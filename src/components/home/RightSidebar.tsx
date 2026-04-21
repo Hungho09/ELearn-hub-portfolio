@@ -11,9 +11,9 @@ import { MentorList } from './MentorList';
  */
 export function RightSidebar() {
   return (
-    <aside className="w-full lg:w-[280px] shrink-0">
+    <aside className="w-[280px] h-full shrink-0">
       <ScrollArea className="h-full">
-        <div className="flex flex-col gap-4 p-4">
+        <div className="flex flex-col gap-5 p-5">
           <ProfileCard />
           <ActivityChart />
           <MentorList />

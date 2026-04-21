@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Sidebar } from '@/components/home/Sidebar';
 import { SearchBar } from '@/components/home/SearchBar';
 import { HeroBanner } from '@/components/home/HeroBanner';
@@ -31,14 +31,14 @@ export default function HomePage() {
   return (
     <TooltipProvider>
       <div className="flex h-screen overflow-hidden bg-background">
-        {/* Left Sidebar - Desktop: always visible on lg+, Collapsed on md, Hidden on sm */}
+        {/* Left Sidebar - Hidden on mobile, visible on md+ */}
         <div className="hidden md:block shrink-0">
           <Sidebar collapsed={false} />
         </div>
 
         {/* Mobile sidebar - uses Sheet component for slide-out drawer */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <SheetContent side="left" className="p-0 w-[240px]">
+          <SheetContent side="left" className="p-0 w-[260px]">
             <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
             <Sidebar collapsed={false} onNavigate={handleMobileNavClose} />
           </SheetContent>
@@ -46,7 +46,7 @@ export default function HomePage() {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto custom-scrollbar">
-          <div className="mx-auto max-w-4xl p-4 md:p-6">
+          <div className="mx-auto max-w-4xl p-5 md:p-6 lg:p-8">
             {/* Search bar at top */}
             <SearchBar onMobileMenuToggle={handleMobileMenuToggle} />
 
@@ -56,19 +56,19 @@ export default function HomePage() {
             </div>
 
             {/* Course progress cards */}
-            <div className="mt-6">
+            <div className="mt-8">
               <CourseProgressCards />
             </div>
 
             {/* Continue watching section */}
-            <div className="mt-6 pb-6">
+            <div className="mt-8 pb-8">
               <ContinueWatching />
             </div>
           </div>
         </main>
 
         {/* Right Sidebar - Visible only on lg+ */}
-        <div className="hidden lg:block shrink-0 border-l border-border overflow-y-auto custom-scrollbar">
+        <div className="hidden lg:block shrink-0 border-l border-border">
           <RightSidebar />
         </div>
       </div>

@@ -26,6 +26,7 @@ const maxHours = Math.max(...weeklyActivity.map((d) => d.hours));
 /**
  * ActivityChart - Weekly activity bar chart using simple divs.
  * Shows learning activity hours for each day of the week.
+ * Bars grow from the bottom up with purple gradient.
  */
 export function ActivityChart() {
   return (
@@ -34,29 +35,29 @@ export function ActivityChart() {
         <CardTitle className="text-sm font-semibold">Activity This Week</CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <div className="flex items-end justify-between gap-2" style={{ height: '120px' }}>
+        <div className="flex items-end justify-between gap-2 h-[120px]">
           {weeklyActivity.map((activity) => {
             const heightPercent = (activity.hours / maxHours) * 100;
 
             return (
               <div
                 key={activity.day}
-                className="flex flex-1 flex-col items-center gap-1.5"
+                className="flex flex-1 flex-col items-center"
               >
-                {/* Bar */}
-                <div className="relative w-full flex justify-center" style={{ height: '90px' }}>
+                {/* Bar container - bars grow from bottom */}
+                <div className="relative w-full flex items-end justify-center h-[90px]">
                   <div
                     className={cn(
-                      'w-full max-w-[24px] rounded-t-md transition-all duration-300',
+                      'w-full max-w-[24px] rounded-t-md transition-all duration-300 cursor-pointer',
                       'bg-gradient-to-t from-primary to-[#A29BFE]',
-                      'hover:from-primary/90 hover:to-[#A29BFE]/90'
+                      'hover:from-primary/80 hover:to-[#A29BFE]/80 hover:shadow-md'
                     )}
-                    style={{ height: `${heightPercent}%`, marginTop: 'auto' }}
-                    title={`${activity.hours} hours`}
+                    style={{ height: `${heightPercent}%` }}
+                    title={`${activity.hours}h studied`}
                   />
                 </div>
                 {/* Day label */}
-                <span className="text-[10px] font-medium text-muted-foreground">
+                <span className="mt-1.5 text-[10px] font-medium text-muted-foreground">
                   {activity.day}
                 </span>
               </div>
