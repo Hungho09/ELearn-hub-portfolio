@@ -1,5 +1,7 @@
 'use client';
 
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   GraduationCap,
   LayoutDashboard,
@@ -9,7 +11,9 @@ import {
   Users,
   Settings,
   LogOut,
+  LogIn,
   Bell,
+  User,
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,23 +25,22 @@ import { cn } from '@/lib/utils';
 interface NavItem {
   label: string;
   icon: React.ElementType;
-  active?: boolean;
+  href?: string;
   badge?: number;
 }
 
 /** Overview navigation items */
 const overviewItems: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, active: true },
+  { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
   { label: 'Inbox', icon: Inbox, badge: 3 },
-  { label: 'Lesson', icon: BookOpen },
+  { label: 'Lesson', icon: BookOpen, href: '/english' },
   { label: 'Task', icon: CheckSquare },
   { label: 'Group', icon: Users },
 ];
 
 /** Settings navigation items */
 const settingsItems: NavItem[] = [
-  { label: 'Settings', icon: Settings },
-  { label: 'Logout', icon: LogOut },
+  { label: 'Settings', icon: Settings, href: '/profile' },
 ];
 
 /** Props for the Sidebar component */
@@ -51,17 +54,49 @@ interface SidebarProps {
 /**
  * Sidebar - Left navigation panel with logo, nav sections, and user info.
  * Supports collapsed mode for tablet and full mode for desktop.
+ * Integrates with NextAuth for user session display.
  */
 export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleNavClick = (item: NavItem) => {
+    if (item.href) {
+      router.push(item.href);
+    }
+    onNavigate?.();
+  };
+
+  const handleLogoClick = () => {
+    router.push('/');
+    onNavigate?.();
+  };
+
+  const handleAuthAction = () => {
+    if (session) {
+      signOut({ callbackUrl: '/login' });
+    } else {
+      router.push('/login');
+    }
+    onNavigate?.();
+  };
+
+  /** Get user display name */
+  const userName = session?.user?.name || 'Guest';
+  const userRole = session ? 'Pro Learner' : 'Not signed in';
+  const userAvatar = session?.user?.avatar || '/images/user-avatar.png';
+  const userInitial = userName.charAt(0).toUpperCase();
+
   /** Render a single navigation item */
   const renderNavItem = (item: NavItem) => {
     const Icon = item.icon;
-    const isActive = item.active;
+    const isActive = item.href === pathname || (item.href === '/' && pathname === '/');
 
     const button = (
       <button
         key={item.label}
-        onClick={onNavigate}
+        onClick={() => handleNavClick(item)}
         className={cn(
           'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
           isActive
@@ -104,14 +139,17 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
       )}
     >
       {/* Logo */}
-      <div className={cn('flex items-center gap-2.5 px-4 py-5', collapsed && 'justify-center px-2')}>
+      <button
+        onClick={handleLogoClick}
+        className={cn('flex items-center gap-2.5 px-4 py-5 w-full hover:bg-muted/50 transition-colors', collapsed && 'justify-center px-2')}
+      >
         <div className="flex size-9 items-center justify-center rounded-lg bg-primary">
           <GraduationCap className="size-5 text-primary-foreground" />
         </div>
         {!collapsed && (
           <span className="text-lg font-bold tracking-tight text-foreground">LearnHub</span>
         )}
-      </div>
+      </button>
 
       <Separator />
 
@@ -131,39 +169,54 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
           {/* Settings Section */}
           {!collapsed && (
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Settings
+              Account
             </p>
           )}
           {settingsItems.map(renderNavItem)}
+
+          {/* Logout / Login button */}
+          <button
+            onClick={handleAuthAction}
+            className={cn(
+              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              'text-muted-foreground hover:bg-muted hover:text-foreground'
+            )}
+          >
+            {session ? <LogOut className="size-5 shrink-0" /> : <LogIn className="size-5 shrink-0" />}
+            {!collapsed && <span className="flex-1 text-left">{session ? 'Logout' : 'Login'}</span>}
+          </button>
         </div>
       </ScrollArea>
 
       <Separator />
 
       {/* User section at bottom */}
-      <div
+      <button
+        onClick={() => { router.push('/profile'); onNavigate?.(); }}
         className={cn(
-          'flex items-center gap-3 px-4 py-4',
+          'flex items-center gap-3 px-4 py-4 w-full hover:bg-muted/50 transition-colors text-left',
           collapsed && 'justify-center px-2'
         )}
       >
         <Avatar className="size-9 ring-2 ring-primary/20">
-          <AvatarImage src="/images/user-avatar.png" alt="Alex Johnson" />
-          <AvatarFallback>AJ</AvatarFallback>
+          <AvatarImage src={userAvatar} alt={userName} />
+          <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+            {userInitial}
+          </AvatarFallback>
         </Avatar>
         {!collapsed && (
           <div className="flex flex-1 items-center justify-between">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">Alex Johnson</p>
-              <p className="truncate text-xs text-muted-foreground">Pro Learner</p>
+              <p className="truncate text-sm font-semibold text-foreground">{userName}</p>
+              <p className="truncate text-xs text-muted-foreground">{userRole}</p>
             </div>
-            <button className="relative rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+            <div className="relative rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
               <Bell className="size-4" />
-              <span className="absolute -right-0.5 -top-0.5 flex size-2 rounded-full bg-destructive" />
-            </button>
+              {session && <span className="absolute -right-0.5 -top-0.5 flex size-2 rounded-full bg-destructive" />}
+            </div>
           </div>
         )}
-      </div>
+      </button>
     </aside>
   );
 }

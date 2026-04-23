@@ -89,3 +89,29 @@ Stage Summary:
 - Page fully polished with consistent styling, proper animations, and responsive design
 - Both desktop (3-column) and mobile (single column with hamburger menu) layouts working correctly
 - VLM analysis confirms professional quality with no major visual bugs
+
+---
+Task ID: 6
+Agent: full-stack-developer subagent
+Task: Build the English Course page with all components
+
+Work Log:
+- Created 7 component files in src/components/english/
+- VideoPlayer.tsx: Large video player area with 16:9 aspect ratio, play button overlay, decorative patterns, progress bar, duration badge, video title, instructor info, and Like/Share/Bookmark/MarkComplete action buttons
+- CurriculumTab.tsx: Expandable sections (4 sections, 16 lessons total) with lesson status icons (completed/current/available/locked), type badges (Video/Quiz/Reading), duration, section progress bars, and overall completion summary
+- NotesTab.tsx: Note editor with textarea, save functionality with simulated delay, character count, saved notes list with edit/delete capabilities, and empty state
+- DiscussionTab.tsx: Discussion thread with comment input, threaded replies, like functionality, quick reply, instructor badges, and sort-by placeholder
+- AIProctoringPanel.tsx: AI chat assistant with status card (active indicator), quick question buttons, chat messages with typing animation, and message input with Enter-to-send
+- CourseProgress.tsx: Circular progress indicator (SVG-based), overall progress bar, and stats grid (Lessons Done, Time Spent, Quiz Score)
+- RelatedCourses.tsx: Three related course cards with thumbnails, ratings, student counts, level badges, and progress indicators
+- Created src/app/english/page.tsx: Main page with top nav bar (back button, title, search, avatar), sticky header, 2-column responsive layout (main content + right sidebar on lg+), left sidebar reuse from home page, and mobile drawer support
+- Fixed unused imports (X from AIProctoringPanel, AvatarImage from DiscussionTab)
+- ESLint passes with no errors
+- Page compiles and serves with 200 status code
+
+Stage Summary:
+- All 8 files created (7 components + 1 page) for the English Course page
+- Responsive design: single column mobile, 2-column desktop with right sidebar
+- Purple theme consistently applied using bg-primary, text-primary, and shadcn/ui components
+- Page accessible at /english route, linked from Sidebar "Lesson" nav item
+- Integrates with existing Sidebar component and NextAuth session for user avatar
