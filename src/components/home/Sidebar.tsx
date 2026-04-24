@@ -73,9 +73,11 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
     onNavigate?.();
   };
 
-  const handleAuthAction = () => {
+  const handleAuthAction = async () => {
     if (session) {
-      signOut({ callbackUrl: '/login' });
+      await signOut({ redirect: false });
+      router.push('/login');
+      router.refresh();
     } else {
       router.push('/login');
     }

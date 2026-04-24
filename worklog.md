@@ -115,3 +115,26 @@ Stage Summary:
 - Purple theme consistently applied using bg-primary, text-primary, and shadcn/ui components
 - Page accessible at /english route, linked from Sidebar "Lesson" nav item
 - Integrates with existing Sidebar component and NextAuth session for user avatar
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Complete auth system integration and fix missing pages
+
+Work Log:
+- Added NEXTAUTH_SECRET and NEXTAUTH_URL to .env file
+- Created register page at src/app/(auth)/register/page.tsx with name/email/password/confirm fields, auto-sign-in after registration
+- Created profile page at src/app/(auth)/profile/page.tsx with session protection, avatar upload, name/bio editing, sign out
+- Updated Sidebar component with NextAuth integration: shows "Guest"/user name, Login/Logout button, real navigation (Dashboard→/, Lesson→/english, Settings→/profile), logo click navigates home
+- Updated ProfileCard component with session data: shows "Guest" or user name/email, "Sign In" or "My Profile" button navigates correctly
+- Fixed signOut flow: changed from callbackUrl redirect to redirect:false + router.push for reliable logout
+- Fixed ProfileForm signOut: uses redirect:false + window.location.href for reliable redirect
+
+Stage Summary:
+- Full auth flow working: Register → Auto-login → Session persistence → Profile editing → Logout → Login
+- All pages return HTTP 200: /, /login, /register, /profile, /english
+- Profile page is protected (redirects unauthenticated users to /login)
+- Sidebar shows auth-aware state (Guest/Login when unauthenticated, Demo User/Logout when authenticated)
+- ProfileCard shows auth-aware state with working navigation
+- ESLint passes with zero errors
+- VLM visual analysis confirms all pages are well-structured with no visual issues

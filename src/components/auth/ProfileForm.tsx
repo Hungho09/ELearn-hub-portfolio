@@ -107,7 +107,8 @@ export function ProfileForm() {
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
-    await signOut({ callbackUrl: "/login" });
+    await signOut({ redirect: false });
+    window.location.href = "/login";
   };
 
   const userInitial = session?.user?.name
