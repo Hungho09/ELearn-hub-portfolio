@@ -1,6 +1,7 @@
-"""SQLAlchemy models for the flashcard service.
+"""SQLAlchemy models for the LearnHub backend.
 
 Models:
+- User: Application users (shared with NextAuth)
 - Vocabulary: English-Vietnamese word pairs with metadata
 - ReviewLog: Spaced repetition review records for ML model consumption
 
@@ -11,6 +12,49 @@ from datetime import datetime, timezone
 from sqlalchemy import String, Integer, Float, Text, DateTime, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
+
+
+class User(Base):
+    """Application user model - compatible with NextAuth.js."""
+
+    __tablename__ = "user"
+
+    id: Mapped[str] = mapped_column(String(255), primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=True)
+    password: Mapped[str] = mapped_column(String(255), nullable=True, comment="bcrypt hashed password")
+    avatar: Mapped[str] = mapped_column(String(500), nullable=True)
+    bio: Mapped[str] = mapped_column(Text, nullable=True)
+    role: Mapped[str] = mapped_column(String(50), default="user")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
+
+    # Relationships
+    review_logs: Mapped[list["ReviewLog"]] = relationship(
+        "ReviewLog", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<User(id='{self.id}', email='{self.email}', name='{self.name}')>"
+
+    def to_dict(self, exclude_password=True):
+        """Convert to dictionary, optionally excluding password."""
+        data = {
+            "id": self.id,
+            "email": self.email,
+            "name": self.name,
+            "avatar": self.avatar,
+            "bio": self.bio,
+            "role": self.role,
+            "createdAt": self.created_at.isoformat() if self.created_at else None,
+            "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if not exclude_password:
+            data["password"] = self.password
+        return data
 
 
 class Vocabulary(Base):
@@ -36,6 +80,20 @@ class Vocabulary(Base):
         "ReviewLog", back_populates="vocabulary", cascade="all, delete-orphan"
     )
 
+    def to_card_dict(self):
+        """Convert to flashcard format matching the frontend interface."""
+        return {
+            "id": self.id,
+            "english": self.english,
+            "vietnamese": self.vietnamese,
+            "pronunciation": self.pronunciation,
+            "example_english": self.example_english,
+            "example_vietnamese": self.example_vietnamese,
+            "part_of_speech": self.part_of_speech,
+            "category": self.category,
+            "difficulty_level": self.difficulty_level,
+        }
+
     def __repr__(self):
         return f"<Vocabulary(id={self.id}, english='{self.english}', vietnamese='{self.vietnamese}')>"
 
@@ -54,7 +112,7 @@ class ReviewLog(Base):
     __tablename__ = "review_log"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True, comment="User ID from NextAuth")
+    user_id: Mapped[str] = mapped_column(String(255), ForeignKey("user.id"), nullable=False, index=True)
     vocabulary_id: Mapped[int] = mapped_column(Integer, ForeignKey("vocabulary.id"), nullable=False)
 
     # SM-2 Algorithm Parameters
@@ -77,7 +135,8 @@ class ReviewLog(Base):
     )
     session_id: Mapped[str] = mapped_column(String(255), nullable=True, comment="Study session identifier")
 
-    # Relationship
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="review_logs")
     vocabulary: Mapped["Vocabulary"] = relationship("Vocabulary", back_populates="review_logs")
 
     # Indexes for ML model queries

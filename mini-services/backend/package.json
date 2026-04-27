@@ -1,0 +1,8 @@
+{
+  "name": "learnhub-backend",
+  "version": "2.0.0",
+  "description": "LearnHub unified Python backend (FastAPI) - bun wrapper for hot reload",
+  "scripts": {
+    "dev": "bun --hot index.ts"
+  }
+}

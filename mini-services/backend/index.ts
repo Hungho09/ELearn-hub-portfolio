@@ -8,7 +8,7 @@ const pythonProcess = spawn('python3', [
   '-m', 'uvicorn',
   'main:app',
   '--host', '0.0.0.0',
-  '--port', '3002',
+  '--port', '3001',
   '--reload',
 ], {
   cwd: __dirname,
@@ -16,12 +16,12 @@ const pythonProcess = spawn('python3', [
 });
 
 pythonProcess.on('error', (err) => {
-  console.error('Failed to start Python flashcard service:', err);
+  console.error('[learnhub-backend] Failed to start Python service:', err);
   process.exit(1);
 });
 
 pythonProcess.on('exit', (code) => {
-  console.error(`Python flashcard service exited with code ${code}`);
+  console.error(`[learnhub-backend] Python service exited with code ${code}`);
   process.exit(code || 1);
 });
 

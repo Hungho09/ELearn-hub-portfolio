@@ -173,3 +173,57 @@ Stage Summary:
 - ReviewLog table stores: rating, ease_factor, interval_days, repetitions, next_review_at, response_time_ms, direction (en_to_vi/vi_to_en), session_id
 - All APIs return 200, ESLint passes with zero errors
 - Flashcard page accessible at /flashcard route
+
+---
+Task ID: 9
+Agent: Main Agent
+Task: Create Python api-service to replace Next.js TypeScript API routes, sharing DB with ML model
+
+Work Log:
+- Investigated user's report about missing `mini-services/api-service/` folder
+- Found `mini-services/flashcard-service/` EXISTS (Python FastAPI) but was never connected to frontend
+- Confirmed `mini-services/api-service/` did NOT exist - was never created in previous session
+- Created complete `mini-services/api-service/` with Python FastAPI backend on port 3001
+- Created SQLAlchemy models: User, Vocabulary, ReviewLog (PostgreSQL-compatible design)
+- Created Pydantic schemas for all request/response validation
+- Implemented auth routes: POST /api/auth/register, POST /api/auth/verify
+- Implemented user routes: GET/PUT /api/user/profile, POST /api/user/avatar
+- Implemented flashcard routes: GET /api/flashcards/session, POST /api/flashcards/review, GET /api/flashcards/stats, GET /api/flashcards/categories
+- Implemented vocabulary CRUD: GET/POST /api/vocabulary
+- Implemented review log endpoints for ML model: GET /api/review-logs/{user_id}, GET /api/review-logs/{user_id}/export
+- Implemented SM-2 spaced repetition algorithm in Python (spaced_repetition.py)
+- Implemented password hashing/verification with bcrypt (auth.py)
+- Created 123-word seed data across 16 categories (seed.py)
+- Created runner.py for persistent process management
+- Updated Next.js API routes to proxy all requests to Python api-service:
+  - src/app/api/auth/register/route.ts → proxies to Python
+  - src/app/api/user/profile/route.ts → proxies to Python (with NextAuth session verification)
+  - src/app/api/user/avatar/route.ts → saves file locally, updates Python DB
+  - src/app/api/flashcards/session/route.ts → proxies to Python
+  - src/app/api/flashcards/review/route.ts → proxies to Python
+  - src/app/api/flashcards/stats/route.ts → proxies to Python
+  - src/app/api/flashcards/categories/route.ts → proxies to Python
+- Updated NextAuth authorize() to verify credentials against Python api-service instead of Prisma directly
+- All 12 integration tests pass:
+  1. Health check ✅
+  2. Next.js home page 200 ✅
+  3. Flashcard session via proxy ✅
+  4. Stats via proxy ✅
+  5. Register via proxy ✅
+  6. Review submission via proxy ✅
+  7. Credential verification ✅
+  8. Stats after review ✅
+  9. Categories via proxy ✅
+  10. Vocabulary list ✅
+  11. Review logs for ML ✅
+  12. ESLint zero errors ✅
+
+Stage Summary:
+- Complete Python FastAPI api-service created at mini-services/api-service/
+- All backend logic migrated from Next.js TypeScript to Python
+- NextAuth stays in Next.js (manages sessions/cookies), auth verification delegates to Python
+- Next.js API routes are now thin proxies that forward to Python api-service on port 3001
+- Python service has its own SQLite database (will share PostgreSQL with ML model in production)
+- 123 vocabulary items seeded across 16 categories
+- Review logs fully accessible for ML model training via /api/review-logs/{user_id}/export
+- Full integration test passing: Register → Login → Flashcard session → Review → Stats → Categories

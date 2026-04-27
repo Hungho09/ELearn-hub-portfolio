@@ -1,7 +1,8 @@
 """Seed the database with initial English-Vietnamese vocabulary data.
 
 Categories: Greetings, Food & Drinks, Numbers, Colors, Family, Daily Activities,
-Travel, Emotions, Time, Body Parts, Animals, Weather, Education, Shopping
+Travel, Emotions, Time, Body Parts, Animals, Weather, Education, Shopping,
+Adjectives, Verbs
 """
 
 from database import engine, SessionLocal
@@ -300,7 +301,7 @@ def seed_database():
         # Check if data already exists
         existing_count = db.query(Vocabulary).count()
         if existing_count > 0:
-            print(f"Database already has {existing_count} vocabulary items. Skipping seed.")
+            print(f"[seed] Database already has {existing_count} vocabulary items. Skipping seed.")
             return
 
         # Insert vocabulary data
@@ -309,7 +310,7 @@ def seed_database():
             db.add(vocab)
 
         db.commit()
-        print(f"Successfully seeded {len(VOCABULARY_DATA)} vocabulary items.")
+        print(f"[seed] Successfully seeded {len(VOCABULARY_DATA)} vocabulary items.")
 
         # Print category summary
         categories = {}
@@ -317,12 +318,12 @@ def seed_database():
             cat = item.get("category", "Uncategorized")
             categories[cat] = categories.get(cat, 0) + 1
 
-        print("\nVocabulary by category:")
+        print("[seed] Vocabulary by category:")
         for cat, count in sorted(categories.items()):
             print(f"  {cat}: {count} words")
 
     except Exception as e:
-        print(f"Error seeding database: {e}")
+        print(f"[seed] Error seeding database: {e}")
         db.rollback()
         raise
     finally:

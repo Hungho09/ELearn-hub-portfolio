@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 
+const API_SERVICE_URL = "http://127.0.0.1:3001";
+
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
+/**
+ * POST /api/user/avatar
+ * Uploads avatar file locally (to Next.js public dir) then updates
+ * the Python api-service database with the avatar URL.
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -57,12 +63,21 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes);
     await writeFile(filepath, buffer);
 
-    // Update user avatar in db
+    // Update avatar URL in Python api-service
     const avatarUrl = `/images/uploads/${filename}`;
-    await db.user.update({
-      where: { id: session.user.id },
-      data: { avatar: avatarUrl },
-    });
+    const res = await fetch(
+      `${API_SERVICE_URL}/api/user/profile?user_id=${encodeURIComponent(session.user.id)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: avatarUrl }),
+      }
+    );
+
+    if (!res.ok) {
+      // File was saved but DB update failed - still return the URL
+      console.error("Failed to update avatar in api-service");
+    }
 
     return NextResponse.json({ avatarUrl });
   } catch (error) {

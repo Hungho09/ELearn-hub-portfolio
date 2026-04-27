@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hash } from "bcryptjs";
-import { db } from "@/lib/db";
 
+const API_SERVICE_URL = "http://127.0.0.1:3001";
+
+/**
+ * POST /api/auth/register
+ * Proxies registration to Python api-service.
+ * After successful registration, the client-side code will
+ * call NextAuth signIn() to create a session.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email, password } = body;
 
-    // Validate required fields
+    // Validate required fields client-side too
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Name, email, and password are required" },
@@ -15,16 +21,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
-    }
-
-    // Validate password length
     if (password.length < 6) {
       return NextResponse.json(
         { error: "Password must be at least 6 characters" },
@@ -32,35 +28,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if email already exists
-    const existingUser = await db.user.findUnique({
-      where: { email },
+    // Forward to Python api-service
+    const res = await fetch(`${API_SERVICE_URL}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
     });
 
-    if (existingUser) {
+    const data = await res.json();
+
+    if (!res.ok) {
       return NextResponse.json(
-        { error: "Email already registered" },
-        { status: 409 }
+        { error: data.detail || "Registration failed" },
+        { status: res.status }
       );
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 12);
-
-    // Create user
-    const user = await db.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    });
-
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json(userWithoutPassword, { status: 201 });
+    return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Registration proxy error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

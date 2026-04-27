@@ -1,77 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+
+const API_SERVICE_URL = "http://127.0.0.1:3001";
 
 /**
  * GET /api/flashcards/categories?user_id=xxx
- * Get learning progress by vocabulary category.
+ * Proxies to Python api-service for learning progress by category.
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('user_id') || 'guest';
+    const userId = searchParams.get("user_id") || "guest";
 
-    // Get all categories
-    const categories = await db.vocabulary.findMany({
-      distinct: ['category'],
-      where: { category: { not: null } },
-      select: { category: true },
-    });
+    const res = await fetch(
+      `${API_SERVICE_URL}/api/flashcards/categories?user_id=${encodeURIComponent(userId)}`
+    );
 
-    const result = [];
-
-    for (const { category } of categories) {
-      if (!category) continue;
-
-      // Total words in category
-      const total = await db.vocabulary.count({ where: { category } });
-
-      // Words reviewed in this category
-      const learned = await db.reviewLog.findMany({
-        where: { userId, vocabulary: { category } },
-        distinct: ['vocabularyId'],
-        select: { vocabularyId: true },
-      });
-
-      // Mastered in this category
-      const latestLogs = await db.reviewLog.groupBy({
-        by: ['vocabularyId'],
-        where: {
-          userId,
-          vocabulary: { category },
-        },
-        _max: { id: true },
-      });
-      const latestLogIds = latestLogs.map(l => l._max.id).filter(Boolean) as number[];
-
-      let mastered = 0;
-      if (latestLogIds.length > 0) {
-        mastered = await db.reviewLog.count({
-          where: {
-            id: { in: latestLogIds },
-            easeFactor: { gte: 2.5 },
-            intervalDays: { gte: 21 },
-          },
-        });
-      }
-
-      // Average ease factor
-      const avgResult = await db.reviewLog.aggregate({
-        where: { userId, vocabulary: { category } },
-        _avg: { easeFactor: true },
-      });
-
-      result.push({
-        category,
-        total_words: total,
-        learned_words: learned.length,
-        mastered_words: mastered,
-        average_ease_factor: Math.round((avgResult._avg.easeFactor ?? 2.5) * 100) / 100,
-      });
+    if (!res.ok) {
+      const data = await res.json();
+      return NextResponse.json(
+        { error: data.detail || "Failed to fetch categories" },
+        { status: res.status }
+      );
     }
 
-    return NextResponse.json(result);
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Categories error:', error);
-    return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 });
+    console.error("Categories proxy error:", error);
+    return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });
   }
 }

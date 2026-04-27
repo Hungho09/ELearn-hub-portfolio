@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
 
+const API_SERVICE_URL = "http://127.0.0.1:3001";
+
+/**
+ * GET /api/user/profile
+ * Proxies to Python api-service with user_id from NextAuth session.
+ */
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -11,18 +16,22 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-    });
+    const res = await fetch(
+      `${API_SERVICE_URL}/api/user/profile?user_id=${encodeURIComponent(session.user.id)}`
+    );
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!res.ok) {
+      const data = await res.json();
+      return NextResponse.json(
+        { error: data.detail || "Failed to fetch profile" },
+        { status: res.status }
+      );
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json(userWithoutPassword);
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Get profile error:", error);
+    console.error("Get profile proxy error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -30,6 +39,10 @@ export async function GET() {
   }
 }
 
+/**
+ * PUT /api/user/profile
+ * Proxies to Python api-service with user_id from NextAuth session.
+ */
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -41,19 +54,27 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, bio } = body;
 
-    const updateData: { name?: string; bio?: string } = {};
-    if (name !== undefined) updateData.name = name;
-    if (bio !== undefined) updateData.bio = bio;
+    const res = await fetch(
+      `${API_SERVICE_URL}/api/user/profile?user_id=${encodeURIComponent(session.user.id)}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, bio }),
+      }
+    );
 
-    const user = await db.user.update({
-      where: { id: session.user.id },
-      data: updateData,
-    });
+    if (!res.ok) {
+      const data = await res.json();
+      return NextResponse.json(
+        { error: data.detail || "Failed to update profile" },
+        { status: res.status }
+      );
+    }
 
-    const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json(userWithoutPassword);
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("Update profile error:", error);
+    console.error("Update profile proxy error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
-import { db } from "@/lib/db";
+
+const API_SERVICE_URL = "http://127.0.0.1:3001";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -16,30 +16,36 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password are required");
         }
 
-        const user = await db.user.findUnique({
-          where: { email: credentials.email },
-        });
+        // Verify credentials against Python api-service
+        try {
+          const res = await fetch(`${API_SERVICE_URL}/api/auth/verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          });
 
-        if (!user || !user.password) {
-          throw new Error("Invalid email or password");
+          if (!res.ok) {
+            throw new Error("Invalid email or password");
+          }
+
+          const user = await res.json();
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            avatar: user.avatar,
+            role: user.role,
+          };
+        } catch (error) {
+          if (error instanceof Error && error.message === "Invalid email or password") {
+            throw error;
+          }
+          throw new Error("Authentication service unavailable");
         }
-
-        const isPasswordValid = await compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid email or password");
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          avatar: user.avatar,
-          role: user.role,
-        };
       },
     }),
   ],

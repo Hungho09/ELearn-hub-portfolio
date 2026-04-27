@@ -1,75 +1,33 @@
-"""FastAPI Flashcard Service - English-Vietnamese vocabulary learning with spaced repetition.
+"""Flashcard router - Spaced repetition flashcard sessions.
 
-API Endpoints:
-- GET  /api/flashcards/session  - Get due cards + new cards for study session
-- POST /api/flashcards/review   - Submit a review for a card
-- GET  /api/flashcards/stats    - Get user learning statistics
+Endpoints:
+- GET  /api/flashcards/session    - Get due cards + new cards for study session
+- POST /api/flashcards/review     - Submit a review for a card
+- GET  /api/flashcards/stats      - Get user learning statistics
 - GET  /api/flashcards/categories - Get progress by category
-- GET  /api/vocabulary          - List all vocabulary (with filters)
-- POST /api/vocabulary          - Add new vocabulary
-- GET  /api/review-logs/{user_id} - Get review logs for ML model
-- GET  /health                  - Health check
 """
 
 from datetime import datetime, timezone, timedelta
-from typing import Optional
-from fastapi import FastAPI, Depends, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, case
+from sqlalchemy import func
 
 from database import get_db
-from models import Base, Vocabulary, ReviewLog
+from models import Vocabulary, ReviewLog
 from schemas import (
-    VocabularyCreate,
-    VocabularyResponse,
     VocabularyCardResponse,
     ReviewSubmit,
-    ReviewLogResponse,
     ReviewResult,
     FlashcardSession,
     UserStats,
     CategoryProgress,
 )
 from spaced_repetition import calculate_sm2, get_initial_state
-from seed import seed_database
 
-# ─── App Setup ────────────────────────────────────────────────────
-
-app = FastAPI(
-    title="LearnHub Flashcard Service",
-    description="English-Vietnamese vocabulary learning with SM-2 spaced repetition",
-    version="1.0.0",
-)
-
-# CORS - allow the Next.js frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+router = APIRouter(prefix="/api/flashcards", tags=["Flashcards"])
 
 
-@app.on_event("startup")
-def startup():
-    """Initialize database and seed data on startup."""
-    from database import engine
-    Base.metadata.create_all(bind=engine)
-    seed_database()
-
-
-# ─── Health Check ─────────────────────────────────────────────────
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "flashcard", "version": "1.0.0"}
-
-
-# ─── Flashcard Session ───────────────────────────────────────────
-
-@app.get("/api/flashcards/session", response_model=FlashcardSession)
+@router.get("/session", response_model=FlashcardSession)
 def get_flashcard_session(
     user_id: str = Query(..., description="User ID from NextAuth session"),
     limit: int = Query(default=20, ge=1, le=50, description="Max cards to return"),
@@ -83,7 +41,6 @@ def get_flashcard_session(
     now = datetime.now(timezone.utc)
 
     # ── Get due cards ────────────────────────────────────
-    # Cards that have been reviewed and next_review_at <= now
     due_subquery = (
         db.query(
             ReviewLog.vocabulary_id,
@@ -106,7 +63,6 @@ def get_flashcard_session(
     due_vocab = db.query(Vocabulary).filter(Vocabulary.id.in_(due_ids)).all() if due_ids else []
 
     # ── Get new cards ────────────────────────────────────
-    # Cards the user has never reviewed
     reviewed_ids = [
         r[0] for r in db.query(ReviewLog.vocabulary_id)
         .filter(ReviewLog.user_id == user_id)
@@ -133,17 +89,15 @@ def get_flashcard_session(
     total_vocab = db.query(func.count(Vocabulary.id)).scalar() or 0
 
     return FlashcardSession(
-        due_cards=[VocabularyCardResponse.model_validate(v) for v in due_vocab],
-        new_cards=[VocabularyCardResponse.model_validate(v) for v in new_vocab],
+        due_cards=[VocabularyCardResponse(**v.to_card_dict()) for v in due_vocab],
+        new_cards=[VocabularyCardResponse(**v.to_card_dict()) for v in new_vocab],
         total_due=len(due_ids),
         total_new=total_vocab - total_reviewed,
         total_learned=total_reviewed,
     )
 
 
-# ─── Submit Review ────────────────────────────────────────────────
-
-@app.post("/api/flashcards/review", response_model=ReviewResult)
+@router.post("/review", response_model=ReviewResult)
 def submit_review(
     review: ReviewSubmit,
     user_id: str = Query(..., description="User ID from NextAuth session"),
@@ -220,9 +174,7 @@ def submit_review(
     )
 
 
-# ─── User Statistics ─────────────────────────────────────────────
-
-@app.get("/api/flashcards/stats", response_model=UserStats)
+@router.get("/stats", response_model=UserStats)
 def get_user_stats(
     user_id: str = Query(..., description="User ID from NextAuth session"),
     db: Session = Depends(get_db),
@@ -326,9 +278,7 @@ def get_user_stats(
     )
 
 
-# ─── Category Progress ───────────────────────────────────────────
-
-@app.get("/api/flashcards/categories", response_model=list[CategoryProgress])
+@router.get("/categories", response_model=list[CategoryProgress])
 def get_category_progress(
     user_id: str = Query(..., description="User ID from NextAuth session"),
     db: Session = Depends(get_db),
@@ -405,107 +355,3 @@ def get_category_progress(
         ))
 
     return result
-
-
-# ─── Vocabulary CRUD ──────────────────────────────────────────────
-
-@app.get("/api/vocabulary", response_model=list[VocabularyResponse])
-def list_vocabulary(
-    category: Optional[str] = Query(default=None),
-    difficulty: Optional[int] = Query(default=None, ge=1, le=3),
-    search: Optional[str] = Query(default=None),
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=50, ge=1, le=100),
-    db: Session = Depends(get_db),
-):
-    """List vocabulary with optional filters."""
-    query = db.query(Vocabulary)
-
-    if category:
-        query = query.filter(Vocabulary.category == category)
-    if difficulty:
-        query = query.filter(Vocabulary.difficulty_level == difficulty)
-    if search:
-        search_term = f"%{search}%"
-        query = query.filter(
-            (Vocabulary.english.ilike(search_term)) |
-            (Vocabulary.vietnamese.ilike(search_term))
-        )
-
-    return query.offset(skip).limit(limit).all()
-
-
-@app.post("/api/vocabulary", response_model=VocabularyResponse, status_code=201)
-def create_vocabulary(vocab: VocabularyCreate, db: Session = Depends(get_db)):
-    """Add a new vocabulary item."""
-    item = Vocabulary(**vocab.model_dump())
-    db.add(item)
-    db.commit()
-    db.refresh(item)
-    return item
-
-
-# ─── Review Logs (for ML Model) ──────────────────────────────────
-
-@app.get("/api/review-logs/{user_id}", response_model=list[ReviewLogResponse])
-def get_review_logs(
-    user_id: str,
-    skip: int = Query(default=0, ge=0),
-    limit: int = Query(default=100, ge=1, le=1000),
-    vocabulary_id: Optional[int] = Query(default=None),
-    direction: Optional[str] = Query(default=None),
-    db: Session = Depends(get_db),
-):
-    """Get review logs for a user - primary data source for ML model.
-
-    The ML model can use these logs to:
-    - Analyze forgetting curves per user/vocabulary
-    - Predict optimal review intervals
-    - Identify difficult words
-    - Personalize learning paths
-    """
-    query = db.query(ReviewLog).filter(ReviewLog.user_id == user_id)
-
-    if vocabulary_id:
-        query = query.filter(ReviewLog.vocabulary_id == vocabulary_id)
-    if direction:
-        query = query.filter(ReviewLog.direction == direction)
-
-    return query.order_by(ReviewLog.reviewed_at.desc()).offset(skip).limit(limit).all()
-
-
-@app.get("/api/review-logs/{user_id}/export")
-def export_review_logs(
-    user_id: str,
-    db: Session = Depends(get_db),
-):
-    """Export all review logs for a user as JSON (for ML model training)."""
-    logs = (
-        db.query(ReviewLog)
-        .filter(ReviewLog.user_id == user_id)
-        .order_by(ReviewLog.reviewed_at)
-        .all()
-    )
-
-    return {
-        "user_id": user_id,
-        "total_logs": len(logs),
-        "exported_at": datetime.now(timezone.utc).isoformat(),
-        "logs": [
-            {
-                "vocabulary_id": log.vocabulary_id,
-                "english": log.vocabulary.english,
-                "vietnamese": log.vocabulary.vietnamese,
-                "rating": log.rating,
-                "ease_factor": log.ease_factor,
-                "interval_days": log.interval_days,
-                "repetitions": log.repetitions,
-                "reviewed_at": log.reviewed_at.isoformat(),
-                "next_review_at": log.next_review_at.isoformat() if log.next_review_at else None,
-                "response_time_ms": log.response_time_ms,
-                "direction": log.direction,
-                "session_id": log.session_id,
-            }
-            for log in logs
-        ],
-    }
