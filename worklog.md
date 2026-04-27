@@ -138,3 +138,38 @@ Stage Summary:
 - ProfileCard shows auth-aware state with working navigation
 - ESLint passes with zero errors
 - VLM visual analysis confirms all pages are well-structured with no visual issues
+
+---
+Task ID: 8
+Agent: Main Agent
+Task: Build English-Vietnamese flashcard learning system with spaced repetition and review logs for ML model
+
+Work Log:
+- Created Python FastAPI backend (mini-services/flashcard-service/) with SQLAlchemy, SM-2 spaced repetition algorithm, and 123 English-Vietnamese vocabulary items across 16 categories
+- Added Vocabulary and ReviewLog models to Prisma schema (prisma/schema.prisma) with full SM-2 algorithm fields
+- Created SM-2 spaced repetition algorithm in TypeScript (src/lib/spaced-repetition.ts)
+- Created vocabulary seed data (prisma/seed-vocab.ts) with 123 words across 16 categories: Greetings, Food & Drinks, Numbers, Colors, Family, Daily Activities, Travel, Emotions, Time, Animals, Weather, Education, Shopping, Body Parts, Adjectives, Verbs
+- Built flashcard API routes in Next.js:
+  - GET /api/flashcards/session - Get due cards + new cards for study session
+  - POST /api/flashcards/review - Submit review with SM-2 algorithm (ratings 1-4)
+  - GET /api/flashcards/stats - User learning statistics (mastered, learning, new, streak, etc.)
+  - GET /api/flashcards/categories - Progress by vocabulary category
+- Built flashcard UI page (src/app/flashcard/page.tsx) with:
+  - Flip-card animation (English front → Vietnamese back, or vice versa)
+  - 4-level rating buttons (Again/Hard/Good/Easy) with color coding
+  - Mode toggle (EN→VI or VI→EN)
+  - Example sentence reveal
+  - Progress bar with card counter
+  - Session complete summary with accuracy stats
+  - Stats dashboard (Mastered, Learning, New, Total Reviews)
+  - Streak tracking and today's review count
+  - Keyboard shortcuts (Space to flip, 1-4 to rate)
+- Updated Sidebar with Flashcard navigation link (Brain icon)
+
+Stage Summary:
+- Complete flashcard system with English↔Vietnamese vocabulary learning
+- SM-2 spaced repetition algorithm saves review data for ML model consumption
+- 123 vocabulary words seeded across 16 categories
+- ReviewLog table stores: rating, ease_factor, interval_days, repetitions, next_review_at, response_time_ms, direction (en_to_vi/vi_to_en), session_id
+- All APIs return 200, ESLint passes with zero errors
+- Flashcard page accessible at /flashcard route

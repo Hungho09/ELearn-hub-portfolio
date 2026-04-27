@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Inbox,
   BookOpen,
+  Brain,
   CheckSquare,
   Users,
   Settings,
@@ -33,6 +34,7 @@ interface NavItem {
 const overviewItems: NavItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
   { label: 'Inbox', icon: Inbox, badge: 3 },
+  { label: 'Flashcard', icon: Brain, href: '/flashcard' },
   { label: 'Lesson', icon: BookOpen, href: '/english' },
   { label: 'Task', icon: CheckSquare },
   { label: 'Group', icon: Users },
