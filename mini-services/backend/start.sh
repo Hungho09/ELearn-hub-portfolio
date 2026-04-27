@@ -1,17 +1,14 @@
 #!/bin/bash
-# Start the LearnHub Backend (Python FastAPI)
-# This is the unified backend service running on port 3001
+# Start the LearnHub Python Backend (FastAPI on port 3001)
+# Usage: cd mini-services/backend && bash start.sh
 
 cd "$(dirname "$0")"
 
 # Install Python dependencies if needed
-if [ ! -d ".venv" ]; then
-    echo "[learnhub-backend] Creating virtual environment..."
-    python3 -m venv .venv
+if ! python3 -c "import fastapi" 2>/dev/null; then
+    echo "[learnhub-backend] Installing dependencies..."
+    pip3 install -q -r requirements.txt
 fi
 
-echo "[learnhub-backend] Installing dependencies..."
-.venv/bin/pip install -q -r requirements.txt
-
 echo "[learnhub-backend] Starting uvicorn on port 3001..."
-exec .venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 3001 --reload
+exec python3 -m uvicorn main:app --host 0.0.0.0 --port 3001 --reload

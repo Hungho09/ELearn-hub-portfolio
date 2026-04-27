@@ -227,3 +227,26 @@ Stage Summary:
 - 123 vocabulary items seeded across 16 categories
 - Review logs fully accessible for ML model training via /api/review-logs/{user_id}/export
 - Full integration test passing: Register → Login → Flashcard session → Review → Stats → Categories
+
+---
+Task ID: 10
+Agent: Main Agent
+Task: Verify project state, lint check, and polish backend restructuring
+
+Work Log:
+- Confirmed no old api-service/ or flashcard-service/ folders exist — already consolidated into backend/
+- Fixed .env: added NEXTAUTH_SECRET and NEXTAUTH_URL (was missing, causing NextAuth warnings)
+- All frontend pages verified: /, /login, /register, /profile, /english, /flashcard → all 200
+- Python backend health check confirmed: /health returns OK with all router info
+- Flashcard API integration verified: stats, session, categories all working via proxy to Python
+- ESLint passes with zero errors
+- Added ml_model/ placeholder directory with README explaining how to swap SM-2 for custom ML model
+- Created root-level start-all.sh that starts both Python backend (port 3001) + Next.js frontend (port 3000) with one command
+- Updated mini-services/start-all.sh and mini-services/backend/start.sh for cleaner startup
+
+Stage Summary:
+- No old unused folders remaining (api-service, flashcard-service already removed)
+- Root start-all.sh enables one-command startup: `bash start-all.sh`
+- ml_model/ directory ready for future ML model integration
+- All pages and APIs verified working
+- ESLint: zero errors
