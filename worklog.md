@@ -279,3 +279,37 @@ Stage Summary:
 - Model weights pre-extracted to tcgl_weights.npz (69KB)
 - New files: ml_model/model.py, ml_model/predict.py, ml_model/predict_lite.py, ml_model/tcgl_weights.npz, ml_model/__init__.py
 - Updated files: routers/flashcard.py, main.py, requirements.txt
+
+---
+Task ID: 12
+Agent: Main Agent
+Task: Convert TCGL model from static NPZ inference to dynamic PyTorch model that can predict AND learn from user data
+
+Work Log:
+- Rewrote ml_model/predict.py as the ACTIVE module with full PyTorch dynamic model
+- Added online learning: after each review, model performs 3 gradient steps to update graph conv + classifier weights
+- Added batch training: train_on_reviews() fine-tunes model on accumulated review data
+- Added model persistence: save_model() persists learned weights to tcgl_learned.pth
+- Added training stats tracking: total_predictions, total_online_updates, total_batch_trainings, losses
+- Fixed BatchNorm issue: single-node graphs now keep BN in eval mode while other layers train
+- Fixed timezone-aware datetime comparison in build_review_graph
+- Fixed contrastive loss tensor shape warnings
+- Updated routers/flashcard.py:
+  - Switched import from predict_lite to predict (dynamic PyTorch)
+  - Added POST /api/flashcards/train endpoint for batch training
+  - Added GET /api/flashcards/training-stats endpoint
+  - Optimized: only load relevant vocab items (not all 123) for graph construction
+  - Added error handling for batch training to prevent server crashes
+- Updated main.py startup to use new predict module
+- Updated ml_model/README.md with new architecture documentation
+- Verified full integration: 3 reviews submitted with online learning, batch training completed, model saved
+
+Stage Summary:
+- TCGL model is now DYNAMIC: can both predict and learn from user data
+- Online learning: automatic after each review (3 gradient steps, ~0.2s per review)
+- Batch training: on-demand via /api/flashcards/train endpoint
+- Model persistence: learned weights saved to tcgl_learned.pth, loaded on restart
+- Embedding layer frozen (1.25M params), conv+classifier trainable (17K params)
+- SM-2 remains as automatic fallback
+- New endpoints: POST /train, GET /training-stats
+- All tests pass: predict, online learn, batch train, model save/load

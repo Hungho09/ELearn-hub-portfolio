@@ -3,16 +3,24 @@
 Uses TCGL (Temporal Contrastive Graph Learning) model for scheduling,
 with SM-2 as automatic fallback if the model is unavailable.
 
+The TCGL model can both PREDICT and LEARN from user data:
+- Online learning: updates model weights after each review
+- Batch training: fine-tune on accumulated review logs via /train endpoint
+
 Endpoints:
 - GET  /api/flashcards/session    - Get due cards + new cards for study session
-- POST /api/flashcards/review     - Submit a review for a card (TCGL + SM-2 fallback)
+- POST /api/flashcards/review     - Submit a review (TCGL predicts + learns, SM-2 fallback)
 - GET  /api/flashcards/stats      - Get user learning statistics
 - GET  /api/flashcards/categories - Get progress by category
 - GET  /api/flashcards/model-info - Get info about the active scheduling model
+- POST /api/flashcards/train      - Batch train model on review data
+- GET  /api/flashcards/training-stats - Get model training statistics
 """
 
 from datetime import datetime, timezone, timedelta
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -27,9 +35,42 @@ from schemas import (
     CategoryProgress,
 )
 from spaced_repetition import calculate_sm2, get_initial_state
-from ml_model.predict_lite import predict_next_review as tcgl_predict, get_model_info as tcgl_model_info, is_model_loaded
+from ml_model.predict import (
+    predict_next_review as tcgl_predict,
+    get_model_info as tcgl_model_info,
+    is_model_loaded,
+    train_on_reviews,
+    get_training_stats,
+)
 
 router = APIRouter(prefix="/api/flashcards", tags=["Flashcards"])
+
+
+# ─── Training Request Schema ──────────────────────────────────────
+
+
+class TrainRequest(BaseModel):
+    """Request body for batch training."""
+    epochs: int = Field(default=10, ge=1, le=100, description="Number of training epochs")
+    learning_rate: float = Field(default=0.005, ge=0.0001, le=0.1, description="Learning rate")
+    max_reviews: int = Field(default=5000, ge=10, le=50000, description="Max reviews to use")
+
+
+class TrainResponse(BaseModel):
+    """Response from batch training."""
+    status: str
+    epochs: Optional[int] = None
+    final_loss: Optional[float] = None
+    losses: Optional[list[float]] = None
+    reviews_used: Optional[int] = None
+    vocab_coverage: Optional[int] = None
+    nodes: Optional[int] = None
+    edges: Optional[int] = None
+    reason: Optional[str] = None
+    learning_rate: Optional[float] = None
+
+
+# ─── Endpoints ────────────────────────────────────────────────────
 
 
 @router.get("/session", response_model=FlashcardSession)
@@ -38,11 +79,7 @@ def get_flashcard_session(
     limit: int = Query(default=20, ge=1, le=50, description="Max cards to return"),
     db: Session = Depends(get_db),
 ):
-    """Get a study session with due cards and new cards.
-
-    Due cards: Cards the user has reviewed before and are due for review.
-    New cards: Cards the user has never reviewed.
-    """
+    """Get a study session with due cards and new cards."""
     now = datetime.now(timezone.utc)
 
     # ── Get due cards ────────────────────────────────────
@@ -110,8 +147,9 @@ def submit_review(
 ):
     """Submit a review for a vocabulary card.
 
-    Uses the TCGL (Temporal Contrastive Graph Learning) model for scheduling,
-    with automatic SM-2 fallback if the model is unavailable.
+    Uses the TCGL model for scheduling with online learning.
+    The model updates its weights after each review to learn from user data.
+    Falls back to SM-2 if the model is unavailable.
 
     Rating scale:
     - 1 (Again): Complete failure, reset progress
@@ -153,7 +191,7 @@ def submit_review(
             db.query(ReviewLog)
             .filter(ReviewLog.user_id == user_id)
             .order_by(ReviewLog.reviewed_at.desc())
-            .limit(200)  # Recent 200 reviews for context
+            .limit(200)
             .all()
         )
         review_history = [
@@ -171,8 +209,12 @@ def submit_review(
             for r in user_reviews
         ]
 
-        # Get all vocabulary for graph construction
-        all_vocab = db.query(Vocabulary).all()
+        # Get only vocabulary items referenced in review history + current card
+        # (don't load ALL 123 items — too heavy for graph construction)
+        referenced_ids = list(set(
+            [r.vocabulary_id for r in user_reviews] + [review.vocabulary_id]
+        ))
+        relevant_vocab = db.query(Vocabulary).filter(Vocabulary.id.in_(referenced_ids)).all()
         vocab_list = [
             {
                 "id": v.id,
@@ -180,7 +222,7 @@ def submit_review(
                 "category": v.category,
                 "part_of_speech": v.part_of_speech,
             }
-            for v in all_vocab
+            for v in relevant_vocab
         ]
 
         vocab_info = {
@@ -190,7 +232,7 @@ def submit_review(
             "part_of_speech": vocab.part_of_speech,
         }
 
-        # Run TCGL model
+        # Run TCGL model (with online learning enabled)
         result = tcgl_predict(
             rating=review.rating,
             current_ease_factor=current_ef,
@@ -204,6 +246,7 @@ def submit_review(
             direction=review.direction,
             response_time_ms=review.response_time_ms,
             session_id=review.session_id,
+            enable_learning=True,  # Model learns from each review!
         )
         model_used = result.get("model_used", "tcgl")
 
@@ -255,10 +298,85 @@ def submit_review(
     )
 
 
+@router.post("/train", response_model=TrainResponse)
+def batch_train_model(
+    req: TrainRequest,
+    user_id: str = Query(..., description="User ID — trains on YOUR review data"),
+    db: Session = Depends(get_db),
+):
+    """Batch train the TCGL model on accumulated review data.
+
+    This fine-tunes the model using all your past review logs.
+    The model learns patterns in your forgetting curves and
+    adapts its predictions to your learning style.
+
+    After training, the model is automatically saved to disk.
+    """
+    # Gather ALL review logs for this user
+    user_reviews = (
+        db.query(ReviewLog)
+        .filter(ReviewLog.user_id == user_id)
+        .order_by(ReviewLog.reviewed_at.asc())
+        .limit(req.max_reviews)
+        .all()
+    )
+
+    review_logs = [
+        {
+            "vocabulary_id": r.vocabulary_id,
+            "rating": r.rating,
+            "reviewed_at": r.reviewed_at.isoformat() if r.reviewed_at else None,
+            "session_id": r.session_id,
+            "ease_factor": r.ease_factor,
+            "interval_days": r.interval_days,
+            "repetitions": r.repetitions,
+            "response_time_ms": r.response_time_ms,
+            "direction": r.direction,
+        }
+        for r in user_reviews
+    ]
+
+    # Get only vocabulary items referenced in the reviews
+    referenced_ids = list(set(r.vocabulary_id for r in user_reviews))
+    relevant_vocab = db.query(Vocabulary).filter(Vocabulary.id.in_(referenced_ids)).all()
+    vocab_items = [
+        {
+            "id": v.id,
+            "difficulty_level": v.difficulty_level,
+            "category": v.category,
+            "part_of_speech": v.part_of_speech,
+        }
+        for v in relevant_vocab
+    ]
+
+    # Train!
+    try:
+        result = train_on_reviews(
+            review_logs=review_logs,
+            vocab_items=vocab_items,
+            epochs=req.epochs,
+            learning_rate=req.learning_rate,
+        )
+    except Exception as e:
+        return TrainResponse(
+            status="error",
+            reason=f"Training failed: {str(e)}",
+            reviews_used=len(review_logs),
+        )
+
+    return TrainResponse(**result)
+
+
 @router.get("/model-info")
 def get_model_info():
     """Get information about the active scheduling model."""
     return tcgl_model_info()
+
+
+@router.get("/training-stats")
+def get_train_stats():
+    """Get detailed model training statistics."""
+    return get_training_stats()
 
 
 @router.get("/stats", response_model=UserStats)
@@ -326,10 +444,10 @@ def get_user_stats(
         .scalar() or 0
     )
 
-    # Streak calculation (consecutive days with at least 1 review)
+    # Streak calculation
     streak = 0
     check_date = now.date()
-    for i in range(365):  # Max 1 year streak
+    for i in range(365):
         day_start = datetime.combine(check_date, datetime.min.time()).replace(tzinfo=timezone.utc)
         day_end = day_start + timedelta(days=1)
 
@@ -347,7 +465,6 @@ def get_user_stats(
             streak += 1
             check_date -= timedelta(days=1)
         else:
-            # Allow today to not have reviews yet (streak from yesterday)
             if i == 0:
                 check_date -= timedelta(days=1)
                 continue
@@ -380,14 +497,12 @@ def get_category_progress(
 
     result = []
     for (category,) in categories:
-        # Total words in category
         total = (
             db.query(func.count(Vocabulary.id))
             .filter(Vocabulary.category == category)
             .scalar() or 0
         )
 
-        # Words reviewed in this category
         learned = (
             db.query(func.count(func.distinct(ReviewLog.vocabulary_id)))
             .join(Vocabulary, ReviewLog.vocabulary_id == Vocabulary.id)
@@ -398,7 +513,6 @@ def get_category_progress(
             .scalar() or 0
         )
 
-        # Mastered in this category
         mastered_subquery = (
             db.query(
                 ReviewLog.vocabulary_id,
@@ -422,7 +536,6 @@ def get_category_progress(
             .scalar() or 0
         )
 
-        # Average ease factor in category
         avg_ef = (
             db.query(func.avg(ReviewLog.ease_factor))
             .join(Vocabulary, ReviewLog.vocabulary_id == Vocabulary.id)

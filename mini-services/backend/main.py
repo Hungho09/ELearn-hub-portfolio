@@ -69,11 +69,11 @@ def startup():
     Base.metadata.create_all(bind=engine)
     seed_database()
 
-    # Pre-load the TCGL model weights at startup
+    # Pre-load the TCGL model at startup
     try:
-        from ml_model.predict_lite import _load_weights
-        _load_weights()
-        print("[startup] TCGL model weights pre-loaded")
+        from ml_model.predict import get_model
+        get_model()  # Loads model + creates optimizer
+        print("[startup] TCGL model pre-loaded (can predict AND learn)")
     except Exception as e:
         print(f"[startup] TCGL model not available: {e}. SM-2 fallback will be used.")
 
@@ -94,7 +94,7 @@ def health_check():
     # Check TCGL model status
     tcgl_status = "not_loaded"
     try:
-        from ml_model.predict_lite import is_model_loaded
+        from ml_model.predict import is_model_loaded
         tcgl_status = "loaded" if is_model_loaded() else "not_loaded"
     except Exception:
         tcgl_status = "unavailable"

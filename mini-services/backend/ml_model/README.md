@@ -2,27 +2,50 @@
 
 ## Current Model: Temporal Contrastive Graph Learning (TCGL)
 
-Your trained TCGL model (`model.pth`) is already integrated as the primary
-flashcard scheduling algorithm, replacing SM-2.
+Your trained TCGL model (`model.pth`) is integrated as the primary
+flashcard scheduling algorithm. **The model can both predict AND learn
+from user data** — it updates its weights after each review.
 
 ## File Structure
 
 ```
 ml_model/
 ├── __init__.py             # Package init
-├── model.py                # Full PyTorch TCGL model class (for retraining/development)
-├── predict.py              # Full inference with PyTorch (heavy, ~200MB)
-├── predict_lite.py         # NumPy-only inference (lightweight, ~1.2MB) ← ACTIVE
-├── tcgl_weights.npz        # Pre-extracted weights (69KB, no PyTorch at runtime)
+├── model.py                # Full PyTorch TCGL model class definition
+├── predict.py              # ACTIVE: Dynamic prediction + online learning + batch training
+├── predict_lite.py         # ARCHIVED: NumPy-only inference (frozen, no learning)
+├── tcgl_weights.npz        # ARCHIVED: Pre-extracted weights for predict_lite.py
+├── tcgl_learned.pth        # Auto-generated: Saved model after online/batch training
 └── README.md               # This file
 ```
+
+## How It Learns
+
+### 1. Online Learning (Automatic)
+After every review submission (`POST /api/flashcards/review`):
+- The model predicts the retention score for the card
+- It compares the prediction against the actual rating
+- It performs 3 gradient steps to update the graph conv + classifier weights
+- The embedding layer stays frozen (pre-trained, too large to overfit)
+
+### 2. Batch Training (On-Demand)
+Call `POST /api/flashcards/train` to fine-tune on all accumulated data:
+- Builds a full graph from all your review logs
+- Trains for 10 epochs (configurable)
+- Saves the updated model to `tcgl_learned.pth`
+- Next startup loads the learned model automatically
+
+### 3. Model Persistence
+- After batch training → model saved to `tcgl_learned.pth`
+- After online learning → model stays in memory (not auto-saved)
+- On restart → learned model loaded first, then pretrained, then fresh init
 
 ## Architecture
 
 ```
 Input: Graph(nodes=vocab words, edges=review history, times=time deltas)
   │
-  ├── Node Embedding: hash-based pseudo-embedding (16 dims)
+  ├── Node Embedding: nn.Embedding(78139, 16) — FROZEN
   ├── Time Encoder: Linear(1 → 16)
   └── Node Features: 19-dim feature vector per vocabulary
       │
@@ -46,37 +69,31 @@ Input: Graph(nodes=vocab words, edges=review history, times=time deltas)
       ├── [17] forgetting_rate (0-1)
       └── [18] bias (1.0)
        │
-  ┌─── CustomGraphConv(51→64) + BatchNorm + ReLU
+  ┌─── CustomGraphConv(51→64) + BatchNorm + ReLU — TRAINABLE
   │
-  ┌─── CustomGraphConv(64→64) + BatchNorm + ReLU
+  ┌─── CustomGraphConv(64→64) + BatchNorm + ReLU — TRAINABLE
   │
-  └─── Classifier MLP: 64→32→1 (recall probability / interval score)
+  └─── Classifier MLP: 64→32→1 (recall probability) — TRAINABLE
 ```
-
-## How It Works
-
-1. **Review submitted** → Flashcard router calls `predict_lite.predict_next_review()`
-2. **Graph built** from user's review history (nodes=vocab, edges=temporal+session)
-3. **Inference** via NumPy forward pass through model weights
-4. **Output** → scalar → mapped to interval days + ease factor
-5. **SM-2 fallback** → automatic if model fails for any reason
 
 ## API Endpoints
 
-- `GET /api/flashcards/model-info` — Shows active model status
-- `POST /api/flashcards/review` — Uses TCGL (with SM-2 fallback)
-- `GET /api/review-logs/{user_id}/export` — Export all review data for retraining
+- `POST /api/flashcards/review` — Review a card (TCGL predicts + learns, SM-2 fallback)
+- `POST /api/flashcards/train` — Batch train model on all review data
+- `GET  /api/flashcards/model-info` — Model status, architecture, learning stats
+- `GET  /api/flashcards/training-stats` — Detailed training statistics
+- `GET  /api/review-logs/{user_id}/export` — Export all review data
 
-## To Retrain the Model
+## To Retrain the Model from Scratch
 
 1. Export review logs: `GET /api/review-logs/{user_id}/export`
-2. Train your model using the review data
+2. Train your model externally using the review data
 3. Save as `model.pth` with the same architecture (or update `model.py`)
-4. Re-extract weights: `python3 -c "from ml_model.predict_lite import _load_weights; ..."`
-5. Or manually: extract numpy arrays from state_dict, save as `tcgl_weights.npz`
+4. Delete `tcgl_learned.pth` so the new model gets loaded
+5. Restart the backend
 
 ## To Use a Different Model
 
-Replace `predict_lite.py` with your own inference module. Keep the same
+Replace `predict.py` with your own inference module. Keep the same
 interface for `predict_next_review()` and `get_initial_state()`.
 Update the import in `routers/flashcard.py` to point to your new module.
