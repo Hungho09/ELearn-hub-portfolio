@@ -250,3 +250,32 @@ Stage Summary:
 - ml_model/ directory ready for future ML model integration
 - All pages and APIs verified working
 - ESLint: zero errors
+
+---
+Task ID: 11
+Agent: Main Agent
+Task: Integrate TCGL (Temporal Contrastive Graph Learning) ML model into flashcard system
+
+Work Log:
+- Analyzed model.pth: OrderedDict with 24 weight arrays, TCGL architecture
+- Reconstructed model architecture: NodeEmbedding(78139x16), TimeEncoder(1→16), CustomGraphConv(51→64→64), Classifier MLP(64→32→1)
+- Created ml_model/model.py: Full PyTorch TCGLModel class (loads with strict=True)
+- Created ml_model/predict.py: Full inference with graph construction from review logs
+- Created ml_model/predict_lite.py: Memory-efficient NumPy-only inference (1.2MB vs 200MB)
+- Pre-extracted model weights to tcgl_weights.npz (69KB, no PyTorch needed at runtime)
+- Updated routers/flashcard.py: TCGL model primary, SM-2 automatic fallback
+- Added /api/flashcards/model-info endpoint showing active model status
+- Updated main.py: Pre-loads TCGL weights at startup, health check shows model status
+- Updated requirements.txt: Added torch, torch-geometric, numpy
+- Fixed shape mismatch in predict_lite.py (encode_node_features returns [1,19], needs [0] for stacking)
+- Verified: TCGL model produces different intervals for different ratings (1→1d, 2→7d, 3→8d, 4→10d)
+- Verified: Full API flow working — health, model-info, review, stats, categories, review-logs
+- ESLint passes with zero errors
+
+Stage Summary:
+- TCGL model fully integrated as primary scheduling algorithm
+- NumPy Lite inference: no PyTorch at runtime, 1.2MB overhead (vs 200MB+ with PyTorch)
+- SM-2 remains as automatic fallback if model fails
+- Model weights pre-extracted to tcgl_weights.npz (69KB)
+- New files: ml_model/model.py, ml_model/predict.py, ml_model/predict_lite.py, ml_model/tcgl_weights.npz, ml_model/__init__.py
+- Updated files: routers/flashcard.py, main.py, requirements.txt

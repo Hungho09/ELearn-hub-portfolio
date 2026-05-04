@@ -65,9 +65,17 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    """Initialize database and seed data on startup."""
+    """Initialize database, seed data, and pre-load TCGL model on startup."""
     Base.metadata.create_all(bind=engine)
     seed_database()
+
+    # Pre-load the TCGL model weights at startup
+    try:
+        from ml_model.predict_lite import _load_weights
+        _load_weights()
+        print("[startup] TCGL model weights pre-loaded")
+    except Exception as e:
+        print(f"[startup] TCGL model not available: {e}. SM-2 fallback will be used.")
 
 
 # ─── Include Routers ──────────────────────────────────────────────
@@ -83,15 +91,24 @@ app.include_router(review_logs_router)
 
 @app.get("/health")
 def health_check():
+    # Check TCGL model status
+    tcgl_status = "not_loaded"
+    try:
+        from ml_model.predict_lite import is_model_loaded
+        tcgl_status = "loaded" if is_model_loaded() else "not_loaded"
+    except Exception:
+        tcgl_status = "unavailable"
+
     return {
         "status": "ok",
         "service": "learnhub-backend",
         "version": "2.0.0",
         "database": "sqlite",
+        "tcgl_model": tcgl_status,
         "routers": {
             "auth": ["/api/auth/register", "/api/auth/verify"],
             "user": ["/api/user/profile", "/api/user/avatar"],
-            "flashcards": ["/api/flashcards/session", "/api/flashcards/review", "/api/flashcards/stats", "/api/flashcards/categories"],
+            "flashcards": ["/api/flashcards/session", "/api/flashcards/review", "/api/flashcards/stats", "/api/flashcards/categories", "/api/flashcards/model-info"],
             "vocabulary": ["/api/vocabulary"],
             "review_logs": ["/api/review-logs/{user_id}", "/api/review-logs/{user_id}/export"],
         },

@@ -1,10 +1,14 @@
 """Flashcard router - Spaced repetition flashcard sessions.
 
+Uses TCGL (Temporal Contrastive Graph Learning) model for scheduling,
+with SM-2 as automatic fallback if the model is unavailable.
+
 Endpoints:
 - GET  /api/flashcards/session    - Get due cards + new cards for study session
-- POST /api/flashcards/review     - Submit a review for a card
+- POST /api/flashcards/review     - Submit a review for a card (TCGL + SM-2 fallback)
 - GET  /api/flashcards/stats      - Get user learning statistics
 - GET  /api/flashcards/categories - Get progress by category
+- GET  /api/flashcards/model-info - Get info about the active scheduling model
 """
 
 from datetime import datetime, timezone, timedelta
@@ -23,6 +27,7 @@ from schemas import (
     CategoryProgress,
 )
 from spaced_repetition import calculate_sm2, get_initial_state
+from ml_model.predict_lite import predict_next_review as tcgl_predict, get_model_info as tcgl_model_info, is_model_loaded
 
 router = APIRouter(prefix="/api/flashcards", tags=["Flashcards"])
 
@@ -103,7 +108,10 @@ def submit_review(
     user_id: str = Query(..., description="User ID from NextAuth session"),
     db: Session = Depends(get_db),
 ):
-    """Submit a review for a vocabulary card using SM-2 spaced repetition.
+    """Submit a review for a vocabulary card.
+
+    Uses the TCGL (Temporal Contrastive Graph Learning) model for scheduling,
+    with automatic SM-2 fallback if the model is unavailable.
 
     Rating scale:
     - 1 (Again): Complete failure, reset progress
@@ -127,7 +135,7 @@ def submit_review(
         .first()
     )
 
-    # Calculate current SM-2 state
+    # Calculate current state
     if latest_log:
         current_ef = latest_log.ease_factor
         current_interval = latest_log.interval_days
@@ -138,24 +146,94 @@ def submit_review(
         current_interval = state["interval_days"]
         current_reps = state["repetitions"]
 
-    # Run SM-2 algorithm
-    result = calculate_sm2(
-        rating=review.rating,
-        current_ease_factor=current_ef,
-        current_interval=current_interval,
-        current_repetitions=current_reps,
-    )
+    # ── Try TCGL model first, fall back to SM-2 ──────────────
+    try:
+        # Gather user's review history for graph construction
+        user_reviews = (
+            db.query(ReviewLog)
+            .filter(ReviewLog.user_id == user_id)
+            .order_by(ReviewLog.reviewed_at.desc())
+            .limit(200)  # Recent 200 reviews for context
+            .all()
+        )
+        review_history = [
+            {
+                "vocabulary_id": r.vocabulary_id,
+                "rating": r.rating,
+                "reviewed_at": r.reviewed_at.isoformat() if r.reviewed_at else None,
+                "session_id": r.session_id,
+                "ease_factor": r.ease_factor,
+                "interval_days": r.interval_days,
+                "repetitions": r.repetitions,
+                "response_time_ms": r.response_time_ms,
+                "direction": r.direction,
+            }
+            for r in user_reviews
+        ]
+
+        # Get all vocabulary for graph construction
+        all_vocab = db.query(Vocabulary).all()
+        vocab_list = [
+            {
+                "id": v.id,
+                "difficulty_level": v.difficulty_level,
+                "category": v.category,
+                "part_of_speech": v.part_of_speech,
+            }
+            for v in all_vocab
+        ]
+
+        vocab_info = {
+            "id": vocab.id,
+            "difficulty_level": vocab.difficulty_level,
+            "category": vocab.category,
+            "part_of_speech": vocab.part_of_speech,
+        }
+
+        # Run TCGL model
+        result = tcgl_predict(
+            rating=review.rating,
+            current_ease_factor=current_ef,
+            current_interval=current_interval,
+            current_repetitions=current_reps,
+            user_id=user_id,
+            vocabulary_id=review.vocabulary_id,
+            vocab_info=vocab_info,
+            user_review_history=review_history,
+            all_vocab=vocab_list,
+            direction=review.direction,
+            response_time_ms=review.response_time_ms,
+            session_id=review.session_id,
+        )
+        model_used = result.get("model_used", "tcgl")
+
+    except Exception as e:
+        print(f"[Flashcard] TCGL model failed: {e}. Using SM-2 fallback.")
+        # SM-2 fallback
+        sm2_result = calculate_sm2(
+            rating=review.rating,
+            current_ease_factor=current_ef,
+            current_interval=current_interval,
+            current_repetitions=current_reps,
+        )
+        result = {
+            "ease_factor": sm2_result.ease_factor,
+            "interval_days": sm2_result.interval_days,
+            "repetitions": sm2_result.repetitions,
+            "next_review_at": sm2_result.next_review_at,
+        }
+        model_used = "sm2_fallback"
 
     # Create review log
     log = ReviewLog(
         user_id=user_id,
         vocabulary_id=review.vocabulary_id,
         rating=review.rating,
-        ease_factor=result.ease_factor,
-        interval_days=result.interval_days,
-        repetitions=result.repetitions,
+        ease_factor=result["ease_factor"],
+        interval_days=result["interval_days"],
+        repetitions=result["repetitions"],
         reviewed_at=datetime.now(timezone.utc),
-        next_review_at=result.next_review_at,
+        next_review_at=result["next_review_at"],
         response_time_ms=review.response_time_ms,
         direction=review.direction,
         session_id=review.session_id,
@@ -164,14 +242,23 @@ def submit_review(
     db.commit()
     db.refresh(log)
 
+    print(f"[Flashcard] Review saved: vocab={review.vocabulary_id}, rating={review.rating}, "
+          f"interval={result['interval_days']}d, ease={result['ease_factor']}, model={model_used}")
+
     return ReviewResult(
         vocabulary_id=review.vocabulary_id,
         rating=review.rating,
-        new_interval_days=result.interval_days,
-        new_ease_factor=result.ease_factor,
-        new_repetitions=result.repetitions,
-        next_review_at=result.next_review_at,
+        new_interval_days=result["interval_days"],
+        new_ease_factor=result["ease_factor"],
+        new_repetitions=result["repetitions"],
+        next_review_at=result["next_review_at"],
     )
+
+
+@router.get("/model-info")
+def get_model_info():
+    """Get information about the active scheduling model."""
+    return tcgl_model_info()
 
 
 @router.get("/stats", response_model=UserStats)
