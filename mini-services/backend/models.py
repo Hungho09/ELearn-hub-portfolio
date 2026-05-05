@@ -10,6 +10,7 @@ Designed to be PostgreSQL-compatible. Switch the engine in database.py to use Po
 
 from datetime import datetime, timezone
 from sqlalchemy import String, Integer, Float, Text, DateTime, ForeignKey, Index
+from grader import get_accepted_answers, remove_vietnamese_diacritics, normalize_string
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database import Base
 
@@ -82,6 +83,9 @@ class Vocabulary(Base):
 
     def to_card_dict(self):
         """Convert to flashcard format matching the frontend interface."""
+        # Compute accepted answers including diacritics-stripped variants
+        accepted = get_accepted_answers(self.english, self.vietnamese)
+
         return {
             "id": self.id,
             "english": self.english,
@@ -92,6 +96,7 @@ class Vocabulary(Base):
             "part_of_speech": self.part_of_speech,
             "category": self.category,
             "difficulty_level": self.difficulty_level,
+            "accepted_answers": accepted,
         }
 
     def __repr__(self):
@@ -134,6 +139,10 @@ class ReviewLog(Base):
         comment="en_to_vi or vi_to_en - which direction was tested"
     )
     session_id: Mapped[str] = mapped_column(String(255), nullable=True, comment="Study session identifier")
+
+    # Auto-grading fields
+    user_answer: Mapped[str] = mapped_column(String(500), nullable=True, comment="User's typed answer for auto-grading")
+    auto_rating: Mapped[int] = mapped_column(Integer, nullable=True, comment="Auto-computed rating from answer comparison")
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="review_logs")

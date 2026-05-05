@@ -1,30 +1,31 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   RotateCcw,
-  Star,
   Brain,
   BookOpen,
-  Clock,
   Flame,
   ChevronRight,
   CheckCircle2,
   XCircle,
-  Zap,
   Volume2,
-  Eye,
-  EyeOff,
   BarChart3,
   Sparkles,
+  Lightbulb,
+  SkipForward,
+  ArrowRight,
+  Languages,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Sidebar } from '@/components/home/Sidebar';
@@ -43,6 +44,7 @@ interface VocabCard {
   part_of_speech: string | null;
   category: string | null;
   difficulty_level: number;
+  accepted_answers?: string[];
 }
 
 interface FlashcardSessionData {
@@ -64,6 +66,20 @@ interface UserStatsData {
   reviews_today: number;
 }
 
+interface CheckAnswerResult {
+  vocabulary_id: number;
+  correct_answer: string;
+  user_answer: string;
+  rating: number;
+  accuracy: number;
+  is_correct: boolean;
+  match_type: 'exact' | 'close' | 'partial' | 'incorrect';
+  similarity: number;
+  pronunciation: string | null;
+  example_english: string | null;
+  example_vietnamese: string | null;
+}
+
 interface ReviewResult {
   vocabulary_id: number;
   rating: number;
@@ -71,10 +87,13 @@ interface ReviewResult {
   new_ease_factor: number;
   new_repetitions: number;
   next_review_at: string | null;
+  auto_rating?: boolean;
+  accuracy?: number;
+  match_type?: string;
 }
 
 type CardMode = 'en_to_vi' | 'vi_to_en';
-type CardState = 'front' | 'back';
+type CardPhase = 'prompt' | 'result';
 type PageView = 'session' | 'complete';
 
 // ─── API Helpers ──────────────────────────────────────────────────
@@ -85,7 +104,29 @@ async function getSession(userId: string, limit = 20): Promise<FlashcardSessionD
   return res.json();
 }
 
-async function submitReview(userId: string, vocabId: number, rating: number, direction: string, responseTimeMs?: number): Promise<ReviewResult> {
+async function checkAnswer(vocabularyId: number, userAnswer: string, direction: string): Promise<CheckAnswerResult> {
+  const res = await fetch('/api/flashcards/check-answer', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      vocabulary_id: vocabularyId,
+      user_answer: userAnswer,
+      direction,
+    }),
+  });
+  if (!res.ok) throw new Error('Failed to check answer');
+  return res.json();
+}
+
+async function submitReview(
+  userId: string,
+  vocabId: number,
+  rating: number,
+  direction: string,
+  responseTimeMs?: number,
+  userAnswer?: string,
+  autoRating?: boolean
+): Promise<ReviewResult> {
   const res = await fetch(`/api/flashcards/review?user_id=${encodeURIComponent(userId)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -94,6 +135,8 @@ async function submitReview(userId: string, vocabId: number, rating: number, dir
       rating,
       direction,
       response_time_ms: responseTimeMs,
+      user_answer: userAnswer,
+      auto_rating: autoRating,
     }),
   });
   if (!res.ok) throw new Error('Failed to submit review');
@@ -106,14 +149,46 @@ async function getStats(userId: string): Promise<UserStatsData> {
   return res.json();
 }
 
-// ─── Rating Button Data ──────────────────────────────────────────
+// ─── Match type config ──────────────────────────────────────────
 
-const RATINGS = [
-  { value: 1, label: 'Again', sublabel: '<1m', color: 'bg-red-500 hover:bg-red-600', icon: XCircle, textColor: 'text-red-500' },
-  { value: 2, label: 'Hard', sublabel: '<6m', color: 'bg-orange-500 hover:bg-orange-600', icon: Zap, textColor: 'text-orange-500' },
-  { value: 3, label: 'Good', sublabel: '<1d', color: 'bg-emerald-500 hover:bg-emerald-600', icon: CheckCircle2, textColor: 'text-emerald-500' },
-  { value: 4, label: 'Easy', sublabel: '<4d', color: 'bg-blue-500 hover:bg-blue-600', icon: Star, textColor: 'text-blue-500' },
-];
+const MATCH_CONFIG = {
+  exact: {
+    icon: CheckCircle2,
+    label: 'Correct!',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
+    borderColor: 'border-emerald-300 dark:border-emerald-700',
+    cardBorder: 'border-l-4 border-l-emerald-500',
+    badgeBg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  },
+  close: {
+    icon: AlertTriangle,
+    label: 'Almost!',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-50 dark:bg-amber-950/30',
+    borderColor: 'border-amber-300 dark:border-amber-700',
+    cardBorder: 'border-l-4 border-l-amber-500',
+    badgeBg: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  },
+  partial: {
+    icon: AlertTriangle,
+    label: 'Partially correct',
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50 dark:bg-orange-950/30',
+    borderColor: 'border-orange-300 dark:border-orange-700',
+    cardBorder: 'border-l-4 border-l-orange-500',
+    badgeBg: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  },
+  incorrect: {
+    icon: XCircle,
+    label: 'Incorrect',
+    color: 'text-red-600',
+    bgColor: 'bg-red-50 dark:bg-red-950/30',
+    borderColor: 'border-red-300 dark:border-red-700',
+    cardBorder: 'border-l-4 border-l-red-500',
+    badgeBg: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  },
+};
 
 // ─── Main Component ──────────────────────────────────────────────
 
@@ -125,15 +200,21 @@ export default function FlashcardPage() {
   // Card state
   const [cards, setCards] = useState<VocabCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [cardState, setCardState] = useState<CardState>('front');
+  const [cardPhase, setCardPhase] = useState<CardPhase>('prompt');
   const [cardMode, setCardMode] = useState<CardMode>('en_to_vi');
   const [pageView, setPageView] = useState<PageView>('session');
-  const [showExample, setShowExample] = useState(false);
-  const [isFlipping, setIsFlipping] = useState(false);
+
+  // Input state
+  const [userInput, setUserInput] = useState('');
+  const [showHint, setShowHint] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Result state
+  const [checkResult, setCheckResult] = useState<CheckAnswerResult | null>(null);
 
   // Stats
   const [stats, setStats] = useState<UserStatsData | null>(null);
-  const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, total: 0 });
+  const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, close: 0, total: 0 });
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -142,6 +223,9 @@ export default function FlashcardPage() {
 
   // Timing
   const [cardStartTime, setCardStartTime] = useState<number>(Date.now());
+
+  // Animation
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const userId = session?.user?.id || session?.user?.email || 'guest';
 
@@ -158,9 +242,12 @@ export default function FlashcardPage() {
       const allCards = [...data.due_cards, ...data.new_cards];
       setCards(allCards);
       setCurrentIndex(0);
-      setCardState('front');
+      setCardPhase('prompt');
+      setUserInput('');
+      setShowHint(false);
+      setCheckResult(null);
       setPageView(allCards.length > 0 ? 'session' : 'complete');
-      setSessionStats({ correct: 0, wrong: 0, total: 0 });
+      setSessionStats({ correct: 0, wrong: 0, close: 0, total: 0 });
       setCardStartTime(Date.now());
 
       // Load stats
@@ -182,20 +269,88 @@ export default function FlashcardPage() {
     loadSession();
   }, [loadSession]);
 
+  // Focus input when card changes
+  useEffect(() => {
+    if (cardPhase === 'prompt' && !loading && inputRef.current) {
+      // Small delay to allow DOM update
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [cardPhase, currentIndex, loading]);
+
   // ─── Card actions ─────────────────────────────────────────
   const currentCard = cards[currentIndex] as VocabCard | undefined;
 
-  const handleFlip = useCallback(() => {
-    if (cardState === 'front') {
-      setIsFlipping(true);
-      setTimeout(() => {
-        setCardState('back');
-        setIsFlipping(false);
-      }, 150);
-    }
-  }, [cardState]);
+  const handleSubmitAnswer = useCallback(async () => {
+    if (!currentCard || submitting || !userInput.trim()) return;
 
-  const handleRate = useCallback(async (rating: number) => {
+    setSubmitting(true);
+    try {
+      const result = await checkAnswer(currentCard.id, userInput.trim(), cardMode);
+      setCheckResult(result);
+      setCardPhase('result');
+    } catch (err) {
+      console.error('Check answer error:', err);
+      setError('Failed to check answer. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [currentCard, submitting, userInput, cardMode]);
+
+  const handleContinue = useCallback(async () => {
+    if (!currentCard || !checkResult || submitting) return;
+
+    const responseTime = Date.now() - cardStartTime;
+    setSubmitting(true);
+
+    try {
+      const uid = userId || 'guest';
+      await submitReview(
+        uid,
+        currentCard.id,
+        checkResult.rating,
+        cardMode,
+        responseTime,
+        userInput.trim(),
+        true
+      );
+
+      // Update session stats
+      setSessionStats(prev => ({
+        correct: prev.correct + (checkResult.is_correct && checkResult.match_type === 'exact' ? 1 : 0),
+        close: prev.close + (checkResult.match_type === 'close' ? 1 : 0),
+        wrong: prev.wrong + (!checkResult.is_correct ? 1 : 0),
+        total: prev.total + 1,
+      }));
+
+      // Animate transition
+      setIsTransitioning(true);
+      setTimeout(() => {
+        // Move to next card
+        if (currentIndex + 1 < cards.length) {
+          setCurrentIndex(prev => prev + 1);
+          setCardPhase('prompt');
+          setUserInput('');
+          setShowHint(false);
+          setCheckResult(null);
+          setCardStartTime(Date.now());
+        } else {
+          // Session complete
+          setPageView('complete');
+          // Refresh stats
+          getStats(uid).then(setStats).catch(() => {});
+        }
+        setIsTransitioning(false);
+      }, 300);
+    } catch (err) {
+      console.error('Review submit error:', err);
+      setError('Failed to save review. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [currentCard, checkResult, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, userInput]);
+
+  const handleSkip = useCallback(async () => {
     if (!currentCard || submitting) return;
 
     const responseTime = Date.now() - cardStartTime;
@@ -203,33 +358,34 @@ export default function FlashcardPage() {
 
     try {
       const uid = userId || 'guest';
-      await submitReview(uid, currentCard.id, rating, cardMode, responseTime);
+      // Skip = rating 1 (Again)
+      await submitReview(uid, currentCard.id, 1, cardMode, responseTime, '', true);
 
-      // Update session stats
       setSessionStats(prev => ({
-        correct: prev.correct + (rating >= 3 ? 1 : 0),
-        wrong: prev.wrong + (rating < 3 ? 1 : 0),
+        ...prev,
+        wrong: prev.wrong + 1,
         total: prev.total + 1,
       }));
 
-      // Move to next card
-      if (currentIndex + 1 < cards.length) {
-        setCurrentIndex(prev => prev + 1);
-        setCardState('front');
-        setShowExample(false);
-        setCardStartTime(Date.now());
-      } else {
-        // Session complete
-        setPageView('complete');
-        // Refresh stats
-        try {
-          const statsData = await getStats(uid);
-          setStats(statsData);
-        } catch { /* ignore */ }
-      }
+      // Animate transition
+      setIsTransitioning(true);
+      setTimeout(() => {
+        if (currentIndex + 1 < cards.length) {
+          setCurrentIndex(prev => prev + 1);
+          setCardPhase('prompt');
+          setUserInput('');
+          setShowHint(false);
+          setCheckResult(null);
+          setCardStartTime(Date.now());
+        } else {
+          setPageView('complete');
+          getStats(uid).then(setStats).catch(() => {});
+        }
+        setIsTransitioning(false);
+      }, 300);
     } catch (err) {
-      console.error('Review submit error:', err);
-      setError('Failed to save review. Please try again.');
+      console.error('Skip submit error:', err);
+      setError('Failed to skip card. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -241,39 +397,65 @@ export default function FlashcardPage() {
 
   const toggleMode = useCallback(() => {
     setCardMode(prev => prev === 'en_to_vi' ? 'vi_to_en' : 'en_to_vi');
-    setCardState('front');
-    setShowExample(false);
+    setCardPhase('prompt');
+    setUserInput('');
+    setShowHint(false);
+    setCheckResult(null);
   }, []);
 
   // ─── Keyboard shortcuts ───────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      // Don't intercept when typing in input (except Enter)
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        if (e.key === 'Enter' && cardPhase === 'prompt' && userInput.trim()) {
+          e.preventDefault();
+          handleSubmitAnswer();
+        } else if (e.key === 'Enter' && cardPhase === 'result') {
+          e.preventDefault();
+          handleContinue();
+        }
+        return;
+      }
+
       switch (e.key) {
-        case ' ':
         case 'Enter':
           e.preventDefault();
-          if (cardState === 'front') handleFlip();
+          if (cardPhase === 'prompt' && userInput.trim()) {
+            handleSubmitAnswer();
+          } else if (cardPhase === 'result') {
+            handleContinue();
+          }
           break;
-        case '1': if (cardState === 'back') handleRate(1); break;
-        case '2': if (cardState === 'back') handleRate(2); break;
-        case '3': if (cardState === 'back') handleRate(3); break;
-        case '4': if (cardState === 'back') handleRate(4); break;
+        case 'Tab':
+          e.preventDefault();
+          toggleMode();
+          break;
+        case 'Escape':
+          e.preventDefault();
+          if (cardPhase === 'prompt') {
+            handleSkip();
+          }
+          break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cardState, handleFlip, handleRate]);
+  }, [cardPhase, userInput, handleSubmitAnswer, handleContinue, handleSkip, toggleMode]);
 
   // ─── Computed values ──────────────────────────────────────
   const progressPercent = cards.length > 0 ? ((currentIndex) / cards.length) * 100 : 0;
-  const isFront = cardState === 'front';
-  const frontText = cardMode === 'en_to_vi' ? currentCard?.english : currentCard?.vietnamese;
-  const backText = cardMode === 'en_to_vi' ? currentCard?.vietnamese : currentCard?.english;
-  const frontLabel = cardMode === 'en_to_vi' ? 'English' : 'Tiếng Việt';
-  const backLabel = cardMode === 'en_to_vi' ? 'Tiếng Việt' : 'English';
-  const frontPronunciation = cardMode === 'en_to_vi' ? null : currentCard?.pronunciation;
-  const backPronunciation = cardMode === 'en_to_vi' ? currentCard?.pronunciation : null;
+  const promptText = cardMode === 'en_to_vi' ? currentCard?.english : currentCard?.vietnamese;
+  const promptLabel = cardMode === 'en_to_vi' ? 'English' : 'Tiếng Việt';
+  const answerLabel = cardMode === 'en_to_vi' ? 'Tiếng Việt' : 'English';
+  const promptPronunciation = cardMode === 'en_to_vi' ? null : currentCard?.pronunciation;
+
+  // Hint: first letter of the correct answer
+  const correctAnswer = cardMode === 'en_to_vi' ? currentCard?.vietnamese : currentCard?.english;
+  const hintLetter = correctAnswer ? correctAnswer[0] + '...' : '';
+
+  // Match config for current result
+  const matchConfig = checkResult ? MATCH_CONFIG[checkResult.match_type] : null;
 
   // ─── Render ───────────────────────────────────────────────
   return (
@@ -308,7 +490,7 @@ export default function FlashcardPage() {
                     <Brain className="size-6 text-primary" />
                     Flashcard
                   </h1>
-                  <p className="text-sm text-muted-foreground">Learn English ↔ Vietnamese vocabulary</p>
+                  <p className="text-sm text-muted-foreground">Type your answer to learn vocabulary</p>
                 </div>
               </div>
               {stats && (
@@ -386,7 +568,10 @@ export default function FlashcardPage() {
 
             {/* ─── Session View ─────────────────────────── */}
             {!loading && pageView === 'session' && currentCard && (
-              <div className="mt-6">
+              <div className={cn(
+                'mt-6 transition-all duration-300',
+                isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+              )}>
                 {/* Mode Toggle & Controls */}
                 <div className="flex items-center justify-between mb-4">
                   <Button
@@ -395,7 +580,7 @@ export default function FlashcardPage() {
                     onClick={toggleMode}
                     className="gap-2"
                   >
-                    <RotateCcw className="size-3.5" />
+                    <Languages className="size-3.5" />
                     {cardMode === 'en_to_vi' ? 'EN → VI' : 'VI → EN'}
                   </Button>
 
@@ -413,143 +598,229 @@ export default function FlashcardPage() {
                   </div>
                 </div>
 
-                {/* Flashcard */}
-                <div
-                  className="perspective-1000"
-                  onClick={isFront ? handleFlip : undefined}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleFlip(); }}
-                >
-                  <Card
-                    className={cn(
-                      'relative min-h-[320px] md:min-h-[380px] transition-all duration-300 cursor-pointer overflow-hidden',
-                      isFront ? 'hover:shadow-lg hover:shadow-primary/10' : '',
-                      isFlipping ? 'scale-95 opacity-50' : 'scale-100 opacity-100',
-                      isFront
-                        ? 'bg-gradient-to-br from-primary/5 via-card to-primary/10 border-primary/20'
-                        : 'bg-gradient-to-br from-emerald-500/5 via-card to-emerald-500/10 border-emerald-500/20',
-                    )}
-                  >
-                    {/* Decorative elements */}
-                    <div className="absolute top-0 right-0 size-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="absolute bottom-0 left-0 size-24 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+                {/* Prompt Card */}
+                <Card className={cn(
+                  'relative overflow-hidden transition-all duration-300',
+                  cardPhase === 'prompt'
+                    ? 'bg-gradient-to-br from-primary/5 via-card to-primary/10 border-primary/20'
+                    : matchConfig
+                      ? `${matchConfig.bgColor} ${matchConfig.borderColor}`
+                      : 'bg-card',
+                )}>
+                  {/* Decorative elements */}
+                  <div className="absolute top-0 right-0 size-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute bottom-0 left-0 size-24 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
-                    <CardContent className="relative flex flex-col items-center justify-center min-h-[320px] md:min-h-[380px] p-8">
-                      {/* Front of card */}
-                      {isFront && (
-                        <div className="flex flex-col items-center gap-4 text-center animate-in fade-in duration-300">
-                          <Badge variant="secondary" className="mb-2">
-                            {frontLabel}
+                  <CardContent className="relative p-6 md:p-8">
+                    {/* ─── Prompt Phase ──────────────────────── */}
+                    {cardPhase === 'prompt' && (
+                      <div className="flex flex-col items-center gap-6 animate-in fade-in duration-300">
+                        {/* Word prompt */}
+                        <div className="text-center">
+                          <Badge variant="secondary" className="mb-3">
+                            {promptLabel}
                           </Badge>
                           <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                            {frontText}
+                            {promptText}
                           </h2>
-                          {frontPronunciation && (
-                            <p className="text-lg text-muted-foreground flex items-center gap-2">
+                          {promptPronunciation && (
+                            <p className="text-lg text-muted-foreground flex items-center gap-2 justify-center mt-2">
                               <Volume2 className="size-4" />
-                              /{frontPronunciation}/
+                              /{promptPronunciation}/
                             </p>
                           )}
                           {currentCard.part_of_speech && (
-                            <Badge variant="outline" className="text-xs capitalize">
+                            <Badge variant="outline" className="text-xs capitalize mt-2">
                               {currentCard.part_of_speech}
                             </Badge>
                           )}
-                          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-                            <Eye className="size-4" />
-                            Tap to reveal answer
-                          </div>
                         </div>
-                      )}
 
-                      {/* Back of card */}
-                      {!isFront && (
-                        <div className="flex flex-col items-center gap-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
-                          <Badge variant="secondary" className="mb-2 bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-                            {backLabel}
-                          </Badge>
-                          <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                            {backText}
-                          </h2>
-                          {backPronunciation && (
-                            <p className="text-lg text-muted-foreground flex items-center gap-2">
-                              <Volume2 className="size-4" />
-                              /{backPronunciation}/
-                            </p>
-                          )}
+                        {/* Input area */}
+                        <div className="w-full max-w-md space-y-4">
+                          <div className="relative">
+                            <Input
+                              ref={inputRef}
+                              type="text"
+                              placeholder={`Type in ${answerLabel}...`}
+                              value={userInput}
+                              onChange={(e) => setUserInput(e.target.value)}
+                              className="h-14 text-lg text-center px-4 rounded-xl border-2 focus:border-primary transition-colors"
+                              disabled={submitting}
+                              autoComplete="off"
+                              autoCorrect="off"
+                              autoCapitalize="off"
+                              spellCheck={false}
+                            />
+                            {userInput && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 size-8"
+                                onClick={() => setUserInput('')}
+                              >
+                                ×
+                              </Button>
+                            )}
+                          </div>
 
-                          {/* Example toggle */}
-                          {currentCard.example_english && (
+                          {/* Hint & Skip buttons */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {!showHint ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setShowHint(true)}
+                                  className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                  <Lightbulb className="size-3.5" />
+                                  Show hint
+                                </Button>
+                              ) : (
+                                <Badge variant="outline" className="text-xs gap-1 py-1">
+                                  <Lightbulb className="size-3" />
+                                  Starts with: <span className="font-semibold">{hintLetter}</span>
+                                </Badge>
+                              )}
+                            </div>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={(e) => { e.stopPropagation(); setShowExample(!showExample); }}
-                              className="gap-1 text-xs"
+                              onClick={handleSkip}
+                              disabled={submitting}
+                              className="gap-1.5 text-xs text-muted-foreground hover:text-red-500"
                             >
-                              {showExample ? <EyeOff className="size-3" /> : <Eye className="size-3" />}
-                              {showExample ? 'Hide' : 'Show'} example
+                              <SkipForward className="size-3.5" />
+                              Skip
                             </Button>
-                          )}
+                          </div>
 
-                          {/* Example sentence */}
-                          {showExample && currentCard.example_english && (
-                            <div className="mt-2 rounded-lg bg-muted/50 p-4 max-w-md animate-in fade-in duration-200">
-                              <p className="text-sm text-foreground">
-                                🇬🇧 {currentCard.example_english}
-                              </p>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                🇻🇳 {currentCard.example_vietnamese}
-                              </p>
-                            </div>
-                          )}
+                          {/* Check button */}
+                          <Button
+                            onClick={handleSubmitAnswer}
+                            disabled={!userInput.trim() || submitting}
+                            className="w-full h-12 text-base font-semibold rounded-xl gap-2"
+                            size="lg"
+                          >
+                            {submitting ? (
+                              <div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            ) : (
+                              <>
+                                Check
+                                <kbd className="ml-1 px-1.5 py-0.5 bg-white/20 rounded text-[11px]">↵</kbd>
+                              </>
+                            )}
+                          </Button>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+                      </div>
+                    )}
 
-                {/* Rating Buttons */}
-                {!isFront && (
-                  <div className="mt-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    <p className="text-center text-sm text-muted-foreground mb-3">
-                      How well did you know this? (Press 1-4)
-                    </p>
-                    <div className="grid grid-cols-4 gap-3">
-                      {RATINGS.map((r) => {
-                        const Icon = r.icon;
-                        return (
-                          <Tooltip key={r.value}>
-                            <TooltipTrigger asChild>
-                              <Button
-                                onClick={() => handleRate(r.value)}
-                                disabled={submitting}
-                                className={cn(
-                                  'flex flex-col items-center gap-1 h-auto py-3 text-white font-semibold transition-all',
-                                  r.color,
-                                  submitting && 'opacity-50'
-                                )}
-                              >
-                                <Icon className="size-5" />
-                                <span className="text-sm">{r.label}</span>
-                                <span className="text-[10px] opacity-80">{r.sublabel}</span>
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              Rate {r.value}: {r.label} - next review in ~{r.sublabel.replace('<', '')}
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      })}
-                    </div>
+                    {/* ─── Result Phase ──────────────────────── */}
+                    {cardPhase === 'result' && checkResult && matchConfig && (
+                      <div className="flex flex-col items-center gap-5 animate-in fade-in slide-in-from-bottom-4 duration-400">
+                        {/* Result icon & label */}
+                        <div className={cn('flex items-center gap-2 text-xl font-bold', matchConfig.color)}>
+                          {(() => {
+                            const Icon = matchConfig.icon;
+                            return <Icon className="size-6" />;
+                          })()}
+                          {matchConfig.label}
+                        </div>
+
+                        {/* Accuracy badge */}
+                        <div className="flex items-center gap-3">
+                          <Badge className={cn('text-sm px-3 py-1', matchConfig.badgeBg)}>
+                            {Math.round(checkResult.accuracy)}% accuracy
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {checkResult.match_type === 'exact' && 'Perfect match'}
+                            {checkResult.match_type === 'close' && 'Minor differences'}
+                            {checkResult.match_type === 'partial' && 'Partially correct'}
+                            {checkResult.match_type === 'incorrect' && 'Not correct'}
+                          </Badge>
+                        </div>
+
+                        {/* Your answer vs correct answer */}
+                        <div className="w-full max-w-md space-y-3">
+                          {/* User's answer */}
+                          <div className={cn(
+                            'rounded-xl p-4 border',
+                            checkResult.is_correct
+                              ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800'
+                              : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                          )}>
+                            <p className="text-xs text-muted-foreground mb-1">Your answer</p>
+                            <p className={cn(
+                              'text-lg font-semibold',
+                              checkResult.is_correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+                            )}>
+                              {checkResult.user_answer}
+                            </p>
+                          </div>
+
+                          {/* Correct answer */}
+                          <div className={cn(
+                            'rounded-xl p-4 border',
+                            'bg-primary/5 border-primary/20'
+                          )}>
+                            <p className="text-xs text-muted-foreground mb-1">Correct answer</p>
+                            <p className="text-lg font-bold text-foreground">
+                              {checkResult.correct_answer}
+                            </p>
+                            {checkResult.pronunciation && (
+                              <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                                <Volume2 className="size-3" />
+                                /{checkResult.pronunciation}/
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Example sentence */}
+                        {checkResult.example_english && (
+                          <div className="w-full max-w-md rounded-xl bg-muted/50 p-4 border border-muted">
+                            <p className="text-sm text-foreground">
+                              🇬🇧 {checkResult.example_english}
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              🇻🇳 {checkResult.example_vietnamese}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Continue button */}
+                        <Button
+                          onClick={handleContinue}
+                          disabled={submitting}
+                          className="w-full max-w-md h-12 text-base font-semibold rounded-xl gap-2"
+                          size="lg"
+                        >
+                          {submitting ? (
+                            <div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          ) : (
+                            <>
+                              Continue
+                              <ArrowRight className="size-4" />
+                              <kbd className="ml-1 px-1.5 py-0.5 bg-white/20 rounded text-[11px]">↵</kbd>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Keyboard shortcuts hint */}
+                {cardPhase === 'prompt' && (
+                  <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                    <span>
+                      <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Tab</kbd> Switch direction
+                    </span>
+                    <span>
+                      <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Esc</kbd> Skip card
+                    </span>
                   </div>
-                )}
-
-                {/* Keyboard hint */}
-                {isFront && (
-                  <p className="mt-4 text-center text-xs text-muted-foreground">
-                    Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Space</kbd> or click to flip
-                  </p>
                 )}
               </div>
             )}
@@ -562,25 +833,31 @@ export default function FlashcardPage() {
                 </div>
 
                 <div className="text-center">
-                  <h2 className="text-3xl font-bold text-foreground">Session Complete! 🎉</h2>
+                  <h2 className="text-3xl font-bold text-foreground">Session Complete!</h2>
                   <p className="text-muted-foreground mt-2">Great work on your vocabulary practice!</p>
                 </div>
 
                 {/* Session Summary */}
-                <div className="grid grid-cols-3 gap-4 w-full max-w-md">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-lg">
                   <Card className="text-center">
                     <CardContent className="p-4">
                       <p className="text-2xl font-bold text-foreground">{sessionStats.total}</p>
-                      <p className="text-xs text-muted-foreground">Cards Reviewed</p>
+                      <p className="text-xs text-muted-foreground">Reviewed</p>
                     </CardContent>
                   </Card>
-                  <Card className="text-center">
+                  <Card className="text-center border-l-4 border-l-emerald-500">
                     <CardContent className="p-4">
                       <p className="text-2xl font-bold text-emerald-600">{sessionStats.correct}</p>
                       <p className="text-xs text-muted-foreground">Correct</p>
                     </CardContent>
                   </Card>
-                  <Card className="text-center">
+                  <Card className="text-center border-l-4 border-l-amber-500">
+                    <CardContent className="p-4">
+                      <p className="text-2xl font-bold text-amber-600">{sessionStats.close}</p>
+                      <p className="text-xs text-muted-foreground">Close</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center border-l-4 border-l-red-500">
                     <CardContent className="p-4">
                       <p className="text-2xl font-bold text-red-500">{sessionStats.wrong}</p>
                       <p className="text-xs text-muted-foreground">Needs Review</p>
@@ -590,23 +867,26 @@ export default function FlashcardPage() {
 
                 {/* Accuracy */}
                 {sessionStats.total > 0 && (
-                  <div className="w-full max-w-md">
+                  <div className="w-full max-w-lg">
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-muted-foreground">Accuracy</span>
                       <span className="font-semibold">
-                        {Math.round((sessionStats.correct / sessionStats.total) * 100)}%
+                        {Math.round(((sessionStats.correct + sessionStats.close) / sessionStats.total) * 100)}%
                       </span>
                     </div>
                     <Progress
-                      value={(sessionStats.correct / sessionStats.total) * 100}
+                      value={((sessionStats.correct + sessionStats.close) / sessionStats.total) * 100}
                       className="h-3"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Includes exact matches and close answers
+                    </p>
                   </div>
                 )}
 
                 {/* Overall Stats */}
                 {stats && (
-                  <Card className="w-full max-w-md">
+                  <Card className="w-full max-w-lg">
                     <CardContent className="p-4">
                       <h3 className="font-semibold mb-3 flex items-center gap-2">
                         <BarChart3 className="size-4 text-primary" />

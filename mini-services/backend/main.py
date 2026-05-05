@@ -108,8 +108,8 @@ def health_check():
         "routers": {
             "auth": ["/api/auth/register", "/api/auth/verify"],
             "user": ["/api/user/profile", "/api/user/avatar"],
-            "flashcards": ["/api/flashcards/session", "/api/flashcards/review", "/api/flashcards/stats", "/api/flashcards/categories", "/api/flashcards/model-info"],
-            "vocabulary": ["/api/vocabulary"],
+            "flashcards": ["/api/flashcards/session", "/api/flashcards/review", "/api/flashcards/check-answer", "/api/flashcards/stats", "/api/flashcards/categories", "/api/flashcards/model-info", "/api/flashcards/train", "/api/flashcards/training-stats"],
+            "vocabulary": ["/api/vocabulary", "/api/vocabulary/enrich", "/api/vocabulary/categories", "/api/vocabulary/random"],
             "review_logs": ["/api/review-logs/{user_id}", "/api/review-logs/{user_id}/export"],
         },
     }

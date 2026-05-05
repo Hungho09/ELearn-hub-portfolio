@@ -2,9 +2,8 @@
 
 ## Current Model: Temporal Contrastive Graph Learning (TCGL)
 
-Your trained TCGL model (`model.pth`) is integrated as the primary
-flashcard scheduling algorithm. **The model can both predict AND learn
-from user data** — it updates its weights after each review.
+The TCGL model is the primary flashcard scheduling algorithm.
+**The model can both predict AND learn from user data** — it updates its weights after each review.
 
 ## File Structure
 
@@ -13,8 +12,6 @@ ml_model/
 ├── __init__.py             # Package init
 ├── model.py                # Full PyTorch TCGL model class definition
 ├── predict.py              # ACTIVE: Dynamic prediction + online learning + batch training
-├── predict_lite.py         # ARCHIVED: NumPy-only inference (frozen, no learning)
-├── tcgl_weights.npz        # ARCHIVED: Pre-extracted weights for predict_lite.py
 ├── tcgl_learned.pth        # Auto-generated: Saved model after online/batch training
 └── README.md               # This file
 ```
@@ -78,17 +75,27 @@ Input: Graph(nodes=vocab words, edges=review history, times=time deltas)
 
 ## API Endpoints
 
+- `POST /api/flashcards/check-answer` — Auto-grade a typed answer
 - `POST /api/flashcards/review` — Review a card (TCGL predicts + learns, SM-2 fallback)
 - `POST /api/flashcards/train` — Batch train model on all review data
 - `GET  /api/flashcards/model-info` — Model status, architecture, learning stats
 - `GET  /api/flashcards/training-stats` — Detailed training statistics
 - `GET  /api/review-logs/{user_id}/export` — Export all review data
 
+## Auto-Grading
+
+The flashcard system uses typed answers with auto-grading (`grader.py`):
+- **Exact match** → Rating 4 (Easy), 100% accuracy
+- **Match ignoring Vietnamese diacritics** → Rating 3 (Good), 80% accuracy
+- **Partial match** (Levenshtein similarity ≥ 0.7) → Rating 3 (Good)
+- **Partial match** (Levenshtein similarity ≥ 0.4) → Rating 2 (Hard)
+- **No match** → Rating 1 (Again)
+
 ## To Retrain the Model from Scratch
 
 1. Export review logs: `GET /api/review-logs/{user_id}/export`
 2. Train your model externally using the review data
-3. Save as `model.pth` with the same architecture (or update `model.py`)
+3. Save as `model.pth` in the `upload/` directory
 4. Delete `tcgl_learned.pth` so the new model gets loaded
 5. Restart the backend
 

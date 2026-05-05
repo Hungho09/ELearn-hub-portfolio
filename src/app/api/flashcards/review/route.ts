@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const userId = searchParams.get("user_id") || "guest";
 
     const body = await request.json();
-    const { vocabulary_id, rating, direction = "en_to_vi", response_time_ms, session_id } = body;
+    const { vocabulary_id, rating, direction = "en_to_vi", response_time_ms, session_id, user_answer, auto_rating } = body;
 
     if (!vocabulary_id || !rating || rating < 1 || rating > 4) {
       return NextResponse.json(
@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
           direction,
           response_time_ms,
           session_id,
+          user_answer,
+          auto_rating,
         }),
       }
     );

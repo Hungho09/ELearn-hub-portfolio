@@ -8,12 +8,13 @@ The TCGL model can both PREDICT and LEARN from user data:
 - Batch training: fine-tune on accumulated review logs via /train endpoint
 
 Endpoints:
-- GET  /api/flashcards/session    - Get due cards + new cards for study session
-- POST /api/flashcards/review     - Submit a review (TCGL predicts + learns, SM-2 fallback)
-- GET  /api/flashcards/stats      - Get user learning statistics
-- GET  /api/flashcards/categories - Get progress by category
-- GET  /api/flashcards/model-info - Get info about the active scheduling model
-- POST /api/flashcards/train      - Batch train model on review data
+- GET  /api/flashcards/session       - Get due cards + new cards for study session
+- POST /api/flashcards/review        - Submit a review (TCGL predicts + learns, SM-2 fallback)
+- POST /api/flashcards/check-answer  - Check a typed answer and auto-grade
+- GET  /api/flashcards/stats         - Get user learning statistics
+- GET  /api/flashcards/categories    - Get progress by category
+- GET  /api/flashcards/model-info    - Get info about the active scheduling model
+- POST /api/flashcards/train         - Batch train model on review data
 - GET  /api/flashcards/training-stats - Get model training statistics
 """
 
@@ -33,15 +34,40 @@ from schemas import (
     FlashcardSession,
     UserStats,
     CategoryProgress,
+    CheckAnswerRequest,
+    CheckAnswerResponse,
 )
 from spaced_repetition import calculate_sm2, get_initial_state
-from ml_model.predict import (
-    predict_next_review as tcgl_predict,
-    get_model_info as tcgl_model_info,
-    is_model_loaded,
-    train_on_reviews,
-    get_training_stats,
-)
+from grader import check_answer as grade_answer
+
+# Lazy imports for TCGL model (requires torch, may not be available)
+try:
+    from ml_model.predict import (
+        predict_next_review as tcgl_predict,
+        get_model_info as tcgl_model_info,
+        is_model_loaded,
+        train_on_reviews,
+        get_training_stats,
+    )
+    _TCGL_AVAILABLE = True
+except ImportError:
+    _TCGL_AVAILABLE = False
+    print("[Flashcard] TCGL model not available (torch not installed). Using SM-2 fallback.")
+
+    def tcgl_predict(*args, **kwargs):
+        raise RuntimeError("TCGL model not available")
+
+    def tcgl_model_info():
+        return {"active_model": "SM-2 (SuperMemo)", "model_loaded": False, "can_learn": False, "error": "torch not installed"}
+
+    def is_model_loaded():
+        return False
+
+    def train_on_reviews(*args, **kwargs):
+        return {"status": "error", "reason": "TCGL model not available (torch not installed)"}
+
+    def get_training_stats():
+        return {"error": "TCGL model not available"}
 
 router = APIRouter(prefix="/api/flashcards", tags=["Flashcards"])
 
@@ -139,6 +165,67 @@ def get_flashcard_session(
     )
 
 
+@router.post("/check-answer", response_model=CheckAnswerResponse)
+def check_flashcard_answer(
+    req: CheckAnswerRequest,
+    db: Session = Depends(get_db),
+):
+    """Check a user's typed answer against the correct translation.
+
+    Uses the auto-grading module to compare answers with support for:
+    - Exact matching
+    - Vietnamese diacritics tolerance (e.g., "xin chao" matches "xin chào")
+    - Fuzzy matching via Levenshtein distance
+
+    Returns a rating, accuracy score, and match details.
+    """
+    # Look up the vocabulary item
+    vocab = db.query(Vocabulary).filter(Vocabulary.id == req.vocabulary_id).first()
+    if not vocab:
+        raise HTTPException(status_code=404, detail="Vocabulary not found")
+
+    # Determine the correct answer based on direction
+    if req.direction == "en_to_vi":
+        correct_answer = vocab.vietnamese
+    else:
+        correct_answer = vocab.english
+
+    # Run the grader
+    grade_result = grade_answer(
+        user_answer=req.user_answer,
+        correct_answer=correct_answer,
+        direction=req.direction,
+    )
+
+    # Map grader match_type to frontend-friendly types
+    match_type = grade_result["match_type"]
+    similarity = grade_result["similarity"]
+    if match_type == "diacritics_ignored":
+        match_type = "close"
+    elif match_type == "none":
+        match_type = "incorrect"
+    elif match_type == "partial" and similarity < 0.4:
+        # Very low similarity partial matches should be treated as incorrect
+        match_type = "incorrect"
+
+    # Convert accuracy from 0-1 to 0-100 percentage
+    accuracy_pct = round(grade_result["accuracy"] * 100, 1)
+
+    return CheckAnswerResponse(
+        vocabulary_id=req.vocabulary_id,
+        correct_answer=correct_answer,
+        user_answer=req.user_answer,
+        rating=grade_result["rating"],
+        accuracy=accuracy_pct,
+        is_correct=grade_result["is_correct"],
+        match_type=match_type,
+        similarity=grade_result["similarity"],
+        pronunciation=vocab.pronunciation,
+        example_english=vocab.example_english,
+        example_vietnamese=vocab.example_vietnamese,
+    )
+
+
 @router.post("/review", response_model=ReviewResult)
 def submit_review(
     review: ReviewSubmit,
@@ -210,7 +297,6 @@ def submit_review(
         ]
 
         # Get only vocabulary items referenced in review history + current card
-        # (don't load ALL 123 items — too heavy for graph construction)
         referenced_ids = list(set(
             [r.vocabulary_id for r in user_reviews] + [review.vocabulary_id]
         ))
@@ -267,7 +353,7 @@ def submit_review(
         }
         model_used = "sm2_fallback"
 
-    # Create review log
+    # Create review log (includes user_answer and auto_rating fields)
     log = ReviewLog(
         user_id=user_id,
         vocabulary_id=review.vocabulary_id,
@@ -280,13 +366,17 @@ def submit_review(
         response_time_ms=review.response_time_ms,
         direction=review.direction,
         session_id=review.session_id,
+        user_answer=review.user_answer,
+        auto_rating=review.auto_rating,
     )
     db.add(log)
     db.commit()
     db.refresh(log)
 
     print(f"[Flashcard] Review saved: vocab={review.vocabulary_id}, rating={review.rating}, "
-          f"interval={result['interval_days']}d, ease={result['ease_factor']}, model={model_used}")
+          f"interval={result['interval_days']}d, ease={result['ease_factor']}, model={model_used}"
+          f"{', auto_rating=' + str(review.auto_rating) if review.auto_rating else ''}"
+          f"{', user_answer=' + repr(review.user_answer[:30]) if review.user_answer else ''}")
 
     return ReviewResult(
         vocabulary_id=review.vocabulary_id,

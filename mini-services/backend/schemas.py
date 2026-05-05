@@ -104,6 +104,7 @@ class VocabularyCardResponse(BaseModel):
     part_of_speech: Optional[str] = None
     category: Optional[str] = None
     difficulty_level: int = 1
+    accepted_answers: list[str] = Field(default_factory=list, description="Alternative accepted answers")
 
 
 # ─── Flashcard Session Schemas ───────────────────────────────────
@@ -122,6 +123,8 @@ class ReviewSubmit(BaseModel):
     direction: str = Field(default="en_to_vi", pattern="^(en_to_vi|vi_to_en)$")
     response_time_ms: Optional[int] = None
     session_id: Optional[str] = None
+    user_answer: Optional[str] = None  # Typed answer for auto-grading
+    auto_rating: Optional[int] = None  # Auto-computed rating
 
 
 class ReviewResult(BaseModel):
@@ -170,3 +173,49 @@ class CategoryProgress(BaseModel):
     learned_words: int
     mastered_words: int
     average_ease_factor: float
+
+
+# ─── Auto-Grading Schemas ─────────────────────────────────────────
+
+class CheckAnswerRequest(BaseModel):
+    """Request to check a typed answer against the correct translation."""
+    vocabulary_id: int
+    user_answer: str = Field(..., min_length=1, max_length=500)
+    direction: str = Field(default="en_to_vi", pattern="^(en_to_vi|vi_to_en)$")
+
+
+class CheckAnswerResponse(BaseModel):
+    """Response from auto-grading a typed answer."""
+    vocabulary_id: int
+    correct_answer: str
+    user_answer: str
+    rating: int
+    accuracy: float
+    is_correct: bool
+    match_type: str
+    similarity: float
+    pronunciation: Optional[str] = None
+    example_english: Optional[str] = None
+    example_vietnamese: Optional[str] = None
+
+
+# ─── Vocabulary Enrich Schemas ────────────────────────────────────
+
+class EnrichRequest(BaseModel):
+    """Request to enrich vocabulary from external APIs."""
+    count: int = Field(default=10, ge=1, le=50, description="Number of words to add")
+    level: Optional[int] = Field(default=None, ge=1, le=3, description="Difficulty level filter")
+
+
+class EnrichResponse(BaseModel):
+    """Response from vocabulary enrichment."""
+    added: int
+    skipped: int
+    errors: int
+    items: list[VocabularyResponse]
+
+
+class CategoryInfo(BaseModel):
+    """Category with word count."""
+    category: str
+    word_count: int

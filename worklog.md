@@ -313,3 +313,97 @@ Stage Summary:
 - SM-2 remains as automatic fallback
 - New endpoints: POST /train, GET /training-stats
 - All tests pass: predict, online learn, batch train, model save/load
+
+---
+Task ID: 4
+Agent: frontend-developer
+Task: Frontend flashcard typing redesign
+
+Work Log:
+- Read existing flashcard page (flip+rate UI), API proxy routes, Python backend router, grader module, schemas, and models
+- Added CheckAnswerRequest and CheckAnswerResponse schemas to Python backend (schemas.py)
+- Added accepted_answers field to VocabularyCardResponse schema
+- Added user_answer and auto_rating optional fields to ReviewSubmit schema
+- Added auto_rating, accuracy, match_type fields to ReviewResult schema
+- Added POST /api/flashcards/check-answer endpoint to Python backend (routers/flashcard.py)
+  - Uses existing grader module for answer comparison (diacritics tolerance, Levenshtein distance)
+  - Maps grader match_type (diacritics_ignored → close, none → incorrect, low-similarity partial → incorrect)
+  - Converts accuracy from 0-1 decimal to 0-100 percentage
+  - Returns correct_answer, user_answer, rating, accuracy, is_correct, match_type, similarity, pronunciation, example sentences
+- Made TCGL model import lazy/optional in flashcard router (try/except with SM-2 fallback when torch unavailable)
+- Created Next.js API proxy route at /src/app/api/flashcards/check-answer/route.ts
+- Updated Next.js review proxy route to forward user_answer and auto_rating fields
+- Completely rewrote flashcard page (/src/app/flashcard/page.tsx) with typing-based flow:
+  - Removed flip card + rating buttons (Again/Hard/Good/Easy)
+  - Added text input field with Enter/Check button submission
+  - Added "Show hint" button that reveals first letter of answer
+  - Added "Skip" button (marks as Again rating)
+  - Result phase shows color-coded feedback: green (exact), amber (close), orange (partial), red (incorrect)
+  - Shows user's answer vs correct answer in distinct areas
+  - Shows accuracy percentage and match type indicator
+  - Shows example sentence after revealing answer
+  - Shows pronunciation after revealing answer
+  - "Continue" button proceeds to next card
+  - Direction toggle (EN→VI / VI→EN) still works
+  - Progress bar and session stats still work
+  - Session complete view updated with Correct/Close/Needs Review breakdown
+  - Keyboard shortcuts: Enter (submit/continue), Tab (switch direction), Escape (skip card)
+  - Animated transitions between prompt → result → next card
+  - Focus management: input auto-focuses on new card
+- ESLint passes with zero errors
+- Flashcard page returns HTTP 200
+- Backend check-answer endpoint verified working with various inputs:
+  - "Xin chào" → exact match, 100% accuracy, rating 4
+  - "xin chao" → close match (diacritics ignored), 80% accuracy, rating 3
+  - "xin" → partial match, 37.5% accuracy, rating 1
+  - "banana" → incorrect, 25% accuracy, rating 1
+
+Stage Summary:
+- Complete flashcard UI redesign from flip+rate to typing+auto-grade
+- New check-answer API endpoint with Vietnamese diacritics tolerance
+- Frontend shows color-coded feedback with accuracy percentage
+- Keyboard shortcuts for power users
+- Backend changes are backward-compatible (user_answer and auto_rating are optional)
+- TCGL model import made lazy so backend works without torch installed
+
+---
+Task ID: 13
+Agent: Main Agent
+Task: Clean up unnecessary files, create start-all.bat for Windows, redesign flashcard to typing-based with auto-grading, add vocabulary enrichment API
+
+Work Log:
+- Removed unnecessary files:
+  - ml_model/predict_lite.py (archived NumPy-only inference)
+  - ml_model/tcgl_weights.npz (archived static weights)
+  - screenshot-current.png, screenshot-mobile.png, screenshot-v2.png (old screenshots)
+  - upload/desktop.png, upload/English.txt (unused files)
+  - src/lib/spaced-repetition.ts (unused frontend SM-2)
+  - db/custom.db (unused Prisma database)
+  - prisma/seed-vocab.ts (vocabulary seeded from Python backend)
+- Created start-all.bat for Windows (starts both Python backend + Next.js frontend)
+- Verified all backend changes from previous agents:
+  - grader.py: Vietnamese diacritics handling + Levenshtein distance auto-grading
+  - models.py: Added user_answer and auto_rating columns to ReviewLog
+  - schemas.py: Added CheckAnswerRequest/Response, EnrichRequest/Response, CategoryInfo
+  - flashcard.py: Added check-answer endpoint, lazy TCGL imports
+  - vocabulary.py: Added enrich (Free Dictionary API + MyMemory Translation), categories, random endpoints
+- Recreated database (deleted old one to apply new schema with user_answer/auto_rating columns)
+- Updated ml_model/README.md to remove references to deleted files
+- Tested all new endpoints:
+  - POST /api/flashcards/check-answer: exact match, diacritics ignored, partial, incorrect all work
+  - GET /api/vocabulary/random: returns random vocabulary item with accepted_answers
+  - GET /api/vocabulary/categories: lists all 17 categories with word counts
+  - POST /api/vocabulary/enrich: fetches from external APIs and adds to database
+- ESLint passes with zero errors
+- All pages return 200 status
+- Dev server log shows no errors
+
+Stage Summary:
+- Cleaned up 9+ unnecessary files from the project
+- start-all.bat created for Windows users
+- Flashcard system completely redesigned: typing-based with auto-grading instead of self-evaluation
+- Auto-grading supports: exact match, Vietnamese diacritics tolerance, fuzzy matching via Levenshtein distance
+- Vocabulary enrichment API can fetch new words from Free Dictionary API + MyMemory Translation
+- 200+ common English words built-in for enrichment across 3 difficulty levels
+- All backend endpoints tested and working
+- ESLint: zero errors
