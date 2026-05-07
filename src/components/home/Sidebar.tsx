@@ -5,7 +5,6 @@ import { useRouter, usePathname } from 'next/navigation';
 import {
   GraduationCap,
   Home,
-  Brain,
   BarChart3,
   Settings,
   LogOut,
@@ -29,7 +28,7 @@ interface NavItem {
 /** Learning navigation items */
 const learningItems: NavItem[] = [
   { label: 'Trang chủ', icon: Home, href: '/' },
-  { label: 'Tiếng Anh', icon: Brain, href: '/study/english' },
+  { label: 'Thống kê', icon: BarChart3, href: '/stats' },
 ];
 
 /** Settings navigation items */
