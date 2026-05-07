@@ -29,8 +29,7 @@ interface NavItem {
 /** Learning navigation items */
 const learningItems: NavItem[] = [
   { label: 'Trang chủ', icon: Home, href: '/' },
-  { label: 'Học tập', icon: Brain, href: '/' },
-  { label: 'Thống kê', icon: BarChart3 },
+  { label: 'Tiếng Anh', icon: Brain, href: '/study/english' },
 ];
 
 /** Settings navigation items */
@@ -88,7 +87,8 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   /** Render a single navigation item */
   const renderNavItem = (item: NavItem) => {
     const Icon = item.icon;
-    const isActive = item.href === pathname || (item.href === '/' && (pathname === '/' || pathname.startsWith('/study')));
+    const isActive = item.href === pathname ||
+      (item.href !== '/' && pathname.startsWith(item.href || ''));
 
     const button = (
       <button
