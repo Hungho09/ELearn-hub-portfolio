@@ -1,0 +1,71 @@
+'use client';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Flame, BookOpen, Brain, Trophy } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface LearningStatsProps {
+  totalReviews: number;
+  wordsMastered: number;
+  wordsLearning: number;
+  streakDays: number;
+  reviewsToday: number;
+}
+
+export function LearningStats({
+  totalReviews,
+  wordsMastered,
+  wordsLearning,
+  streakDays,
+  reviewsToday,
+}: LearningStatsProps) {
+  const statItems = [
+    {
+      label: 'Chuỗi ngày',
+      value: streakDays,
+      icon: Flame,
+      color: 'text-orange-500',
+      border: 'border-l-orange-500',
+    },
+    {
+      label: 'Hôm nay',
+      value: reviewsToday,
+      icon: BookOpen,
+      color: 'text-primary',
+      border: 'border-l-primary',
+    },
+    {
+      label: 'Đã thành thạo',
+      value: wordsMastered,
+      icon: Trophy,
+      color: 'text-emerald-600',
+      border: 'border-l-emerald-500',
+    },
+    {
+      label: 'Tổng ôn tập',
+      value: totalReviews,
+      icon: Brain,
+      color: 'text-purple-600 dark:text-purple-400',
+      border: 'border-l-purple-500',
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {statItems.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <Card key={stat.label} className={cn('border-l-4', stat.border)}>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Icon className={cn('size-4', stat.color)} />
+                <span className="text-xs text-muted-foreground">{stat.label}</span>
+              </div>
+              <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}

@@ -4,17 +4,13 @@ import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   GraduationCap,
-  LayoutDashboard,
-  Inbox,
-  BookOpen,
+  Home,
   Brain,
-  CheckSquare,
-  Users,
+  BarChart3,
   Settings,
   LogOut,
   LogIn,
   Bell,
-  User,
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -30,14 +26,11 @@ interface NavItem {
   badge?: number;
 }
 
-/** Overview navigation items */
-const overviewItems: NavItem[] = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/' },
-  { label: 'Inbox', icon: Inbox, badge: 3 },
-  { label: 'Flashcard', icon: Brain, href: '/flashcard' },
-  { label: 'Lesson', icon: BookOpen, href: '/english' },
-  { label: 'Task', icon: CheckSquare },
-  { label: 'Group', icon: Users },
+/** Learning navigation items */
+const learningItems: NavItem[] = [
+  { label: 'Trang chủ', icon: Home, href: '/' },
+  { label: 'Học tập', icon: Brain, href: '/' },
+  { label: 'Thống kê', icon: BarChart3 },
 ];
 
 /** Settings navigation items */
@@ -87,15 +80,15 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   };
 
   /** Get user display name */
-  const userName = session?.user?.name || 'Guest';
-  const userRole = session ? 'Pro Learner' : 'Not signed in';
+  const userName = session?.user?.name || 'Học viên';
+  const userRole = session ? 'Học viên Pro' : 'Chưa đăng nhập';
   const userAvatar = session?.user?.avatar || '/images/user-avatar.png';
   const userInitial = userName.charAt(0).toUpperCase();
 
   /** Render a single navigation item */
   const renderNavItem = (item: NavItem) => {
     const Icon = item.icon;
-    const isActive = item.href === pathname || (item.href === '/' && pathname === '/');
+    const isActive = item.href === pathname || (item.href === '/' && (pathname === '/' || pathname.startsWith('/study')));
 
     const button = (
       <button
@@ -160,20 +153,20 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <div className="flex flex-col gap-1">
-          {/* Overview Section */}
+          {/* Learning Section */}
           {!collapsed && (
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Overview
+              Học tập
             </p>
           )}
-          {overviewItems.map(renderNavItem)}
+          {learningItems.map(renderNavItem)}
 
           <Separator className="my-3" />
 
-          {/* Settings Section */}
+          {/* Account Section */}
           {!collapsed && (
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Account
+              Tài khoản
             </p>
           )}
           {settingsItems.map(renderNavItem)}

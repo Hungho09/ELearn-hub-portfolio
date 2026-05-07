@@ -1,0 +1,194 @@
+'use client';
+
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Volume2, Lightbulb, SkipForward, Languages } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface VocabCard {
+  id: number;
+  english: string;
+  vietnamese: string;
+  pronunciation: string | null;
+  example_english: string | null;
+  example_vietnamese: string | null;
+  part_of_speech: string | null;
+  category: string | null;
+  difficulty_level: number;
+}
+
+interface StudyCardProps {
+  card: VocabCard;
+  cardMode: 'en_to_vi' | 'vi_to_en';
+  userInput: string;
+  showHint: boolean;
+  submitting: boolean;
+  onInputChange: (value: string) => void;
+  onSubmit: () => void;
+  onSkip: () => void;
+  onToggleMode: () => void;
+  onShowHint: () => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}
+
+export function StudyCard({
+  card,
+  cardMode,
+  userInput,
+  showHint,
+  submitting,
+  onInputChange,
+  onSubmit,
+  onSkip,
+  onToggleMode,
+  onShowHint,
+  inputRef,
+}: StudyCardProps) {
+  const promptText = cardMode === 'en_to_vi' ? card.english : card.vietnamese;
+  const promptLabel = cardMode === 'en_to_vi' ? 'English' : 'Tiếng Việt';
+  const answerLabel = cardMode === 'en_to_vi' ? 'Tiếng Việt' : 'English';
+  const promptPronunciation = cardMode === 'en_to_vi' ? null : card.pronunciation;
+  const correctAnswer = cardMode === 'en_to_vi' ? card.vietnamese : card.english;
+  const hintLetter = correctAnswer ? correctAnswer[0] + '...' : '';
+
+  return (
+    <div className="space-y-4">
+      {/* Mode Toggle & Info */}
+      <div className="flex items-center justify-between">
+        <Button variant="outline" size="sm" onClick={onToggleMode} className="gap-2">
+          <Languages className="size-3.5" />
+          {cardMode === 'en_to_vi' ? 'EN → VI' : 'VI → EN'}
+        </Button>
+        <div className="flex items-center gap-2">
+          {card.category && (
+            <Badge variant="outline" className="text-xs">{card.category}</Badge>
+          )}
+          {card.difficulty_level > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {'⭐'.repeat(card.difficulty_level)}
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Prompt Card */}
+      <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-card to-primary/10 border-primary/20">
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 size-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 size-24 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+        <CardContent className="relative p-6 md:p-8">
+          <div className="flex flex-col items-center gap-6 animate-in fade-in duration-300">
+            {/* Word prompt */}
+            <div className="text-center">
+              <Badge variant="secondary" className="mb-3">{promptLabel}</Badge>
+              <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+                {promptText}
+              </h2>
+              {promptPronunciation && (
+                <p className="text-lg text-muted-foreground flex items-center gap-2 justify-center mt-2">
+                  <Volume2 className="size-4" />/{promptPronunciation}/
+                </p>
+              )}
+              {card.part_of_speech && (
+                <Badge variant="outline" className="text-xs capitalize mt-2">
+                  {card.part_of_speech}
+                </Badge>
+              )}
+            </div>
+
+            {/* Input area */}
+            <div className="w-full max-w-md space-y-4">
+              <div className="relative">
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder={`Type in ${answerLabel}...`}
+                  value={userInput}
+                  onChange={(e) => onInputChange(e.target.value)}
+                  className="h-14 text-lg text-center px-4 rounded-xl border-2 focus:border-primary transition-colors"
+                  disabled={submitting}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                />
+                {userInput && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 size-8"
+                    onClick={() => onInputChange('')}
+                  >
+                    ×
+                  </Button>
+                )}
+              </div>
+
+              {/* Hint & Skip */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {!showHint ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onShowHint}
+                      className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <Lightbulb className="size-3.5" />
+                      Show hint
+                    </Button>
+                  ) : (
+                    <Badge variant="outline" className="text-xs gap-1 py-1">
+                      <Lightbulb className="size-3" />
+                      Starts with: <span className="font-semibold">{hintLetter}</span>
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onSkip}
+                  disabled={submitting}
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-red-500"
+                >
+                  <SkipForward className="size-3.5" />
+                  Skip
+                </Button>
+              </div>
+
+              {/* Check button */}
+              <Button
+                onClick={onSubmit}
+                disabled={!userInput.trim() || submitting}
+                className="w-full h-12 text-base font-semibold rounded-xl gap-2"
+                size="lg"
+              >
+                {submitting ? (
+                  <div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <>
+                    Check
+                    <kbd className="ml-1 px-1.5 py-0.5 bg-white/20 rounded text-[11px]">↵</kbd>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Keyboard shortcuts hint */}
+      <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+        <span>
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Tab</kbd> Switch direction
+        </span>
+        <span>
+          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Esc</kbd> Skip card
+        </span>
+      </div>
+    </div>
+  );
+}
