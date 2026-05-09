@@ -5,7 +5,7 @@
 #  Usage:  cd /home/z/my-project && bash start-all.sh
 #
 #  Starts:
-#    1. Python FastAPI backend  (port 3001)
+#    1. Python FastAPI backend  (port 3001) — uses uv for venv
 #    2. Next.js frontend        (port 3000)
 # ============================================================
 
@@ -13,6 +13,7 @@ set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKEND_DIR="$PROJECT_DIR/mini-services/backend"
+VENV_DIR="$BACKEND_DIR/.venv"
 
 echo "========================================="
 echo "  LearnHub — Starting All Services      "
@@ -24,16 +25,26 @@ echo "[1/2] Starting Python Backend (port 3001)..."
 
 cd "$BACKEND_DIR"
 
-# Install Python dependencies if needed
-if ! python3 -c "import fastapi" 2>/dev/null; then
-    echo "  → Installing Python dependencies..."
-    pip3 install -q -r requirements.txt
-else
-    echo "  → Dependencies already installed"
+# Check if uv is available
+if ! command -v uv &> /dev/null; then
+    echo "  [ERROR] uv not found. Install it: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    exit 1
 fi
 
-# Start uvicorn in background
-python3 -m uvicorn main:app --host 0.0.0.0 --port 3001 --reload &
+# Create venv if it doesn't exist
+if [ ! -f "$VENV_DIR/bin/python" ]; then
+    echo "  → Creating virtual environment with uv..."
+    uv venv "$VENV_DIR"
+else
+    echo "  → Virtual environment already exists"
+fi
+
+# Install dependencies with uv
+echo "  → Installing Python dependencies with uv..."
+uv pip install --python "$VENV_DIR/bin/python" -r requirements.txt
+
+# Start uvicorn in background using venv python
+"$VENV_DIR/bin/python" -m uvicorn main:app --host 0.0.0.0 --port 3001 --reload &
 BACKEND_PID=$!
 echo "  → Backend started (PID: $BACKEND_PID, port: 3001)"
 

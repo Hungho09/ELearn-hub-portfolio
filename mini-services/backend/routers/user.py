@@ -35,7 +35,7 @@ def update_profile(
     user_id: str = Query(..., description="User ID from NextAuth session"),
     db: Session = Depends(get_db),
 ):
-    """Update user profile (name and/or bio)."""
+    """Update user profile (name, bio, and/or avatar)."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -44,6 +44,8 @@ def update_profile(
         user.name = request.name
     if request.bio is not None:
         user.bio = request.bio
+    if request.avatar is not None:
+        user.avatar = request.avatar
 
     user.updated_at = datetime.now(timezone.utc)
     db.commit()

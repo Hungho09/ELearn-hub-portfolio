@@ -5,7 +5,7 @@ REM
 REM  Usage:  cd \path\to\my-project && start-all.bat
 REM
 REM  Starts:
-REM    1. Python FastAPI backend  (port 3001)
+REM    1. Python FastAPI backend  (port 3001)  — uses uv for venv
 REM    2. Next.js frontend        (port 3000)
 REM ============================================================
 
@@ -13,6 +13,7 @@ setlocal enabledelayedexpansion
 
 set "PROJECT_DIR=%~dp0"
 set "BACKEND_DIR=%PROJECT_DIR%mini-services\backend"
+set "VENV_DIR=%BACKEND_DIR%.venv"
 
 echo =========================================
 echo   LearnHub - Starting All Services
@@ -24,25 +25,29 @@ echo [1/2] Starting Python Backend (port 3001)...
 
 cd /d "%BACKEND_DIR%"
 
-REM Check if Python is available
-where python >nul 2>nul
+REM Check if uv is available
+where uv >nul 2>nul
 if %errorlevel% neq 0 (
-    echo   [ERROR] Python not found. Please install Python 3.10+ and add to PATH.
+    echo   [ERROR] uv not found. Please install uv: https://docs.astral.sh/uv/getting-started/installation/
+    echo   Or run: pip install uv
     pause
     exit /b 1
 )
 
-REM Install Python dependencies if needed
-python -c "import fastapi" >nul 2>nul
-if %errorlevel% neq 0 (
-    echo   - Installing Python dependencies...
-    pip install -q -r requirements.txt
+REM Create venv if it doesn't exist
+if not exist "%VENV_DIR%\Scripts\python.exe" (
+    echo   - Creating virtual environment with uv...
+    uv venv "%VENV_DIR"
 ) else (
-    echo   - Dependencies already installed
+    echo   - Virtual environment already exists
 )
 
-REM Start uvicorn in background
-start "LearnHub Backend" /min python -m uvicorn main:app --host 0.0.0.0 --port 3001 --reload
+REM Install dependencies with uv
+echo   - Installing Python dependencies with uv...
+uv pip install --python "%VENV_DIR%\Scripts\python.exe" -r requirements.txt
+
+REM Start uvicorn in background using venv python
+start "LearnHub Backend" /min "%VENV_DIR%\Scripts\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 3001 --reload
 echo   - Backend started (port: 3001)
 
 REM Wait for backend to be ready

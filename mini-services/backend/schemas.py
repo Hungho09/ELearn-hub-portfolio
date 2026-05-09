@@ -43,6 +43,7 @@ class LoginVerifyResponse(BaseModel):
 class UserUpdateRequest(BaseModel):
     name: Optional[str] = None
     bio: Optional[str] = None
+    avatar: Optional[str] = None
 
 
 class UserResponse(BaseModel):
@@ -124,7 +125,7 @@ class ReviewSubmit(BaseModel):
     response_time_ms: Optional[int] = None
     session_id: Optional[str] = None
     user_answer: Optional[str] = None  # Typed answer for auto-grading
-    auto_rating: Optional[int] = None  # Auto-computed rating
+    auto_rating: Optional[bool] = None  # Whether the rating was auto-computed (frontend sends true/false)
 
 
 class ReviewResult(BaseModel):

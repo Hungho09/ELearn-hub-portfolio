@@ -39,9 +39,17 @@ export async function POST(request: NextRequest) {
     );
 
     if (!res.ok) {
-      const data = await res.json();
+      // Try to parse as JSON, but handle non-JSON responses gracefully
+      let errorDetail = "Failed to submit review";
+      try {
+        const data = await res.json();
+        errorDetail = data.detail || data.error || errorDetail;
+      } catch {
+        // Backend returned non-JSON (e.g., HTML error page)
+        errorDetail = `Backend error (${res.status}): ${res.statusText}`;
+      }
       return NextResponse.json(
-        { error: data.detail || "Failed to submit review" },
+        { error: errorDetail },
         { status: res.status }
       );
     }
@@ -50,6 +58,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error("Review proxy error:", error);
-    return NextResponse.json({ error: "Failed to submit review" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to submit review" },
+      { status: 500 }
+    );
   }
 }

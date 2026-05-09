@@ -45,6 +45,44 @@ from routers import (
 )
 from seed import seed_database
 
+# ─── Database Migration ────────────────────────────────────────────
+
+def _migrate_database():
+    """Add missing columns to existing SQLite tables.
+
+    SQLAlchemy's create_all() only creates NEW tables — it does NOT
+    add columns to existing tables. This function uses ALTER TABLE
+    to add any missing columns.
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+    columns_to_add = {
+        "review_log": [
+            ("user_answer", "VARCHAR(500)"),
+            ("auto_rating", "INTEGER"),
+        ],
+    }
+
+    with engine.connect() as conn:
+        for table_name, columns in columns_to_add.items():
+            if not inspector.has_table(table_name):
+                continue
+
+            existing = {col["name"] for col in inspector.get_columns(table_name)}
+
+            for col_name, col_type in columns:
+                if col_name not in existing:
+                    try:
+                        conn.execute(text(
+                            f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}"
+                        ))
+                        conn.commit()
+                        print(f"[migration] Added column {table_name}.{col_name}")
+                    except Exception as e:
+                        print(f"[migration] Could not add {table_name}.{col_name}: {e}")
+
+
 # ─── App Setup ────────────────────────────────────────────────────
 
 app = FastAPI(
@@ -65,8 +103,12 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    """Initialize database, seed data, and pre-load TCGL model on startup."""
+    """Initialize database, migrate schema, seed data, and pre-load TCGL model on startup."""
     Base.metadata.create_all(bind=engine)
+
+    # Migrate: ensure new columns exist (SQLite doesn't support ALTER COLUMN)
+    _migrate_database()
+
     seed_database()
 
     # Pre-load the TCGL model at startup

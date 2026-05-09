@@ -142,7 +142,7 @@ class ReviewLog(Base):
 
     # Auto-grading fields
     user_answer: Mapped[str] = mapped_column(String(500), nullable=True, comment="User's typed answer for auto-grading")
-    auto_rating: Mapped[int] = mapped_column(Integer, nullable=True, comment="Auto-computed rating from answer comparison")
+    auto_rating: Mapped[bool] = mapped_column(Integer, nullable=True, comment="Whether the rating was auto-computed from answer comparison")
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="review_logs")
