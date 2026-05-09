@@ -7,6 +7,7 @@ import {
   Home,
   BarChart3,
   Settings,
+  Shield,
   LogOut,
   LogIn,
   Bell,
@@ -29,6 +30,11 @@ interface NavItem {
 const learningItems: NavItem[] = [
   { label: 'Trang chủ', icon: Home, href: '/' },
   { label: 'Thống kê', icon: BarChart3, href: '/stats' },
+];
+
+/** Admin navigation items (only shown for admin users) */
+const adminItems: NavItem[] = [
+  { label: 'Admin', icon: Shield, href: '/admin' },
 ];
 
 /** Settings navigation items */
@@ -78,8 +84,9 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   };
 
   /** Get user display name */
+  const isAdmin = session?.user?.role === 'admin';
   const userName = session?.user?.name || 'Học viên';
-  const userRole = session ? 'Học viên Pro' : 'Chưa đăng nhập';
+  const userRole = isAdmin ? 'Admin' : session ? 'Học viên Pro' : 'Chưa đăng nhập';
   const userAvatar = session?.user?.avatar || '/images/user-avatar.png';
   const userInitial = userName.charAt(0).toUpperCase();
 
@@ -169,6 +176,19 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
             </p>
           )}
           {settingsItems.map(renderNavItem)}
+
+          {/* Admin Section (only for admin users) */}
+          {isAdmin && (
+            <>
+              <Separator className="my-3" />
+              {!collapsed && (
+                <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Quản trị
+                </p>
+              )}
+              {adminItems.map(renderNavItem)}
+            </>
+          )}
 
           {/* Logout / Login button */}
           <button

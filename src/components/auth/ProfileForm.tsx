@@ -40,6 +40,16 @@ export function ProfileForm() {
         body: JSON.stringify({ name, bio }),
       });
 
+      if (res.status === 401) {
+        toast({
+          title: "Error",
+          description: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/login"; }, 1500);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error("Failed to update profile");
       }
@@ -78,6 +88,16 @@ export function ProfileForm() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 401) {
+        toast({
+          title: "Error",
+          description: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+          variant: "destructive",
+        });
+        setTimeout(() => { window.location.href = "/login"; }, 1500);
+        return;
+      }
 
       if (!res.ok) {
         const data = await res.json();

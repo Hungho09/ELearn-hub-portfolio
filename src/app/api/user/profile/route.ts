@@ -9,9 +9,18 @@ const API_SERVICE_URL = "http://127.0.0.1:3001";
  * Proxies to Python api-service with user_id from NextAuth session.
  */
 export async function GET() {
+  let session;
   try {
-    const session = await getServerSession(authOptions);
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.error("Get profile session error:", error);
+    return NextResponse.json(
+      { error: "Session expired. Please log in again." },
+      { status: 401 }
+    );
+  }
 
+  try {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -44,9 +53,18 @@ export async function GET() {
  * Proxies to Python api-service with user_id from NextAuth session.
  */
 export async function PUT(request: NextRequest) {
+  let session;
   try {
-    const session = await getServerSession(authOptions);
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.error("Update profile session error:", error);
+    return NextResponse.json(
+      { error: "Session expired. Please log in again." },
+      { status: 401 }
+    );
+  }
 
+  try {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

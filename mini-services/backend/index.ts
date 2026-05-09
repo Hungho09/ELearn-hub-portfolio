@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const pythonProcess = spawn('python3', [
+const pythonProcess = spawn('/home/z/.venv/bin/python3', [
   '-m', 'uvicorn',
   'main:app',
   '--host', '0.0.0.0',

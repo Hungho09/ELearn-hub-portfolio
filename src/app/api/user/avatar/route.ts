@@ -16,9 +16,18 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
  * the Python api-service database with the avatar URL.
  */
 export async function POST(request: NextRequest) {
+  let session;
   try {
-    const session = await getServerSession(authOptions);
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.error("Avatar upload session error:", error);
+    return NextResponse.json(
+      { error: "Session expired. Please log in again." },
+      { status: 401 }
+    );
+  }
 
+  try {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

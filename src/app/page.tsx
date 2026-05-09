@@ -6,17 +6,13 @@ import { useRouter } from 'next/navigation';
 import {
   GraduationCap,
   Menu,
-  Download,
-  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Sidebar } from '@/components/home/Sidebar';
-import { Card, CardContent } from '@/components/ui/card';
 import { LanguageCard } from '@/components/learn/LanguageCard';
 import { LearningStats } from '@/components/learn/LearningStats';
-import { cn } from '@/lib/utils';
 
 interface UserStatsData {
   total_reviews: number;
@@ -95,8 +91,6 @@ export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [stats, setStats] = useState<UserStatsData | null>(null);
   const [totalVocab, setTotalVocab] = useState(0);
-  const [enriching, setEnriching] = useState(false);
-  const [enrichResult, setEnrichResult] = useState<string | null>(null);
 
   const userId = session?.user?.id || session?.user?.email || 'guest';
   const userName = session?.user?.name || 'Học viên';
@@ -138,28 +132,6 @@ export default function HomePage() {
       router.push('/study/english');
     }
   }, [router]);
-
-  const handleEnrich = useCallback(async () => {
-    setEnriching(true);
-    setEnrichResult(null);
-    try {
-      const res = await fetch('/api/vocabulary/auto-enrich?count=200', { method: 'POST' });
-      if (!res.ok) {
-        const data = await res.json();
-        setEnrichResult(`Lỗi: ${data.error || 'Không thể thêm từ vựng'}`);
-        return;
-      }
-      const data = await res.json();
-      setTotalVocab(data.total_in_db);
-      setEnrichResult(
-        `Đã thêm ${data.added} từ mới! Bỏ qua ${data.skipped}, lỗi ${data.errors}. Tổng: ${data.total_in_db} từ`
-      );
-    } catch {
-      setEnrichResult('Lỗi kết nối đến server. Hãy thử lại.');
-    } finally {
-      setEnriching(false);
-    }
-  }, []);
 
   return (
     <TooltipProvider>
@@ -242,53 +214,6 @@ export default function HomePage() {
                   />
                 ))}
               </div>
-            </div>
-
-            {/* Vocabulary Enrichment */}
-            <div className="mt-8">
-              <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div>
-                      <h3 className="font-semibold text-foreground flex items-center gap-2">
-                        <Download className="size-4 text-primary" />
-                        Thêm từ vựng từ API
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Lấy thêm từ vựng từ Free Dictionary API + MyMemory Translation. Hiện có <span className="font-semibold text-primary">{totalVocab}</span> từ.
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleEnrich}
-                      disabled={enriching}
-                      variant="outline"
-                      className="gap-2"
-                    >
-                      {enriching ? (
-                        <>
-                          <Loader2 className="size-4 animate-spin" />
-                          Đang thêm...
-                        </>
-                      ) : (
-                        <>
-                          <Download className="size-4" />
-                          Thêm 200 từ
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  {enrichResult && (
-                    <p className={cn(
-                      'mt-3 text-sm rounded-lg p-2',
-                      enrichResult.startsWith('Lỗi')
-                        ? 'text-destructive bg-destructive/10'
-                        : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/20'
-                    )}>
-                      {enrichResult}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
             </div>
 
             {/* Quick Tips Section */}

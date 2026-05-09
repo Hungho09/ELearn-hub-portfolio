@@ -17,7 +17,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from database import get_db
-from models import Vocabulary
+from models import User, Vocabulary
+from admin import require_admin
 from schemas import VocabularyCreate, VocabularyResponse, VocabularyCardResponse, EnrichResponse, CategoryInfo
 
 router = APIRouter(prefix="/api/vocabulary", tags=["Vocabulary"])
@@ -233,7 +234,11 @@ def list_vocabulary(
 
 
 @router.post("", response_model=VocabularyResponse, status_code=201)
-def create_vocabulary(vocab: VocabularyCreate, db: Session = Depends(get_db)):
+def create_vocabulary(
+    vocab: VocabularyCreate,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     """Add a new vocabulary item."""
     item = Vocabulary(**vocab.model_dump())
     db.add(item)
@@ -399,6 +404,7 @@ def _fetch_and_add_words(words: list[str], db: Session) -> tuple[int, int, int]:
 def enrich_vocabulary(
     count: int = Query(default=10, ge=1, le=50, description="Number of words to add"),
     level: Optional[int] = Query(default=None, ge=1, le=3, description="Difficulty level filter"),
+    admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Enrich vocabulary from external APIs.
@@ -445,6 +451,7 @@ def enrich_vocabulary(
 def auto_enrich_vocabulary(
     count: int = Query(default=100, ge=10, le=500, description="Number of words to try adding"),
     level: Optional[int] = Query(default=None, ge=1, le=3, description="Difficulty level filter"),
+    admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
     """Auto-enrich vocabulary in bulk from external APIs.
@@ -504,6 +511,65 @@ def list_categories(
         CategoryInfo(category=category, word_count=count)
         for category, count in results
     ]
+
+
+@router.get("/admin/stats")
+def admin_vocab_stats(
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Get vocabulary database stats (admin only)."""
+    total = db.query(func.count(Vocabulary.id)).scalar() or 0
+    by_level = {}
+    for level in [1, 2, 3]:
+        count = db.query(func.count(Vocabulary.id)).filter(Vocabulary.difficulty_level == level).scalar() or 0
+        by_level[level] = count
+
+    categories = db.query(
+        Vocabulary.category,
+        func.count(Vocabulary.id).label("count")
+    ).group_by(Vocabulary.category).all()
+
+    # Part of speech stats
+    pos_stats = db.query(
+        Vocabulary.part_of_speech,
+        func.count(Vocabulary.id).label("count")
+    ).filter(Vocabulary.part_of_speech.isnot(None)).group_by(Vocabulary.part_of_speech).all()
+
+    # Build category dict
+    category_dict = {}
+    for cat, cnt in categories:
+        if cat:
+            category_dict[cat] = cnt
+
+    # Build part of speech dict
+    pos_dict = {}
+    for pos, cnt in pos_stats:
+        if pos:
+            pos_dict[pos] = cnt
+
+    return {
+        "total_vocabulary": total,
+        "by_difficulty": by_level,
+        "by_category": category_dict,
+        "by_part_of_speech": pos_dict,
+        "categories": [{"name": cat, "count": cnt} for cat, cnt in categories if cat],
+    }
+
+
+@router.delete("/{vocab_id}")
+def delete_vocabulary(
+    vocab_id: int,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Delete a vocabulary item (admin only)."""
+    vocab = db.query(Vocabulary).filter(Vocabulary.id == vocab_id).first()
+    if not vocab:
+        raise HTTPException(status_code=404, detail="Vocabulary not found")
+    db.delete(vocab)
+    db.commit()
+    return {"status": "deleted", "id": vocab_id}
 
 
 @router.get("/random", response_model=VocabularyCardResponse)
