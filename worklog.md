@@ -37,3 +37,59 @@ Stage Summary:
 - Admin-only operations: add/enrich/delete vocabulary
 - Regular users can only study and review flashcards
 - Backend admin stats endpoint returns comprehensive vocabulary breakdown
+
+---
+Task ID: 2
+Agent: Main
+Task: Fix start-all.bat syntax and profile session expired bug
+
+Work Log:
+- Verified start-all.bat: VENV_DIR already had `\` before `.venv` (Read tool stripped it in display)
+- Fixed start-all.bat: `uv venv "%VENV_DIR"` → `uv venv "%VENV_DIR%"` (missing closing %)
+- Root cause of profile bug: Missing `NEXTAUTH_SECRET` in `.env`
+  - Without it, NextAuth generates a random secret on each server restart/hot-reload
+  - JWTs encrypted with old secret can't be decrypted → getServerSession() returns null
+  - API returns 401 → frontend shows "Phiên đăng nhập đã hết hạn"
+- Added `NEXTAUTH_SECRET` and `NEXTAUTH_URL` to `.env`
+- Fixed `auth.ts` jwt callback to handle `update()` trigger from client:
+  - Added `trigger === "update"` handling to persist name/avatar changes in JWT
+- Fixed ProfileForm.tsx `update()` calls:
+  - Changed from `update({...session, user: {...}})` to `update({ name })` / `update({ avatar })`
+  - The old way passed the full session object which could cause issues
+- Added better logging in API routes: `[Auth]` prefix for session errors, `[Profile]`/`[Avatar]` for proxy errors
+- Verified lint passes clean
+
+Stage Summary:
+- start-all.bat: Fixed missing `%` in `uv venv "%VENV_DIR%"` 
+- Profile bug: Fixed by adding stable NEXTAUTH_SECRET to .env
+- auth.ts: Now properly handles session updates via jwt callback trigger
+- ProfileForm: Cleaner update() calls that work correctly with NextAuth v4
+
+---
+Task ID: 3
+Agent: Main
+Task: Create admin user galaxyvn and clean up unused DB files
+
+Work Log:
+- Created admin user directly in backend DB: galaxyvn@learnhub.com / Abc@123 (role=admin, id=u_galaxyvn_admin)
+- Password verified with bcrypt checkpw — OK
+- Updated seed.py to create galaxyvn@learnhub.com instead of admin@learnhub.com
+- Deleted old admin@learnhub.com user from DB
+- Analyzed all 4 .db files:
+  - `mini-services/backend/learnhub.db` — ✅ ACTIVE (2 users, 443 vocab, 17 review logs)
+  - `mini-services/api-service/learnhub.db` — ❌ OLD (pre-merge service, not running)
+  - `mini-services/flashcard-service/flashcard.db` — ❌ OLD (pre-merge service, not running)
+  - `db/custom.db` — ❌ UNUSED (Prisma DB, empty, never imported)
+  - `/home/z/my-project/learnhub.db` — ❌ EMPTY (orphaned)
+- Deleted 3 unused DBs: api-service/learnhub.db, flashcard-service/flashcard.db, db/custom.db, learnhub.db
+- Deleted old service directories: mini-services/api-service/, mini-services/flashcard-service/
+- Removed empty db/ directory
+- Removed DATABASE_URL from .env (Prisma not used)
+- Only one DB remains: mini-services/backend/learnhub.db
+
+Stage Summary:
+- Admin user: galaxyvn@learnhub.com / Abc@123 (role=admin)
+- Seed updated to match
+- 4 → 1 database files (only backend/learnhub.db remains)
+- Old api-service and flashcard-service directories removed
+- .env cleaned up (removed DATABASE_URL, kept NEXTAUTH_SECRET + NEXTAUTH_URL)

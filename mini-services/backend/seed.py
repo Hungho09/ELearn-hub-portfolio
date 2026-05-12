@@ -1007,19 +1007,19 @@ def seed_database():
         from models import User
         from auth import hash_password
 
-        admin_email = "admin@learnhub.com"
+        admin_email = "galaxyvn@learnhub.com"
         existing_admin = db.query(User).filter(User.email == admin_email).first()
         if not existing_admin:
             admin_user = User(
-                id="admin_learnhub",
+                id="u_galaxyvn_admin",
                 email=admin_email,
-                name="Admin",
-                password=hash_password("admin123"),
+                name="galaxyvn",
+                password=hash_password("Abc@123"),
                 role="admin",
             )
             db.add(admin_user)
             db.commit()
-            print(f"[seed] Admin user created: {admin_email} / admin123")
+            print(f"[seed] Admin user created: {admin_email} / Abc@123")
         else:
             if existing_admin.role != "admin":
                 existing_admin.role = "admin"
