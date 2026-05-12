@@ -13,7 +13,7 @@ setlocal enabledelayedexpansion
 
 set "PROJECT_DIR=%~dp0"
 set "BACKEND_DIR=%PROJECT_DIR%mini-services\backend"
-set "VENV_DIR=%BACKEND_DIR%.venv"
+set "VENV_DIR=%BACKEND_DIR%\.venv"
 
 echo =========================================
 echo   LearnHub - Starting All Services
@@ -37,7 +37,7 @@ if %errorlevel% neq 0 (
 REM Create venv if it doesn't exist
 if not exist "%VENV_DIR%\Scripts\python.exe" (
     echo   - Creating virtual environment with uv...
-    uv venv "%VENV_DIR"
+    uv venv "%VENV_DIR%"
 ) else (
     echo   - Virtual environment already exists
 )

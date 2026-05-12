@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   try {
     session = await getServerSession(authOptions);
   } catch (error) {
-    console.error("Avatar upload session error:", error);
+    console.error("[Auth] Avatar upload session error:", error);
     return NextResponse.json(
       { error: "Session expired. Please log in again." },
       { status: 401 }
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
 
   try {
     if (!session?.user?.id) {
+      console.warn("[Auth] Avatar upload: No valid session. session=", JSON.stringify(session));
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -85,12 +86,12 @@ export async function POST(request: NextRequest) {
 
     if (!res.ok) {
       // File was saved but DB update failed - still return the URL
-      console.error("Failed to update avatar in api-service");
+      console.error("[Avatar] Failed to update avatar in api-service:", res.status);
     }
 
     return NextResponse.json({ avatarUrl });
   } catch (error) {
-    console.error("Avatar upload error:", error);
+    console.error("[Avatar] Upload error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

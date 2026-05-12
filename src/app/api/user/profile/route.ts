@@ -13,7 +13,7 @@ export async function GET() {
   try {
     session = await getServerSession(authOptions);
   } catch (error) {
-    console.error("Get profile session error:", error);
+    console.error("[Auth] Get profile session error:", error);
     return NextResponse.json(
       { error: "Session expired. Please log in again." },
       { status: 401 }
@@ -22,6 +22,7 @@ export async function GET() {
 
   try {
     if (!session?.user?.id) {
+      console.warn("[Auth] Get profile: No valid session. session=", JSON.stringify(session));
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -40,7 +41,7 @@ export async function GET() {
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Get profile proxy error:", error);
+    console.error("[Profile] Get proxy error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -57,7 +58,7 @@ export async function PUT(request: NextRequest) {
   try {
     session = await getServerSession(authOptions);
   } catch (error) {
-    console.error("Update profile session error:", error);
+    console.error("[Auth] Update profile session error:", error);
     return NextResponse.json(
       { error: "Session expired. Please log in again." },
       { status: 401 }
@@ -66,6 +67,7 @@ export async function PUT(request: NextRequest) {
 
   try {
     if (!session?.user?.id) {
+      console.warn("[Auth] Update profile: No valid session. session=", JSON.stringify(session));
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -92,7 +94,7 @@ export async function PUT(request: NextRequest) {
     const data = await res.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Update profile proxy error:", error);
+    console.error("[Profile] Update proxy error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

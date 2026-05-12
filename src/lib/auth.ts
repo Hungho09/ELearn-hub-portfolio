@@ -57,12 +57,24 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session: updateData }) {
+      // Initial sign-in: store user data in the JWT token
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role;
         token.avatar = (user as { avatar?: string | null }).avatar;
       }
+
+      // When update() is called from the client, persist the updated fields
+      if (trigger === "update" && updateData) {
+        if (updateData.name) {
+          token.name = updateData.name;
+        }
+        if (updateData.avatar) {
+          token.avatar = updateData.avatar;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

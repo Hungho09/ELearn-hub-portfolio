@@ -51,23 +51,23 @@ export function ProfileForm() {
       }
 
       if (!res.ok) {
-        throw new Error("Failed to update profile");
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to update profile");
       }
 
       const updatedUser = await res.json();
-      await update({
-        ...session,
-        user: { ...session?.user, name: updatedUser.name },
-      });
+
+      // Force session refresh so the new name shows in sidebar/avatar
+      await update({ name: updatedUser.name });
 
       toast({
         title: "Success",
         description: "Profile updated successfully",
       });
-    } catch {
+    } catch (err) {
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: err instanceof Error ? err.message : "Failed to update profile",
         variant: "destructive",
       });
     } finally {
@@ -100,15 +100,14 @@ export function ProfileForm() {
       }
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to upload avatar");
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to upload avatar");
       }
 
       const data = await res.json();
-      await update({
-        ...session,
-        user: { ...session?.user, avatar: data.avatarUrl },
-      });
+
+      // Force session refresh so the new avatar shows everywhere
+      await update({ avatar: data.avatarUrl });
 
       toast({
         title: "Success",
