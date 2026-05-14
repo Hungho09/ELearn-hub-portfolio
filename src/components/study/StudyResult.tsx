@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, AlertTriangle, ArrowRight, Volume2 } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, ArrowRight, Volume2, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CheckAnswerResult {
@@ -13,11 +13,12 @@ interface CheckAnswerResult {
   rating: number;
   accuracy: number;
   is_correct: boolean;
-  match_type: 'exact' | 'close' | 'partial' | 'incorrect';
+  match_type: 'exact' | 'close' | 'partial' | 'incorrect' | 'semantic';
   similarity: number;
   pronunciation: string | null;
   example_english: string | null;
   example_vietnamese: string | null;
+  grader: 'labse' | 'levenshtein' | 'exact';
 }
 
 interface StudyResultProps {
@@ -35,6 +36,15 @@ const MATCH_CONFIG = {
     borderColor: 'border-emerald-300 dark:border-emerald-700',
     badgeBg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
     detailLabel: 'Perfect match',
+  },
+  semantic: {
+    icon: CheckCircle2,
+    label: 'Chính xác!',
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
+    borderColor: 'border-emerald-300 dark:border-emerald-700',
+    badgeBg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    detailLabel: 'Semantic match (AI)',
   },
   close: {
     icon: AlertTriangle,
@@ -65,9 +75,21 @@ const MATCH_CONFIG = {
   },
 };
 
+const GRADER_LABELS = {
+  labse: { label: 'LaBSE AI', icon: Brain, color: 'text-violet-600 dark:text-violet-400' },
+  levenshtein: { label: 'Levenshtein', icon: AlertTriangle, color: 'text-muted-foreground' },
+  exact: { label: 'Exact', icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400' },
+};
+
 export function StudyResult({ result, submitting, onContinue }: StudyResultProps) {
-  const config = MATCH_CONFIG[result.match_type];
+  const matchType = result.match_type === 'semantic' && !result.is_correct
+    ? (result.similarity >= 0.5 ? 'partial' : 'incorrect')
+    : result.match_type;
+  const config = MATCH_CONFIG[matchType as keyof typeof MATCH_CONFIG] || MATCH_CONFIG.incorrect;
   const Icon = config.icon;
+
+  const graderInfo = GRADER_LABELS[result.grader] || GRADER_LABELS.levenshtein;
+  const GraderIcon = graderInfo.icon;
 
   return (
     <div className="space-y-4">
@@ -80,7 +102,7 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
               {config.label}
             </div>
 
-            {/* Accuracy badge */}
+            {/* Accuracy badge + Grader badge */}
             <div className="flex items-center gap-3">
               <Badge className={cn('text-sm px-3 py-1', config.badgeBg)}>
                 {Math.round(result.accuracy)}% accuracy
@@ -88,6 +110,12 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
               <Badge variant="outline" className="text-xs">
                 {config.detailLabel}
               </Badge>
+              {result.grader === 'labse' && (
+                <Badge variant="outline" className={cn('text-xs gap-1', graderInfo.color)}>
+                  <GraderIcon className="size-3" />
+                  {graderInfo.label}
+                </Badge>
+              )}
             </div>
 
             {/* Your answer vs correct answer */}

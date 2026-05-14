@@ -233,7 +233,7 @@ export default function HomePage() {
                   <p className="text-2xl mb-2">🧠</p>
                   <h3 className="font-semibold text-foreground text-sm">Spaced Repetition</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Thuật toán TCGL thông minh lên lịch ôn tập tối ưu dựa trên đường quên của bạn.
+                    Thuật toán TGCL thông minh lên lịch ôn tập tối ưu dựa trên đường quên của bạn.
                   </p>
                 </div>
                 <div className="rounded-xl bg-gradient-to-br from-orange-500/5 to-orange-500/10 border border-orange-500/20 p-5">

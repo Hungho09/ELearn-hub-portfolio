@@ -1,16 +1,38 @@
-# ML Model Directory — TCGL Integration
+# ML Model Directory — TGCL Integration
 
-## Current Model: Temporal Contrastive Graph Learning (TCGL)
+## Current Model: Temporal Graph Contrastive Learning (TGCL)
 
-The TCGL model is the primary flashcard scheduling algorithm.
+The TGCL model is the primary flashcard scheduling algorithm.
 **The model can both predict AND learn from user data** — it updates its weights after each review.
+
+## Setup Notes
+
+- Để thay đổi vị trí chứa model tải về của LaBSE, bạn có thể đặt biến môi trường `HF_HOME`.
+  - Trên Windows PowerShell:
+    ```powershell
+    $env:HF_HOME = "D:\path\to\huggingface-cache"
+    ```
+  - Trên Linux/macOS:
+    ```bash
+    export HF_HOME="/path/to/huggingface-cache"
+    ```
+- `HF_HOME` sẽ định nghĩa thư mục cache chung cho Hugging Face, bao gồm LaBSE và các model khác.
+- Khi chạy backend hoặc cài đặt thư viện, hãy đảm bảo biến môi trường này đã được thiết lập trước.
+
+## Cài đặt phụ thuộc TGCL
+
+- Cài các thư viện cần thiết cho mô hình TGCL bằng file `requirements-tcgl.txt`:
+  ```bash
+  pip install -r mini-services/backend/requirements-tcgl.txt
+  ```
+- Nếu bạn đang dùng `venv` hoặc môi trường ảo, kích hoạt trước khi cài.
 
 ## File Structure
 
 ```
 ml_model/
 ├── __init__.py             # Package init
-├── model.py                # Full PyTorch TCGL model class definition
+├── model.py                # Full PyTorch TGCL model class definition
 ├── predict.py              # ACTIVE: Dynamic prediction + online learning + batch training
 ├── tcgl_learned.pth        # Auto-generated: Saved model after online/batch training
 └── README.md               # This file
@@ -76,7 +98,7 @@ Input: Graph(nodes=vocab words, edges=review history, times=time deltas)
 ## API Endpoints
 
 - `POST /api/flashcards/check-answer` — Auto-grade a typed answer
-- `POST /api/flashcards/review` — Review a card (TCGL predicts + learns, SM-2 fallback)
+- `POST /api/flashcards/review` — Review a card (TGCL predicts + learns, SM-2 fallback)
 - `POST /api/flashcards/train` — Batch train model on all review data
 - `GET  /api/flashcards/model-info` — Model status, architecture, learning stats
 - `GET  /api/flashcards/training-stats` — Detailed training statistics

@@ -1,19 +1,20 @@
 """Flashcard router - Spaced repetition flashcard sessions.
 
-Uses TCGL (Temporal Contrastive Graph Learning) model for scheduling,
+Uses TGCL (Temporal Graph Contrastive Learning) model for scheduling,
 with SM-2 as automatic fallback if the model is unavailable.
 
-The TCGL model can both PREDICT and LEARN from user data:
+The TGCL model can both PREDICT and LEARN from user data:
 - Online learning: updates model weights after each review
 - Batch training: fine-tune on accumulated review logs via /train endpoint
 
 Endpoints:
 - GET  /api/flashcards/session       - Get due cards + new cards for study session
-- POST /api/flashcards/review        - Submit a review (TCGL predicts + learns, SM-2 fallback)
-- POST /api/flashcards/check-answer  - Check a typed answer and auto-grade
+- POST /api/flashcards/review        - Submit a review (TGCL predicts + learns, SM-2 fallback)
+- POST /api/flashcards/check-answer  - Check a typed answer and auto-grade (LaBSE or Levenshtein)
 - GET  /api/flashcards/stats         - Get user learning statistics
 - GET  /api/flashcards/categories    - Get progress by category
 - GET  /api/flashcards/model-info    - Get info about the active scheduling model
+- GET  /api/flashcards/grader-info   - Get info about the active grading model (LaBSE/Levenshtein)
 - POST /api/flashcards/train         - Batch train model on review data
 - GET  /api/flashcards/training-stats - Get model training statistics
 """
@@ -38,9 +39,9 @@ from schemas import (
     CheckAnswerResponse,
 )
 from spaced_repetition import calculate_sm2, get_initial_state
-from grader import check_answer as grade_answer
+from grader import check_answer as grade_answer, get_labse_status as grader_status
 
-# Lazy imports for TCGL model (requires torch, may not be available)
+# Lazy imports for TGCL model (requires torch, may not be available)
 try:
     from ml_model.predict import (
         predict_next_review as tcgl_predict,
@@ -49,13 +50,13 @@ try:
         train_on_reviews,
         get_training_stats,
     )
-    _TCGL_AVAILABLE = True
+    _TGCL_AVAILABLE = True
 except ImportError:
-    _TCGL_AVAILABLE = False
-    print("[Flashcard] TCGL model not available (torch not installed). Using SM-2 fallback.")
+    _TGCL_AVAILABLE = False
+    print("[Flashcard] TGCL model not available (torch not installed). Using SM-2 fallback.")
 
     def tcgl_predict(*args, **kwargs):
-        raise RuntimeError("TCGL model not available")
+        raise RuntimeError("TGCL model not available")
 
     def tcgl_model_info():
         return {"active_model": "SM-2 (SuperMemo)", "model_loaded": False, "can_learn": False, "error": "torch not installed"}
@@ -64,10 +65,10 @@ except ImportError:
         return False
 
     def train_on_reviews(*args, **kwargs):
-        return {"status": "error", "reason": "TCGL model not available (torch not installed)"}
+        return {"status": "error", "reason": "TGCL model not available (torch not installed)"}
 
     def get_training_stats():
-        return {"error": "TCGL model not available"}
+        return {"error": "TGCL model not available"}
 
 router = APIRouter(prefix="/api/flashcards", tags=["Flashcards"])
 
@@ -172,12 +173,14 @@ def check_flashcard_answer(
 ):
     """Check a user's typed answer against the correct translation.
 
-    Uses the auto-grading module to compare answers with support for:
+    Uses the auto-grading module (LaBSE semantic similarity when available,
+    Levenshtein distance as fallback) to compare answers with support for:
     - Exact matching
     - Vietnamese diacritics tolerance (e.g., "xin chao" matches "xin chào")
-    - Fuzzy matching via Levenshtein distance
+    - Semantic similarity via LaBSE cross-lingual embeddings
+    - Fuzzy matching via Levenshtein distance (fallback)
 
-    Returns a rating, accuracy score, and match details.
+    Returns a rating, accuracy score, match details, and grader used.
     """
     # Look up the vocabulary item
     vocab = db.query(Vocabulary).filter(Vocabulary.id == req.vocabulary_id).first()
@@ -202,6 +205,9 @@ def check_flashcard_answer(
     similarity = grade_result["similarity"]
     if match_type == "diacritics_ignored":
         match_type = "close"
+    elif match_type == "semantic":
+        # LaBSE semantic match — pass through as-is for frontend to display
+        pass
     elif match_type == "none":
         match_type = "incorrect"
     elif match_type == "partial" and similarity < 0.4:
@@ -223,6 +229,7 @@ def check_flashcard_answer(
         pronunciation=vocab.pronunciation,
         example_english=vocab.example_english,
         example_vietnamese=vocab.example_vietnamese,
+        grader=grade_result.get("grader", "levenshtein"),
     )
 
 
@@ -234,7 +241,7 @@ def submit_review(
 ):
     """Submit a review for a vocabulary card.
 
-    Uses the TCGL model for scheduling with online learning.
+    Uses the TGCL model for scheduling with online learning.
     The model updates its weights after each review to learn from user data.
     Falls back to SM-2 if the model is unavailable.
 
@@ -271,7 +278,7 @@ def submit_review(
         current_interval = state["interval_days"]
         current_reps = state["repetitions"]
 
-    # ── Try TCGL model first, fall back to SM-2 ──────────────
+    # ── Try TGCL model first, fall back to SM-2 ──────────────
     try:
         # Gather user's review history for graph construction
         user_reviews = (
@@ -318,7 +325,7 @@ def submit_review(
             "part_of_speech": vocab.part_of_speech,
         }
 
-        # Run TCGL model (with online learning enabled)
+        # Run TGCL model (with online learning enabled)
         result = tcgl_predict(
             rating=review.rating,
             current_ease_factor=current_ef,
@@ -337,7 +344,7 @@ def submit_review(
         model_used = result.get("model_used", "tcgl")
 
     except Exception as e:
-        print(f"[Flashcard] TCGL model failed: {e}. Using SM-2 fallback.")
+        print(f"[Flashcard] TGCL model failed: {e}. Using SM-2 fallback.")
         # SM-2 fallback
         sm2_result = calculate_sm2(
             rating=review.rating,
@@ -394,7 +401,7 @@ def batch_train_model(
     user_id: str = Query(..., description="User ID — trains on YOUR review data"),
     db: Session = Depends(get_db),
 ):
-    """Batch train the TCGL model on accumulated review data.
+    """Batch train the TGCL model on accumulated review data.
 
     This fine-tunes the model using all your past review logs.
     The model learns patterns in your forgetting curves and
@@ -461,6 +468,17 @@ def batch_train_model(
 def get_model_info():
     """Get information about the active scheduling model."""
     return tcgl_model_info()
+
+
+@router.get("/grader-info")
+def get_grader_info():
+    """Get information about the active answer grading model.
+
+    Returns the status of the LaBSE semantic similarity model:
+    - If LaBSE is available: grading uses cross-lingual semantic similarity
+    - If LaBSE is not available: grading falls back to Levenshtein distance
+    """
+    return grader_status()
 
 
 @router.get("/training-stats")

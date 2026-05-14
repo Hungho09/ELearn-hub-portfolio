@@ -198,6 +198,7 @@ class CheckAnswerResponse(BaseModel):
     pronunciation: Optional[str] = None
     example_english: Optional[str] = None
     example_vietnamese: Optional[str] = None
+    grader: str = "levenshtein"  # "labse" or "levenshtein" or "exact"
 
 
 # ─── Vocabulary Enrich Schemas ────────────────────────────────────

@@ -4,7 +4,7 @@ const API_SERVICE_URL = "http://127.0.0.1:3001";
 
 /**
  * POST /api/flashcards/review?user_id=xxx
- * Proxies review submission to Python backend with SM-2 / TCGL algorithm.
+ * Proxies review submission to Python backend with SM-2 / TGCL algorithm.
  */
 export async function POST(request: NextRequest) {
   try {

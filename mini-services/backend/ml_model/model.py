@@ -1,4 +1,4 @@
-"""Temporal Contrastive Graph Learning (TCGL) Model Definition.
+"""Temporal Graph Contrastive Learning (TGCL) Model Definition.
 
 This module reconstructs the model architecture from the trained model.pth
 and provides inference capabilities for flashcard spaced repetition.
@@ -22,7 +22,7 @@ from torch_geometric.utils import scatter as pyg_scatter
 
 
 class CustomGraphConv(nn.Module):
-    """Custom graph convolution matching the TCGL model's state_dict.
+    """Custom graph convolution matching the TGCL model's state_dict.
 
     Uses separate linear transformations for source (lin_l) and
     target (lin_r) nodes, with mean aggregation of neighbor messages.
@@ -83,8 +83,8 @@ class TimeEncoder(nn.Module):
         return self.w(t)
 
 
-class TCGLModel(nn.Module):
-    """Temporal Contrastive Graph Learning model for flashcard scheduling.
+class TGCLModel(nn.Module):
+    """Temporal Graph Contrastive Learning model for flashcard scheduling.
 
     Takes a graph of vocabulary words connected by review history,
     encodes temporal patterns, and predicts optimal review intervals.
@@ -136,7 +136,7 @@ class TCGLModel(nn.Module):
         edge_index: torch.Tensor,
         edge_time: torch.Tensor,
     ) -> torch.Tensor:
-        """Forward pass through the TCGL model.
+        """Forward pass through the TGCL model.
 
         Args:
             x: Node features [N, node_feat_dim] — per-word features like
@@ -188,17 +188,17 @@ class TCGLModel(nn.Module):
         return out
 
 
-def load_model(model_path: str, device: str = "cpu") -> TCGLModel:
-    """Load a pre-trained TCGL model from a .pth file.
+def load_model(model_path: str, device: str = "cpu") -> TGCLModel:
+    """Load a pre-trained TGCL model from a .pth file.
 
     Args:
         model_path: Path to the model.pth file
         device: Device to load the model on ('cpu' or 'cuda')
 
     Returns:
-        Loaded TCGLModel in eval mode
+        Loaded TGCLModel in eval mode
     """
-    model = TCGLModel()
+    model = TGCLModel()
     state_dict = torch.load(model_path, map_location=device, weights_only=False)
     model.load_state_dict(state_dict, strict=True)
     model.to(device)

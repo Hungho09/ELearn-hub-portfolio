@@ -62,11 +62,12 @@ interface CheckAnswerResult {
   rating: number;
   accuracy: number;
   is_correct: boolean;
-  match_type: 'exact' | 'close' | 'partial' | 'incorrect';
+  match_type: 'exact' | 'close' | 'partial' | 'incorrect' | 'semantic';
   similarity: number;
   pronunciation: string | null;
   example_english: string | null;
   example_vietnamese: string | null;
+  grader: 'labse' | 'levenshtein' | 'exact';
 }
 
 interface ReviewResult {
@@ -261,7 +262,7 @@ export default function StudyEnglishPage() {
       );
 
       setSessionStats(prev => ({
-        correct: prev.correct + (checkResult.is_correct && checkResult.match_type === 'exact' ? 1 : 0),
+        correct: prev.correct + (checkResult.is_correct && (checkResult.match_type === 'exact' || checkResult.match_type === 'semantic') ? 1 : 0),
         close: prev.close + (checkResult.match_type === 'close' ? 1 : 0),
         wrong: prev.wrong + (!checkResult.is_correct ? 1 : 0),
         total: prev.total + 1,

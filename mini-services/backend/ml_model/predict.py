@@ -1,6 +1,6 @@
-"""TCGL Model — Dynamic Prediction & Online Learning Module.
+"""TGCL Model — Dynamic Prediction & Online Learning Module.
 
-This module provides the ACTIVE Temporal Contrastive Graph Learning
+This module provides the ACTIVE Temporal Graph Contrastive Learning
 model that can both PREDICT and LEARN from user data.
 
 Key capabilities:
@@ -29,7 +29,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from ml_model.model import TCGLModel
+from ml_model.model import TGCLModel
 
 # ─── Configuration ────────────────────────────────────────────────
 
@@ -40,7 +40,7 @@ _SAVE_MODEL_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "tcgl_learned.pth"
 )
 
-MODEL_PATH = os.environ.get("TCGL_MODEL_PATH", _DEFAULT_MODEL_PATH)
+MODEL_PATH = os.environ.get("TGCL_MODEL_PATH", _DEFAULT_MODEL_PATH)
 
 NODE_FEAT_DIM = 19
 EMBED_DIM = 16
@@ -70,7 +70,7 @@ PARTS_OF_SPEECH = [
 
 # ─── Model Singleton (thread-safe) ────────────────────────────────
 
-_model: Optional[TCGLModel] = None
+_model: Optional[TGCLModel] = None
 _optimizer: Optional[torch.optim.Adam] = None
 _lock = threading.Lock()
 
@@ -87,8 +87,8 @@ _stats = {
 }
 
 
-def get_model() -> TCGLModel:
-    """Get or initialize the TCGL model singleton."""
+def get_model() -> TGCLModel:
+    """Get or initialize the TGCL model singleton."""
     global _model, _optimizer
     if _model is None:
         with _lock:
@@ -103,20 +103,20 @@ def _load_model_internal():
 
     # Try loading the learned model first (has our online updates)
     if os.path.exists(_SAVE_MODEL_PATH):
-        print(f"[TCGL] Loading LEARNED model from {_SAVE_MODEL_PATH}...")
-        _model = TCGLModel()
+        print(f"[TGCL] Loading LEARNED model from {_SAVE_MODEL_PATH}...")
+        _model = TGCLModel()
         state_dict = torch.load(_SAVE_MODEL_PATH, map_location="cpu", weights_only=False)
         _model.load_state_dict(state_dict, strict=True)
         _stats["model_source"] = "learned"
     elif os.path.exists(MODEL_PATH):
-        print(f"[TCGL] Loading PRETRAINED model from {MODEL_PATH}...")
-        _model = TCGLModel()
+        print(f"[TGCL] Loading PRETRAINED model from {MODEL_PATH}...")
+        _model = TGCLModel()
         state_dict = torch.load(MODEL_PATH, map_location="cpu", weights_only=False)
         _model.load_state_dict(state_dict, strict=True)
         _stats["model_source"] = "pretrained"
     else:
-        print("[TCGL] No model file found. Initializing fresh model...")
-        _model = TCGLModel(num_nodes=200)  # Small for our 123 vocab items
+        print("[TGCL] No model file found. Initializing fresh model...")
+        _model = TGCLModel(num_nodes=200)  # Small for our 123 vocab items
         _stats["model_source"] = "fresh"
 
     _model.to("cpu")
@@ -135,7 +135,7 @@ def _load_model_internal():
 
     n_trainable = sum(p.numel() for p in trainable_params)
     n_total = sum(p.numel() for p in _model.parameters())
-    print(f"[TCGL] Model ready on CPU — {n_trainable:,} trainable / {n_total:,} total params")
+    print(f"[TGCL] Model ready on CPU — {n_trainable:,} trainable / {n_total:,} total params")
 
 
 # ─── Feature Engineering ──────────────────────────────────────────
@@ -227,7 +227,7 @@ def build_review_graph(
     vocab_items: list[dict],
     target_vocab_id: Optional[int] = None,
 ) -> tuple:
-    """Construct a graph from review logs for TCGL model inference.
+    """Construct a graph from review logs for TGCL model inference.
 
     Args:
         review_logs: List of review log dicts
@@ -422,7 +422,7 @@ def _contrastive_loss(
     edge_index: torch.Tensor,
     margin: float = 1.0,
 ) -> torch.Tensor:
-    """Temporal contrastive loss.
+    """Temporal Graph Contrastive Loss.
 
     Positive pairs: nodes connected by edges (reviewed in same session / temporal sequence)
     Negative pairs: nodes NOT connected
@@ -471,7 +471,7 @@ def predict_next_review(
     session_id: Optional[str] = None,
     enable_learning: bool = True,
 ) -> dict:
-    """Predict the next review parameters using the TCGL model.
+    """Predict the next review parameters using the TGCL model.
 
     This is the drop-in replacement for calculate_sm2().
     After prediction, performs online learning (gradient update) if enable_learning=True.
@@ -593,7 +593,7 @@ def predict_next_review(
         }
 
     except Exception as e:
-        print(f"[TCGL] Model inference failed: {e}. Falling back to SM-2.")
+        print(f"[TGCL] Model inference failed: {e}. Falling back to SM-2.")
         import traceback
         traceback.print_exc()
         from spaced_repetition import calculate_sm2
@@ -682,7 +682,7 @@ def _online_learn(
         _stats["last_online_loss"] = round(loss.item(), 6)
 
     except Exception as e:
-        print(f"[TCGL] Online learning failed: {e}")
+        print(f"[TGCL] Online learning failed: {e}")
         model = get_model()
         if model is not None:
             model.eval()
@@ -808,7 +808,7 @@ def save_model(path: Optional[str] = None) -> str:
 
     _stats["model_saved_at"] = datetime.now(timezone.utc).isoformat()
     _stats["model_source"] = "learned"
-    print(f"[TCGL] Model saved to {save_path}")
+    print(f"[TGCL] Model saved to {save_path}")
     return save_path
 
 
@@ -826,7 +826,7 @@ def get_initial_state() -> dict:
 
 
 def is_model_loaded() -> bool:
-    """Check if the TCGL model is loaded."""
+    """Check if the TGCL model is loaded."""
     return _model is not None
 
 
@@ -838,7 +838,7 @@ def get_model_info() -> dict:
         total = sum(p.numel() for p in model.parameters())
 
         return {
-            "active_model": "TCGL (Temporal Contrastive Graph Learning) — Dynamic PyTorch",
+            "active_model": "TGCL (Temporal Graph Contrastive Learning) — Dynamic PyTorch",
             "model_loaded": True,
             "can_learn": True,
             "model_source": _stats["model_source"],
@@ -878,7 +878,7 @@ def get_model_info() -> dict:
             "model_loaded": False,
             "can_learn": False,
             "error": str(e),
-            "fallback": "SM-2 is active because TCGL model could not be loaded",
+            "fallback": "SM-2 is active because TGCL model could not be loaded",
         }
 
 

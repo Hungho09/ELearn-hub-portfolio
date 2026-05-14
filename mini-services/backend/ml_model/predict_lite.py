@@ -1,4 +1,4 @@
-"""Lightweight TCGL inference using NumPy instead of PyTorch.
+"""Lightweight TGCL inference using NumPy instead of PyTorch.
 
 This module extracts the trained weights from model.pth and performs
 inference using pure NumPy operations, avoiding the ~200MB PyTorch
@@ -28,7 +28,7 @@ _WEIGHTS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tcgl_w
 # If NPZ doesn't exist, fall back to extracting from .pth
 _DEFAULT_MODEL_PATH = os.path.join(_PROJECT_ROOT, "upload", "model.pth")
 
-MODEL_PATH = os.environ.get("TCGL_MODEL_PATH", _DEFAULT_MODEL_PATH)
+MODEL_PATH = os.environ.get("TGCL_MODEL_PATH", _DEFAULT_MODEL_PATH)
 
 NODE_FEAT_DIM = 19
 EMBED_DIM = 16
@@ -63,10 +63,10 @@ def _load_weights() -> dict:
 
     # Try loading from pre-extracted NPZ first (no torch needed)
     if os.path.exists(_WEIGHTS_PATH):
-        print(f"[TCGL-Lite] Loading weights from {_WEIGHTS_PATH}...")
+        print(f"[TGCL-Lite] Loading weights from {_WEIGHTS_PATH}...")
         data = np.load(_WEIGHTS_PATH)
         _weights = {k: data[k] for k in data.files}
-        print(f"[TCGL-Lite] Weights loaded ({len(_weights)} arrays, no PyTorch)")
+        print(f"[TGCL-Lite] Weights loaded ({len(_weights)} arrays, no PyTorch)")
         return _weights
 
     # Fallback: extract from .pth (requires torch)
@@ -80,9 +80,9 @@ def _load_weights() -> dict:
         )
 
     if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError(f"TCGL model not found at {MODEL_PATH}")
+        raise FileNotFoundError(f"TGCL model not found at {MODEL_PATH}")
 
-    print(f"[TCGL-Lite] Extracting weights from {MODEL_PATH}...")
+    print(f"[TGCL-Lite] Extracting weights from {MODEL_PATH}...")
     state = torch.load(MODEL_PATH, map_location="cpu", weights_only=False)
 
     # Extract weights as numpy arrays (skip the huge 78K embedding table)
@@ -131,7 +131,7 @@ def _load_weights() -> dict:
     import gc
     gc.collect()
 
-    print(f"[TCGL-Lite] Weights extracted ({len(_weights)} arrays)")
+    print(f"[TGCL-Lite] Weights extracted ({len(_weights)} arrays)")
     return _weights
 
 
@@ -168,7 +168,7 @@ def _scatter_mean(src, index, dim_size):
 
 def _forward(x: np.ndarray, edge_index: np.ndarray, edge_time: np.ndarray,
              embed_features: np.ndarray) -> np.ndarray:
-    """Run the TCGL forward pass using pure NumPy.
+    """Run the TGCL forward pass using pure NumPy.
 
     Args:
         x: Node features [N, 19]
@@ -298,7 +298,7 @@ def predict_next_review(
     response_time_ms: Optional[int] = None,
     session_id: Optional[str] = None,
 ) -> dict:
-    """Predict the next review parameters using the TCGL model (NumPy inference).
+    """Predict the next review parameters using the TGCL model (NumPy inference).
 
     Drop-in replacement for calculate_sm2(). Falls back to SM-2 if model fails.
     Same interface as ml_model.predict.predict_next_review.
@@ -462,7 +462,7 @@ def predict_next_review(
         }
 
     except Exception as e:
-        print(f"[TCGL-Lite] Inference failed: {e}. Falling back to SM-2.")
+        print(f"[TGCL-Lite] Inference failed: {e}. Falling back to SM-2.")
         from spaced_repetition import calculate_sm2
 
         result = calculate_sm2(
@@ -493,7 +493,7 @@ def get_initial_state() -> dict:
 
 
 def is_model_loaded() -> bool:
-    """Check if the TCGL model weights are loaded."""
+    """Check if the TGCL model weights are loaded."""
     return _weights is not None
 
 
@@ -502,7 +502,7 @@ def get_model_info() -> dict:
     try:
         w = _load_weights()
         return {
-            "active_model": "TCGL (Temporal Contrastive Graph Learning) — NumPy Lite",
+            "active_model": "TGCL (Temporal Graph Contrastive Learning) — NumPy Lite",
             "model_loaded": True,
             "model_path": MODEL_PATH,
             "inference_mode": "numpy (memory-efficient, no PyTorch runtime)",
@@ -522,5 +522,5 @@ def get_model_info() -> dict:
             "active_model": "SM-2 (SuperMemo)",
             "model_loaded": False,
             "error": str(e),
-            "fallback": "SM-2 is active because TCGL model could not be loaded",
+            "fallback": "SM-2 is active because TGCL model could not be loaded",
         }

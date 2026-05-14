@@ -93,3 +93,37 @@ Stage Summary:
 - 4 → 1 database files (only backend/learnhub.db remains)
 - Old api-service and flashcard-service directories removed
 - .env cleaned up (removed DATABASE_URL, kept NEXTAUTH_SECRET + NEXTAUTH_URL)
+
+---
+Task ID: 4
+Agent: Main
+Task: Integrate LaBSE semantic similarity model into the answer grading system
+
+Work Log:
+- Analyzed current grader.py: uses Levenshtein distance + diacritics normalization (string-level only)
+- Installed sentence-transformers + torch CPU-only on sandbox for testing
+- Verified LaBSE model works: "Xin chào" vs "Hello" = 0.92, "Đẹp" vs "Beautiful" = 0.96
+- Rewrote grader.py with LaBSE integration:
+  - Lazy model loading with thread-safe singleton pattern
+  - Automatic fallback to Levenshtein if LaBSE unavailable
+  - New grading thresholds for semantic similarity: 0.85+ Easy, 0.70+ Good, 0.50+ Hard, <0.50 Again
+  - Returns `grader` field in result ("labse" | "levenshtein" | "exact")
+  - Diacritics-ignored match now rated as Easy (0.95 accuracy) instead of Good
+- Updated main.py: LaBSE model pre-loaded at startup, health check includes grader status
+- Updated flashcard router: added /grader-info endpoint, semantic match_type passthrough
+- Updated schemas.py: added `grader` field to CheckAnswerResponse
+- Updated requirements.txt: added sentence-transformers>=3.0.0
+- Updated frontend StudyResult component:
+  - Added `semantic` match_type with green styling + "Semantic match (AI)" badge
+  - Added LaBSE AI badge with Brain icon when grader is "labse"
+  - Fallback for incorrect semantic matches to partial/incorrect styling
+- Updated study/english page: semantic matches count as "correct" in session stats
+- Lint passes clean
+
+Stage Summary:
+- Grader now uses LaBSE for cross-lingual semantic similarity (VN→EN matching)
+- Automatic fallback to Levenshtein if sentence-transformers not installed
+- Backend startup pre-loads LaBSE model (~2-5s load time)
+- Frontend shows "LaBSE AI" badge when semantic grading is used
+- Health endpoint shows grader status
+- requirements.txt updated with sentence-transformers dependency

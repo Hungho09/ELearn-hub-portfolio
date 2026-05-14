@@ -103,7 +103,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def startup():
-    """Initialize database, migrate schema, seed data, and pre-load TCGL model on startup."""
+    """Initialize database, migrate schema, seed data, and pre-load models on startup."""
     Base.metadata.create_all(bind=engine)
 
     # Migrate: ensure new columns exist (SQLite doesn't support ALTER COLUMN)
@@ -111,13 +111,20 @@ def startup():
 
     seed_database()
 
-    # Pre-load the TCGL model at startup
+    # Pre-load the TGCL model at startup
     try:
         from ml_model.predict import get_model
         get_model()  # Loads model + creates optimizer
-        print("[startup] TCGL model pre-loaded (can predict AND learn)")
+        print("[startup] TGCL model pre-loaded (can predict AND learn)")
     except Exception as e:
-        print(f"[startup] TCGL model not available: {e}. SM-2 fallback will be used.")
+        print(f"[startup] TGCL model not available: {e}. SM-2 fallback will be used.")
+
+    # Pre-load the LaBSE model for semantic grading
+    try:
+        from grader import _load_labse_model
+        _load_labse_model()
+    except Exception as e:
+        print(f"[startup] LaBSE model not available: {e}. Levenshtein fallback will be used.")
 
 
 # ─── Include Routers ──────────────────────────────────────────────
@@ -133,7 +140,7 @@ app.include_router(review_logs_router)
 
 @app.get("/health")
 def health_check():
-    # Check TCGL model status
+    # Check TGCL model status
     tcgl_status = "not_loaded"
     try:
         from ml_model.predict import is_model_loaded
@@ -141,12 +148,22 @@ def health_check():
     except Exception:
         tcgl_status = "unavailable"
 
+    # Check LaBSE grader status
+    labse_status = "not_loaded"
+    try:
+        from grader import get_labse_status
+        labse_info = get_labse_status()
+        labse_status = "loaded" if labse_info["available"] else "not_available"
+    except Exception:
+        labse_status = "unavailable"
+
     return {
         "status": "ok",
         "service": "learnhub-backend",
         "version": "2.0.0",
         "database": "sqlite",
         "tcgl_model": tcgl_status,
+        "labse_grader": labse_status,
         "routers": {
             "auth": ["/api/auth/register", "/api/auth/verify"],
             "user": ["/api/user/profile", "/api/user/avatar"],
