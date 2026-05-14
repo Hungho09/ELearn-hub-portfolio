@@ -24,6 +24,11 @@ node_modules
 .DS_Store
 *.pem
 
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
 # debug
 npm-debug.log*
 yarn-debug.log*
