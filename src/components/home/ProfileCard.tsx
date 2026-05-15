@@ -22,7 +22,7 @@ export function ProfileCard() {
   const userInitial = userName.charAt(0).toUpperCase();
 
   return (
-    <Card className="shadow-sm border-border/50 py-0 gap-0">
+    <Card variant="interactive" className="border-border py-0 gap-0">
       <CardContent className="p-5">
         {/* Avatar and user info */}
         <div className="flex flex-col items-center text-center">

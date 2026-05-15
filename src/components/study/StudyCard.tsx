@@ -74,10 +74,10 @@ export function StudyCard({
       </div>
 
       {/* Prompt Card */}
-      <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-card to-primary/10 border-primary/20">
-        {/* Decorative circles */}
-        <div className="absolute top-0 right-0 size-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 size-24 bg-primary/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+      <Card className="relative overflow-hidden shadow-card bg-gradient-to-br from-primary/10 via-card to-primary/20 border-primary/30">
+        {/* Decorative circles - animated */}
+        <div className="absolute top-0 right-0 size-32 bg-primary/8 rounded-full -translate-y-1/2 translate-x-1/2 animate-float [animation-duration:6s]" />
+        <div className="absolute bottom-0 left-0 size-24 bg-primary/8 rounded-full translate-y-1/2 -translate-x-1/2 animate-float [animation-duration:5s] [animation-delay:1s]" />
 
         <CardContent className="relative p-6 md:p-8">
           <div className="flex flex-col items-center gap-6 animate-in fade-in duration-300">
@@ -108,7 +108,7 @@ export function StudyCard({
                   placeholder={`Type in ${answerLabel}...`}
                   value={userInput}
                   onChange={(e) => onInputChange(e.target.value)}
-                  className="h-14 text-lg text-center px-4 rounded-xl border-2 focus:border-primary transition-colors"
+                  className="h-14 text-lg text-center px-4 rounded-xl border-2 border-primary/20 focus:border-primary transition-colors"
                   disabled={submitting}
                   autoComplete="off"
                   autoCorrect="off"
@@ -171,7 +171,7 @@ export function StudyCard({
                 ) : (
                   <>
                     Check
-                    <kbd className="ml-1 px-1.5 py-0.5 bg-white/20 rounded text-[11px]">↵</kbd>
+                    <kbd className="ml-1 px-1.5 py-0.5 bg-white/20 border border-white/30 rounded text-[11px]">↵</kbd>
                   </>
                 )}
               </Button>
@@ -183,10 +183,10 @@ export function StudyCard({
       {/* Keyboard shortcuts hint */}
       <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
         <span>
-          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Tab</kbd> Switch direction
+          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[10px] shadow-[inset_0_1px_0_hsla(var(--background)/0.5)]">Tab</kbd> Switch direction
         </span>
         <span>
-          <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Esc</kbd> Skip card
+          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[10px] shadow-[inset_0_1px_0_hsla(var(--background)/0.5)]">Esc</kbd> Skip card
         </span>
       </div>
     </div>

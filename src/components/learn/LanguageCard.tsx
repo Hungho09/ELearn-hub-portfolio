@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Lock, ArrowRight } from 'lucide-react';
+import { Lock, ArrowRight, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LanguageCardProps {
@@ -47,24 +47,28 @@ export function LanguageCard({
 
   return (
     <Card
+      variant={available ? 'interactive' : 'default'}
       className={cn(
-        'group relative overflow-hidden transition-all duration-300',
-        available
-          ? 'hover:shadow-lg hover:-translate-y-1 cursor-pointer border-border/80'
-          : 'opacity-60 cursor-not-allowed'
+        'group relative overflow-hidden transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
+        !available && 'cursor-not-allowed'
       )}
       onClick={available ? onStart : undefined}
     >
-      {/* Decorative gradient overlay */}
+      {/* Decorative gradient overlay — richer on hover */}
       {available && (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/8 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       )}
 
-      <CardContent className="relative p-6">
+      {/* Frosted overlay for unavailable */}
+      {!available && (
+        <div className="absolute inset-0 bg-muted/40 backdrop-blur-[1px] rounded-xl z-[1]" />
+      )}
+
+      <CardContent className={cn('relative p-6', !available && 'opacity-60')}>
         {/* Header: Flag + Name */}
         <div className="flex items-start gap-4">
           <div className={cn(
-            'flex size-14 items-center justify-center rounded-xl text-3xl shrink-0',
+            'flex size-14 items-center justify-center rounded-xl text-3xl shrink-0 transition-transform duration-300 group-hover:scale-105',
             available ? 'bg-primary/10' : 'bg-muted'
           )}>
             {flag}
@@ -99,8 +103,9 @@ export function LanguageCard({
             </div>
             <Progress value={progressPercent} className="h-1.5" />
             {streakDays > 0 && (
-              <p className="text-xs text-orange-500 font-medium">
-                🔥 {streakDays} day streak
+              <p className="text-xs text-orange-500 font-medium flex items-center gap-1">
+                <Flame className="size-3" />
+                {streakDays} day streak
               </p>
             )}
           </div>
@@ -110,7 +115,7 @@ export function LanguageCard({
         <div className="mt-4">
           {available ? (
             <Button
-              className="w-full gap-2 group-hover:shadow-md transition-shadow"
+              className="w-full gap-2 group-hover:shadow-btn-hover group-hover:scale-[1.01] transition-all"
               onClick={(e) => {
                 e.stopPropagation();
                 onStart();

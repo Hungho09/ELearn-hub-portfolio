@@ -93,7 +93,7 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
 
   return (
     <div className="space-y-4">
-      <Card className={cn('relative overflow-hidden', config.bgColor, config.borderColor)}>
+      <Card className={cn('relative overflow-hidden shadow-card', config.bgColor, config.borderColor)}>
         <CardContent className="relative p-6 md:p-8">
           <div className="flex flex-col items-center gap-5 animate-in fade-in slide-in-from-bottom-4 duration-400">
             {/* Result icon & label */}

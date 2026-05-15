@@ -1,7 +1,8 @@
 'use client';
 
-import { Bell } from 'lucide-react';
+import { Bell, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
@@ -49,9 +50,10 @@ export function CourseProgressCards() {
       {/* Section header */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-foreground">Online Course</h2>
-        <button className="rounded-md bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors">
+        <Button variant="outline" size="xs" className="gap-1.5">
           See All
-        </button>
+          <ArrowRight className="size-3.5" />
+        </Button>
       </div>
 
       {/* Course progress cards */}
@@ -62,7 +64,8 @@ export function CourseProgressCards() {
           return (
             <Card
               key={course.name}
-              className="shadow-sm hover:shadow-md transition-all duration-200 border-border/50 py-0 gap-0 cursor-pointer group"
+              variant="interactive"
+              className="border-border py-0 gap-0 group"
             >
               <CardContent className="flex items-center gap-3.5 p-4">
                 {/* Course thumbnail */}
@@ -70,7 +73,7 @@ export function CourseProgressCards() {
                   <img
                     src={course.image}
                     alt={course.name}
-                    className="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                    className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
 
@@ -80,10 +83,14 @@ export function CourseProgressCards() {
                     <h3 className="truncate text-sm font-semibold text-foreground">
                       {course.name}
                     </h3>
-                    <button className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 size-7 rounded-md text-muted-foreground hover:text-foreground"
+                    >
                       <Bell className="size-3.5" />
                       <span className="sr-only">Notifications for {course.name}</span>
-                    </button>
+                    </Button>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {course.watched}/{course.total} Watched

@@ -1,8 +1,9 @@
 'use client';
 
-import { Play, Clock } from 'lucide-react';
+import { Play, Clock, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 /** Course card data type */
@@ -49,9 +50,10 @@ export function ContinueWatching() {
       {/* Section header */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-semibold text-foreground">Continue Watching</h2>
-        <button className="rounded-md bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground hover:bg-secondary/80 transition-colors">
+        <Button variant="outline" size="xs" className="gap-1.5">
           See All
-        </button>
+          <ArrowRight className="size-3.5" />
+        </Button>
       </div>
 
       {/* Course cards grid */}
@@ -59,7 +61,8 @@ export function ContinueWatching() {
         {continueCourses.map((course) => (
           <Card
             key={course.title}
-            className="group overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 border-border/50 py-0 gap-0 cursor-pointer"
+            variant="interactive"
+            className="group overflow-hidden border-border py-0 gap-0"
           >
             {/* Thumbnail with play overlay */}
             <div className="relative aspect-video overflow-hidden bg-muted">

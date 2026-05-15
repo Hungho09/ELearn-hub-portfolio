@@ -137,7 +137,7 @@ export function ProfileForm() {
   return (
     <div className="space-y-6">
       {/* Avatar Section */}
-      <Card>
+      <Card className="shadow-card">
         <CardContent className="p-6">
           <div className="flex items-center gap-6">
             <div className="relative group">
@@ -186,7 +186,7 @@ export function ProfileForm() {
       </Card>
 
       {/* Profile Form */}
-      <Card>
+      <Card className="shadow-card">
         <CardHeader>
           <CardTitle>Profile Information</CardTitle>
         </CardHeader>
@@ -240,7 +240,7 @@ export function ProfileForm() {
       </Card>
 
       {/* Sign Out */}
-      <Card>
+      <Card className="shadow-card">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>

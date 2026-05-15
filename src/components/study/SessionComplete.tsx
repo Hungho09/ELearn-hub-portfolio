@@ -52,25 +52,25 @@ export function SessionComplete({
 
       {/* Session Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-lg">
-        <Card className="text-center">
+        <Card className="text-center shadow-card">
           <CardContent className="p-4">
             <p className="text-2xl font-bold text-foreground">{sessionStats.total}</p>
             <p className="text-xs text-muted-foreground">Đã ôn</p>
           </CardContent>
         </Card>
-        <Card className="text-center border-l-4 border-l-emerald-500">
+        <Card className="text-center border-l-4 border-l-emerald-500 shadow-card">
           <CardContent className="p-4">
             <p className="text-2xl font-bold text-emerald-600">{sessionStats.correct}</p>
             <p className="text-xs text-muted-foreground">Chính xác</p>
           </CardContent>
         </Card>
-        <Card className="text-center border-l-4 border-l-amber-500">
+        <Card className="text-center border-l-4 border-l-amber-500 shadow-card">
           <CardContent className="p-4">
             <p className="text-2xl font-bold text-amber-600">{sessionStats.close}</p>
             <p className="text-xs text-muted-foreground">Gần đúng</p>
           </CardContent>
         </Card>
-        <Card className="text-center border-l-4 border-l-red-500">
+        <Card className="text-center border-l-4 border-l-red-500 shadow-card">
           <CardContent className="p-4">
             <p className="text-2xl font-bold text-red-500">{sessionStats.wrong}</p>
             <p className="text-xs text-muted-foreground">Cần ôn lại</p>

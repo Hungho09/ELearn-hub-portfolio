@@ -2,12 +2,22 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+type CardVariant = "default" | "interactive"
+
+interface CardProps extends React.ComponentProps<"div"> {
+  variant?: CardVariant
+}
+
+function Card({ className, variant = "default", ...props }: CardProps) {
   return (
     <div
       data-slot="card"
+      data-variant={variant}
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6",
+        "shadow-card transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]",
+        variant === "interactive" &&
+          "hover:-translate-y-0.5 hover:shadow-card-hover cursor-pointer",
         className
       )}
       {...props}

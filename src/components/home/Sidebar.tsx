@@ -101,10 +101,10 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
         key={item.label}
         onClick={() => handleNavClick(item)}
         className={cn(
-          'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+          'flex w-full items-center gap-3 rounded-full px-3 py-2 text-sm font-medium transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
           isActive
-            ? 'bg-primary text-primary-foreground shadow-sm'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            ? 'bg-primary text-primary-foreground shadow-btn hover:shadow-btn-hover hover:scale-[1.01]'
+            : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-[1.01]'
         )}
       >
         <Icon className="size-5 shrink-0" />
@@ -137,7 +137,7 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex h-full flex-col border-r border-border bg-card transition-all duration-300',
+        'flex h-full flex-col border-r border-border bg-card/80 backdrop-blur-md transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
         collapsed ? 'w-[72px]' : 'w-[240px]'
       )}
     >
@@ -146,7 +146,7 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
         onClick={handleLogoClick}
         className={cn('flex items-center gap-2.5 px-4 py-5 w-full hover:bg-muted/50 transition-colors', collapsed && 'justify-center px-2')}
       >
-        <div className="flex size-9 items-center justify-center rounded-lg bg-primary">
+        <div className="flex size-9 items-center justify-center rounded-xl bg-primary shadow-btn hover:shadow-btn-hover transition-shadow">
           <GraduationCap className="size-5 text-primary-foreground" />
         </div>
         {!collapsed && (
@@ -194,8 +194,8 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
           <button
             onClick={handleAuthAction}
             className={cn(
-              'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-              'text-muted-foreground hover:bg-muted hover:text-foreground'
+              'flex w-full items-center gap-3 rounded-full px-3 py-2 text-sm font-medium transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
+              'text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-[1.01]'
             )}
           >
             {session ? <LogOut className="size-5 shrink-0" /> : <LogIn className="size-5 shrink-0" />}

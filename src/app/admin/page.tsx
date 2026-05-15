@@ -549,7 +549,7 @@ export default function AdminDashboardPage() {
                 Thêm từ vựng từ API
               </h2>
 
-              <Card className="border-dashed border-2 border-primary/30 bg-primary/5">
+              <Card className="border-dashed border-2 border-primary/30 bg-primary/5 shadow-card">
                 <CardContent className="p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>

@@ -79,7 +79,7 @@ export default function RegisterPage() {
           </div>
           <span className="text-2xl font-bold tracking-tight text-foreground">LearnHub</span>
         </Link>
-        <Card className="shadow-lg border-border/50">
+        <Card className="shadow-card border-border hover:shadow-card-hover transition-all duration-[var(--duration-normal)]">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-xl">Create Account</CardTitle>
             <CardDescription>Start your learning journey today</CardDescription>

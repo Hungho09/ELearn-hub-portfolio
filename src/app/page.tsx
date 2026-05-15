@@ -6,12 +6,16 @@ import { useRouter } from 'next/navigation';
 import {
   GraduationCap,
   Menu,
+  Target,
+  BrainCircuit,
+  Flame,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Sidebar } from '@/components/home/Sidebar';
 import { LanguageCard } from '@/components/learn/LanguageCard';
+import { Card, CardContent } from '@/components/ui/card';
 import { LearningStats } from '@/components/learn/LearningStats';
 
 interface UserStatsData {
@@ -222,27 +226,39 @@ export default function HomePage() {
                 Mẹo học tập
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 p-5">
-                  <p className="text-2xl mb-2">🎯</p>
-                  <h3 className="font-semibold text-foreground text-sm">Active Recall</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Nhập đáp án thay vì tự đánh giá. Hệ thống tự chấm điểm giúp bạn học trung thực hơn.
-                  </p>
-                </div>
-                <div className="rounded-xl bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 p-5">
-                  <p className="text-2xl mb-2">🧠</p>
-                  <h3 className="font-semibold text-foreground text-sm">Spaced Repetition</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Thuật toán TGCL thông minh lên lịch ôn tập tối ưu dựa trên đường quên của bạn.
-                  </p>
-                </div>
-                <div className="rounded-xl bg-gradient-to-br from-orange-500/5 to-orange-500/10 border border-orange-500/20 p-5">
-                  <p className="text-2xl mb-2">🔥</p>
-                  <h3 className="font-semibold text-foreground text-sm">Streak</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Duy trì chuỗi ngày học để xây dựng thói quen. Mỗi ngày ôn tập đều đặn là bước tiến lớn!
-                  </p>
-                </div>
+                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+                  <CardContent className="p-5">
+                    <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                      <Target className="size-4 text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-sm">Active Recall</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Nhập đáp án thay vì tự đánh giá. Hệ thống tự chấm điểm giúp bạn học trung thực hơn.
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-emerald-500/10">
+                  <CardContent className="p-5">
+                    <div className="size-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-3">
+                      <BrainCircuit className="size-4 text-emerald-500" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-sm">Spaced Repetition</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Thuật toán TGCL thông minh lên lịch ôn tập tối ưu dựa trên đường quên của bạn.
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-orange-500/10">
+                  <CardContent className="p-5">
+                    <div className="size-8 rounded-lg bg-orange-500/10 flex items-center justify-center mb-3">
+                      <Flame className="size-4 text-orange-500" />
+                    </div>
+                    <h3 className="font-semibold text-foreground text-sm">Streak</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Duy trì chuỗi ngày học để xây dựng thói quen. Mỗi ngày ôn tập đều đặn là bước tiến lớn!
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>

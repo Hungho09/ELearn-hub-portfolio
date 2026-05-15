@@ -30,7 +30,7 @@ const maxHours = Math.max(...weeklyActivity.map((d) => d.hours));
  */
 export function ActivityChart() {
   return (
-    <Card className="shadow-sm border-border/50 py-0 gap-0">
+    <Card variant="interactive" className="border-border py-0 gap-0">
       <CardHeader className="p-4 pb-2">
         <CardTitle className="text-sm font-semibold">Activity This Week</CardTitle>
       </CardHeader>
