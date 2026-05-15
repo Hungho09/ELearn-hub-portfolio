@@ -1,0 +1,126 @@
+🏆 MASTER PLAN: HỆ THỐNG GAMIFICATION (MVP)
+GIAI ĐOẠN 1: ĐẶC TẢ LUẬT CHƠI (GAME DESIGN)
+1. Hệ thống Điểm kinh nghiệm (XP)
+
+Cơ chế nhận XP: Người dùng nhận XP sau mỗi lần trả lời thẻ Flashcard (khi gọi API /review).
+
+Điểm cơ bản (Base XP) theo Rating:
+
+Mức 1 (Again / Sai): +5 XP (Khuyến khích nỗ lực).
+
+Mức 2 (Hard / Khó): +10 XP.
+
+Mức 3 (Good / Tốt): +20 XP.
+
+Mức 4 (Easy / Dễ): +30 XP.
+
+Điểm thưởng (Bonus XP): Dựa trên độ khó của từ vựng (difficulty_level * 5). Tối đa +15 XP cho từ khó nhất.
+
+2. Hệ thống Cấp độ (Leveling System)
+
+Công thức lên cấp: Tuyến tính kết hợp hàm mũ nhẹ để giai đoạn đầu dễ thăng cấp, tạo động lực sớm.
+
+Next_Level_XP = (Current_Level ^ 2) * 50 + 50
+
+Ví dụ: Level 1 -> 2 (Cần 100 XP), Level 2 -> 3 (Cần 250 XP), Level 3 -> 4 (Cần 500 XP).
+
+Giới hạn cấp độ (Level Cap): Tối đa Cấp 50 (Yêu cầu ~125,000 XP).
+
+3. Hệ thống Huy hiệu (Badge System MVP)
+Danh sách 6 huy hiệu cốt lõi được kích hoạt tự động dựa trên hành vi học tập:
+
+🏅 FIRST_BLOOD (Bước chân đầu tiên): Kích hoạt khi hoàn thành review thẻ từ vựng đầu tiên.
+
+🔥 STREAK_3 (Lính mới chăm chỉ): Kích hoạt khi đạt chuỗi 3 ngày học liên tiếp.
+
+🔥 STREAK_7 (Chiến binh kỷ luật): Kích hoạt khi đạt chuỗi 7 ngày học liên tiếp.
+
+💎 MASTER_10 (Bậc thầy nhập môn): Kích hoạt khi có 10 từ đạt mốc "Thành thạo" (Ease >= 2.5 & Interval >= 21).
+
+📚 SCHOLAR_100 (Học giả kiên trì): Kích hoạt khi tổng số lần ôn tập (Total Reviews) vượt mốc 100.
+
+🦉 NIGHT_OWL (Cú đêm): Kích hoạt khi user học và submit review trong khung giờ 22:00 - 04:00 sáng.
+
+GIAI ĐOẠN 2: KIẾN TRÚC DỮ LIỆU & BACKEND (FASTAPI)
+1. Thiết kế Database (models.py)
+
+Bảng User: Bổ sung cột xp_points (Integer, default=0) và current_level (Integer, default=1).
+
+Bảng UserBadge (Mới): Lưu trữ huy hiệu đã mở khóa.
+
+Cột: id, user_id (FK), badge_code (String), unlocked_at (DateTime).
+
+Ràng buộc: Unique Index (user_id, badge_code) để mỗi người chỉ nhận 1 huy hiệu 1 lần.
+
+2. Cập nhật Schemas (schemas.py)
+
+Bổ sung xp_points, current_level, next_level_xp vào UserStats, UserResponse.
+
+Bổ sung xp_earned (int) và unlocked_badges (list[str]) vào ReviewResult để Frontend bắt sự kiện tạo hiệu ứng.
+
+3. Core Logic Xử lý (flashcard.py)
+
+API POST /review:
+
+Tính toán xp_earned = Base XP + Bonus XP. Cộng thẳng vào user.xp_points.
+
+Vòng lặp kiểm tra Level Up: while user.xp_points >= next_level_xp: user.current_level += 1.
+
+Kiểm tra điều kiện unlock các Badge (VD: Nếu review count = 1 -> Unlock FIRST_BLOOD). Thêm vào bảng UserBadge nếu chưa có.
+
+API GET /stats:
+
+Tính toán và trả về next_level_xp để Frontend vẽ thanh Progress Bar.
+
+4. Dữ liệu mẫu Test (seed.py)
+
+Tạo user gamer@learnhub.com với Level 8, 3800 XP và sẵn 3 huy hiệu (FIRST_BLOOD, STREAK_3, NIGHT_OWL) để test UI Frontend mà không cần cày lại từ đầu.
+
+GIAI ĐOẠN 3: ĐỒNG BỘ PHIÊN ĐĂNG NHẬP (NEXTAUTH BRIDGE)
+1. Mở rộng Type (next-auth.d.ts)
+
+Khai báo xpPoints và currentLevel vào cấu trúc Session, User và JWT.
+
+2. Cập nhật Logic Auth (auth.ts)
+
+Lưu xpPoints và currentLevel vào JWT token khi đăng nhập.
+
+Thiết lập sự kiện trigger === "update": Cho phép Frontend gọi hàm update() để làm mới XP và Level trong Session âm thầm (không cần f5 trang) ngay khi kết thúc bài học.
+
+GIAI ĐOẠN 4: GIAO DIỆN NGƯỜI DÙNG & TRẢI NGHIỆM (FRONTEND UI/UX)
+1. Luồng Học Tập (Study Flow)
+
+src/app/study/english/page.tsx:
+
+Tạo State earnedXp để cộng dồn XP lấy từ API sau mỗi lần nhấn Enter/Submit.
+
+Khi hết thẻ (chuyển sang màn complete), tự động gọi API lấy Stats mới nhất và trigger update() NextAuth để đồng bộ Level lên Header.
+
+SessionComplete.tsx:
+
+Tạo Banner động (Bounce animation) hiển thị tổng số XP vừa kiếm được trong phiên: + X XP.
+
+Tích hợp thanh Progress Bar cấp độ hiển thị XP hiện tại / XP cần cho cấp tiếp theo.
+
+2. Bảng Điều Khiển & Thống Kê (Dashboards)
+
+LearningStats.tsx: Thêm thẻ "Cấp độ" với icon Khiên (Shield) và màu Cyan đặc trưng vào bộ Card chỉ số rút gọn.
+
+src/app/page.tsx (Trang chủ): Thêm thanh Progress XP mini cạnh lời chào (Xin chào, Học viên! - Cấp X) để user thấy ngay tiến độ thăng cấp.
+
+src/app/stats/page.tsx (Trang Thống kê):
+
+Xây dựng thẻ Hero Card cực lớn hiển thị Level, Tổng XP, Hạng (Người mới / Chuyên gia), thanh Progress chi tiết.
+
+(Chuẩn bị UI) Layout danh sách Badge dạng Grid, badge nào chưa mở sẽ hiển thị màu xám (grayscale) kèm icon ổ khóa.
+
+GIAI ĐOẠN 5: LỘ TRÌNH PHÁT TRIỂN TIẾP THEO (POST-MVP)
+Sau khi MVP (Giai đoạn 1->4) hoạt động ổn định, các tính năng sau sẽ được xem xét thêm vào:
+
+UX Notifications: Tích hợp thư viện sonner hoặc react-toastify. Khi API /review trả về mảng unlocked_badges có chứa data, lập tức bắn popup nhỏ góc màn hình ngay trong lúc đang học: "🏆 Bạn vừa mở khóa huy hiệu: Chiến Binh Kỷ Luật!".
+
+Level-Up Modal: Sử dụng react-confetti. Nếu cấp độ cuối session lớn hơn cấp độ đầu session, bật hiệu ứng pháo giấy toàn màn hình ở trang SessionComplete.
+
+Leaderboard (Bảng xếp hạng): Tạo API top 50 user có XP cao nhất tuần/tháng để tăng tính cạnh tranh xã hội.
+
+Cửa hàng (Shop/Inventory): Dùng XP làm đơn vị tiền tệ ảo để mua Avatar Frame (Khung ảnh đại diện), Chủ đề giao diện (Dark/Light mode đặc biệt), hoặc mở khóa ngôn ngữ mới.

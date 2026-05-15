@@ -48,16 +48,23 @@ from seed import seed_database
 # ─── Database Migration ────────────────────────────────────────────
 
 def _migrate_database():
-    """Add missing columns to existing SQLite tables.
+    """Add missing columns/tables to existing SQLite database.
 
     SQLAlchemy's create_all() only creates NEW tables — it does NOT
     add columns to existing tables. This function uses ALTER TABLE
-    to add any missing columns.
+    to add any missing columns or create new tables.
     """
     from sqlalchemy import inspect, text
 
     inspector = inspect(engine)
+
+    # Columns to add to existing tables
     columns_to_add = {
+        "user": [
+            ("xp_points", "INTEGER"),
+            ("current_level", "INTEGER"),
+            ("last_reviewed_at", "VARCHAR(255)"),
+        ],
         "review_log": [
             ("user_answer", "VARCHAR(500)"),
             ("auto_rating", "INTEGER"),
@@ -81,6 +88,24 @@ def _migrate_database():
                         print(f"[migration] Added column {table_name}.{col_name}")
                     except Exception as e:
                         print(f"[migration] Could not add {table_name}.{col_name}: {e}")
+
+        # Create user_badge table if it doesn't exist
+        if not inspector.has_table("user_badge"):
+            try:
+                conn.execute(text(
+                    """CREATE TABLE user_badge (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id VARCHAR(255) NOT NULL,
+                        badge_code VARCHAR(50) NOT NULL,
+                        unlocked_at VARCHAR(255) NOT NULL,
+                        FOREIGN KEY (user_id) REFERENCES user(id),
+                        UNIQUE(user_id, badge_code)
+                    )"""
+                ))
+                conn.commit()
+                print("[migration] Created table user_badge")
+            except Exception as e:
+                print(f"[migration] Could not create user_badge table: {e}")
 
 
 # ─── App Setup ────────────────────────────────────────────────────
