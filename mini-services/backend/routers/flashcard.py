@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from database import get_db
-from models import Vocabulary, ReviewLog
+from models import User, Vocabulary, ReviewLog, UserBadge
 from schemas import (
     VocabularyCardResponse,
     ReviewSubmit,
@@ -40,6 +40,18 @@ from schemas import (
 )
 from spaced_repetition import calculate_sm2, get_initial_state
 from grader import check_answer as grade_answer, get_labse_status as grader_status
+from gamification import (
+    calculate_xp,
+    calculate_new_level,
+    next_level_xp,
+    check_badges,
+    FIRST_BLOOD,
+    STREAK_3,
+    STREAK_7,
+    MASTER_10,
+    SCHOLAR_100,
+    NIGHT_OWL,
+)
 
 # Lazy imports for TGCL model (requires torch, may not be available)
 try:
@@ -385,6 +397,100 @@ def submit_review(
           f"{', auto_rating=' + str(review.auto_rating) if review.auto_rating else ''}"
           f"{', user_answer=' + repr(review.user_answer[:30]) if review.user_answer else ''}")
 
+    # ── Gamification: XP, Leveling, Badges ────────────────────
+    user = db.query(User).filter(User.id == user_id).first()
+    xp_earned = 0
+    unlocked_badges: list[str] = []
+
+    if user:
+        # 1. Calculate and award XP
+        xp_earned = calculate_xp(review.rating, vocab.difficulty_level)
+        user.xp_points += xp_earned
+
+        # 2. Check level-up (handles multi-level jumps)
+        new_level, levels_gained = calculate_new_level(user.xp_points, user.current_level)
+        if levels_gained > 0:
+            user.current_level = new_level
+            print(f"[Gamification] {user_id} leveled up: +{levels_gained} levels → L{new_level}")
+
+        # 3. Check badge eligibility
+        now_utc = datetime.now(timezone.utc)
+        total_reviews = db.query(func.count(ReviewLog.id)).filter(
+            ReviewLog.user_id == user_id
+        ).scalar() or 0
+
+        existing_badges = {b.badge_code for b in user.badges}
+        badge_result = check_badges(
+            user_id=user_id,
+            old_badges=existing_badges,
+            is_first_review=(total_reviews == 1),
+            total_reviews=total_reviews,
+            mastered_words=0,  # Recalculated below if needed
+            streak_days=0,     # Recalculated below if needed
+            hour_of_day=now_utc.hour,
+        )
+
+        # Calculate mastered words for MASTER_10 badge
+        mastered_count = db.query(func.count(func.distinct(ReviewLog.vocabulary_id))).filter(
+            ReviewLog.user_id == user_id,
+            ReviewLog.ease_factor >= 2.5,
+            ReviewLog.interval_days >= 21,
+        ).scalar() or 0
+        if mastered_count >= 10:
+            badge_result_check = check_badges(
+                user_id=user_id,
+                old_badges=existing_badges,
+                mastered_words=mastered_count,
+            )
+            for b in badge_result_check.new_badges:
+                badge_result.add(b, badge_result_check.unlocked[b]["reason"])
+
+        # Calculate streak for STREAK badges
+        streak = 0
+        check_date = now_utc.date()
+        for i in range(7):
+            day_start = datetime.combine(check_date, datetime.min.time()).replace(tzinfo=timezone.utc)
+            day_end = day_start + timedelta(days=1)
+            has_review = db.query(
+                db.query(ReviewLog)
+                .filter(
+                    ReviewLog.user_id == user_id,
+                    ReviewLog.reviewed_at >= day_start,
+                    ReviewLog.reviewed_at < day_end,
+                )
+                .exists()
+            ).scalar()
+            if has_review:
+                streak += 1
+                check_date -= timedelta(days=1)
+            else:
+                if i == 0:
+                    check_date -= timedelta(days=1)
+                    continue
+                break
+
+        if streak >= 7:
+            badge_result_check = check_badges(
+                user_id=user_id,
+                old_badges=existing_badges,
+                streak_days=streak,
+            )
+            for b in badge_result_check.new_badges:
+                badge_result.add(b, badge_result_check.unlocked[b]["reason"])
+
+        # Save new badges to DB
+        for badge_code in badge_result.new_badges:
+            new_badge = UserBadge(
+                user_id=user_id,
+                badge_code=badge_code,
+                unlocked_at=now_utc,
+            )
+            db.add(new_badge)
+            unlocked_badges.append(badge_code)
+            print(f"[Gamification] {user_id} unlocked badge: {badge_code}")
+
+        db.commit()
+
     return ReviewResult(
         vocabulary_id=review.vocabulary_id,
         rating=review.rating,
@@ -392,6 +498,8 @@ def submit_review(
         new_ease_factor=result["ease_factor"],
         new_repetitions=result["repetitions"],
         next_review_at=result["next_review_at"],
+        xpEarned=xp_earned,
+        unlockedBadges=unlocked_badges,
     )
 
 
@@ -578,6 +686,12 @@ def get_user_stats(
                 continue
             break
 
+    # Gamification data
+    user = db.query(User).filter(User.id == user_id).first()
+    xp = user.xp_points if user else 0
+    level = user.current_level if user else 1
+    nxt = next_level_xp(level)
+
     return UserStats(
         total_reviews=total_reviews,
         total_unique_words=total_unique_words,
@@ -587,6 +701,9 @@ def get_user_stats(
         words_new=total_vocab - total_unique_words,
         streak_days=streak,
         reviews_today=reviews_today,
+        xpPoints=xp,
+        currentLevel=level,
+        nextLevelXp=nxt,
     )
 
 

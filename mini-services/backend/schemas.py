@@ -53,6 +53,8 @@ class UserResponse(BaseModel):
     avatar: Optional[str] = None
     bio: Optional[str] = None
     role: str = "user"
+    xpPoints: int = 0
+    currentLevel: int = 1
     createdAt: Optional[str] = None
     updatedAt: Optional[str] = None
 
@@ -120,7 +122,7 @@ class FlashcardSession(BaseModel):
 
 class ReviewSubmit(BaseModel):
     vocabulary_id: int
-    rating: int = Field(..., ge=1, le=4)
+    rating: int = Field(..., ge=0)
     direction: str = Field(default="en_to_vi", pattern="^(en_to_vi|vi_to_en)$")
     response_time_ms: Optional[int] = None
     session_id: Optional[str] = None
@@ -135,6 +137,8 @@ class ReviewResult(BaseModel):
     new_ease_factor: float
     new_repetitions: int
     next_review_at: Optional[datetime] = None
+    xpEarned: int = 0
+    unlockedBadges: list[str] = Field(default_factory=list)
 
 
 class ReviewLogResponse(BaseModel):
@@ -166,6 +170,10 @@ class UserStats(BaseModel):
     words_new: int
     streak_days: int
     reviews_today: int
+    # Gamification fields
+    xpPoints: int = 0
+    currentLevel: int = 1
+    nextLevelXp: int = 100
 
 
 class CategoryProgress(BaseModel):

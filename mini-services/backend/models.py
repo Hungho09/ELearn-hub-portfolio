@@ -27,6 +27,10 @@ class User(Base):
     avatar: Mapped[str] = mapped_column(String(500), nullable=True)
     bio: Mapped[str] = mapped_column(Text, nullable=True)
     role: Mapped[str] = mapped_column(String(50), default="user")
+    # Gamification fields
+    xp_points: Mapped[int] = mapped_column(Integer, default=0)
+    current_level: Mapped[int] = mapped_column(Integer, default=1)
+    last_reviewed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.now(timezone.utc),
@@ -36,6 +40,9 @@ class User(Base):
     # Relationships
     review_logs: Mapped[list["ReviewLog"]] = relationship(
         "ReviewLog", back_populates="user", cascade="all, delete-orphan"
+    )
+    badges: Mapped[list["UserBadge"]] = relationship(
+        "UserBadge", back_populates="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self):
@@ -50,6 +57,8 @@ class User(Base):
             "avatar": self.avatar,
             "bio": self.bio,
             "role": self.role,
+            "xpPoints": self.xp_points,
+            "currentLevel": self.current_level,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -157,3 +166,26 @@ class ReviewLog(Base):
 
     def __repr__(self):
         return f"<ReviewLog(id={self.id}, user_id='{self.user_id}', vocab_id={self.vocabulary_id}, rating={self.rating})>"
+
+
+class UserBadge(Base):
+    """User-achieved badges for gamification."""
+
+    __tablename__ = "user_badge"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(String(255), ForeignKey("user.id"), nullable=False, index=True)
+    badge_code: Mapped[str] = mapped_column(String(50), nullable=False)
+    unlocked_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="badges")
+
+    __table_args__ = (
+        Index("idx_user_badge_unique", "user_id", "badge_code", unique=True),
+    )
+
+    def __repr__(self):
+        return f"<UserBadge(user_id='{self.user_id}', badge_code='{self.badge_code}')>"
