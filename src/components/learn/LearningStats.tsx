@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Flame, BookOpen, Brain, Trophy } from 'lucide-react';
+import { Flame, BookOpen, Brain, Trophy, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LearningStatsProps {
@@ -10,6 +10,7 @@ interface LearningStatsProps {
   wordsLearning: number;
   streakDays: number;
   reviewsToday: number;
+  currentLevel?: number;
 }
 
 export function LearningStats({
@@ -18,6 +19,7 @@ export function LearningStats({
   wordsLearning,
   streakDays,
   reviewsToday,
+  currentLevel,
 }: LearningStatsProps) {
   const statItems = [
     {
@@ -48,10 +50,28 @@ export function LearningStats({
       color: 'text-purple-600 dark:text-purple-400',
       border: 'border-l-purple-500',
     },
+    ...(currentLevel !== undefined
+      ? [
+          {
+            label: 'Cấp độ',
+            value: currentLevel,
+            icon: Shield,
+            color: 'text-cyan-600',
+            border: 'border-l-cyan-500',
+          },
+        ]
+      : []),
+    {
+      label: 'Đang học',
+      value: wordsLearning,
+      icon: BookOpen,
+      color: 'text-amber-600',
+      border: 'border-l-amber-500',
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
       {statItems.map((stat) => {
         const Icon = stat.icon;
         return (

@@ -36,6 +36,8 @@ class LoginVerifyResponse(BaseModel):
     name: Optional[str] = None
     avatar: Optional[str] = None
     role: str = "user"
+    xpPoints: int = 0
+    currentLevel: int = 1
 
 
 # ─── User Schemas ────────────────────────────────────────────────
@@ -174,6 +176,7 @@ class UserStats(BaseModel):
     xpPoints: int = 0
     currentLevel: int = 1
     nextLevelXp: int = 100
+    badges: list[str] = Field(default_factory=list)
 
 
 class CategoryProgress(BaseModel):

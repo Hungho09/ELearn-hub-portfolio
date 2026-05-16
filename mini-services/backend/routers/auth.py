@@ -84,4 +84,6 @@ def verify_credentials(request: LoginVerifyRequest, db: Session = Depends(get_db
         name=user.name,
         avatar=user.avatar,
         role=user.role,
+        xpPoints=user.xp_points,
+        currentLevel=user.current_level,
     )

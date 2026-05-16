@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import {
@@ -15,11 +15,16 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+
+// ─── Components ───────────────────────────────────────────────────
+
 import { Sidebar } from '@/components/home/Sidebar';
 import { StudyCard } from '@/components/study/StudyCard';
 import { StudyResult } from '@/components/study/StudyResult';
 import { SessionComplete } from '@/components/study/SessionComplete';
-import { cn } from '@/lib/utils';
+import { LevelUpModal } from '@/components/study/LevelUpModal';
+import { BadgeUnlock } from '@/components/study/BadgeUnlock';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -53,6 +58,9 @@ interface UserStatsData {
   words_new: number;
   streak_days: number;
   reviews_today: number;
+  xpPoints?: number;
+  currentLevel?: number;
+  nextLevelXp?: number;
 }
 
 interface CheckAnswerResult {
@@ -80,6 +88,8 @@ interface ReviewResult {
   auto_rating?: boolean;
   accuracy?: number;
   match_type?: string;
+  xpEarned?: number;
+  unlockedBadges?: string[];
 }
 
 type CardMode = 'en_to_vi' | 'vi_to_en';
@@ -142,7 +152,7 @@ async function getStats(userId: string): Promise<UserStatsData> {
 // ─── Main Component ──────────────────────────────────────────────
 
 export default function StudyEnglishPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -176,6 +186,14 @@ export default function StudyEnglishPage() {
   // Animation
   const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // ─── Gamification state ────────────────────────────────────
+  const [earnedXp, setEarnedXp] = useState(0);
+  const [prevLevel, setPrevLevel] = useState(session?.user?.currentLevel ?? 1);
+  const [unlockedBadges, setUnlockedBadges] = useState<string[]>([]);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [showBadgeUnlock, setShowBadgeUnlock] = useState(false);
+  const [newLevel, setNewLevel] = useState(1);
+
   const userId = session?.user?.id || session?.user?.email || 'guest';
 
   // ─── Load session data ────────────────────────────────────
@@ -198,6 +216,15 @@ export default function StudyEnglishPage() {
       setSessionStats({ correct: 0, wrong: 0, close: 0, total: 0 });
       setCardStartTime(Date.now());
 
+      // Reset gamification state
+      setEarnedXp(0);
+      setUnlockedBadges([]);
+      setShowLevelUp(false);
+      setShowBadgeUnlock(false);
+      const lvl = session?.user?.currentLevel ?? 1;
+      setPrevLevel(lvl);
+      setNewLevel(lvl);
+
       try {
         const statsData = await getStats(uid);
         setStats(statsData);
@@ -210,7 +237,7 @@ export default function StudyEnglishPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId, status]);
+  }, [userId, status, session?.user?.currentLevel]);
 
   useEffect(() => {
     loadSession();
@@ -251,7 +278,7 @@ export default function StudyEnglishPage() {
 
     try {
       const uid = userId || 'guest';
-      await submitReview(
+      const review = await submitReview(
         uid,
         currentCard.id,
         checkResult.rating,
@@ -260,6 +287,15 @@ export default function StudyEnglishPage() {
         userInput.trim(),
         true
       );
+
+      // Accumulate gamification
+      if (review.xpEarned) {
+        setEarnedXp(prev => prev + review.xpEarned);
+      }
+      if (review.unlockedBadges && review.unlockedBadges.length > 0) {
+        setUnlockedBadges(prev => [...prev, ...review.unlockedBadges]);
+        setShowBadgeUnlock(true);
+      }
 
       setSessionStats(prev => ({
         correct: prev.correct + (checkResult.is_correct && (checkResult.match_type === 'exact' || checkResult.match_type === 'semantic') ? 1 : 0),
@@ -278,8 +314,22 @@ export default function StudyEnglishPage() {
           setCheckResult(null);
           setCardStartTime(Date.now());
         } else {
+          // Finished session — fetch fresh stats + update session
           setPageView('complete');
-          getStats(uid).then(setStats).catch(() => {});
+          getStats(uid).then((freshStats) => {
+            setStats(freshStats);
+            if (freshStats.currentLevel && freshStats.currentLevel > prevLevel) {
+              setNewLevel(freshStats.currentLevel);
+              setShowLevelUp(true);
+            }
+            // Update NextAuth session silently
+            if (update) {
+              update({
+                xpPoints: freshStats.xpPoints ?? 0,
+                currentLevel: freshStats.currentLevel ?? prevLevel,
+              });
+            }
+          }).catch(() => {});
         }
         setIsTransitioning(false);
       }, 300);
@@ -289,7 +339,7 @@ export default function StudyEnglishPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [currentCard, checkResult, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, userInput]);
+  }, [currentCard, checkResult, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, userInput, prevLevel, update]);
 
   const handleSkip = useCallback(async () => {
     if (!currentCard || submitting) return;
@@ -299,7 +349,16 @@ export default function StudyEnglishPage() {
 
     try {
       const uid = userId || 'guest';
-      await submitReview(uid, currentCard.id, 1, cardMode, responseTime, '', true);
+      const review = await submitReview(uid, currentCard.id, 1, cardMode, responseTime, '', true);
+
+      // Accumulate gamification
+      if (review.xpEarned) {
+        setEarnedXp(prev => prev + review.xpEarned);
+      }
+      if (review.unlockedBadges && review.unlockedBadges.length > 0) {
+        setUnlockedBadges(prev => [...prev, ...review.unlockedBadges]);
+        setShowBadgeUnlock(true);
+      }
 
       setSessionStats(prev => ({
         ...prev,
@@ -318,7 +377,19 @@ export default function StudyEnglishPage() {
           setCardStartTime(Date.now());
         } else {
           setPageView('complete');
-          getStats(uid).then(setStats).catch(() => {});
+          getStats(uid).then((freshStats) => {
+            setStats(freshStats);
+            if (freshStats.currentLevel && freshStats.currentLevel > prevLevel) {
+              setNewLevel(freshStats.currentLevel);
+              setShowLevelUp(true);
+            }
+            if (update) {
+              update({
+                xpPoints: freshStats.xpPoints ?? 0,
+                currentLevel: freshStats.currentLevel ?? prevLevel,
+              });
+            }
+          }).catch(() => {});
         }
         setIsTransitioning(false);
       }, 300);
@@ -328,7 +399,7 @@ export default function StudyEnglishPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [currentCard, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length]);
+  }, [currentCard, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, prevLevel, update]);
 
   const handleRestart = useCallback(() => {
     loadSession();
@@ -498,6 +569,7 @@ export default function StudyEnglishPage() {
                 <SessionComplete
                   sessionStats={sessionStats}
                   userStats={stats}
+                  earnedXp={earnedXp}
                   onRestart={handleRestart}
                   onBack={() => router.push('/')}
                 />
@@ -523,6 +595,21 @@ export default function StudyEnglishPage() {
           </div>
         </main>
       </div>
+
+      {/* Gamification overlays */}
+      {showLevelUp && (
+        <LevelUpModal
+          prevLevel={prevLevel}
+          newLevel={newLevel}
+          onClose={() => setShowLevelUp(false)}
+        />
+      )}
+      {showBadgeUnlock && unlockedBadges.length > 0 && (
+        <BadgeUnlock
+          badges={unlockedBadges}
+          onClose={() => setShowBadgeUnlock(false)}
+        />
+      )}
     </TooltipProvider>
   );
 }

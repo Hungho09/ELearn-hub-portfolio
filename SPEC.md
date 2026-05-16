@@ -1,6 +1,6 @@
 # SPEC: Gamification System (MVP)
 
-> Derived from `tasks/new-feature-plan.txt`. Covers Phases 1–4 of the gamification MVP.
+> Derived from `new-feature-plan.txt`. Covers Phases 1–4 of the gamification MVP.
 
 ---
 

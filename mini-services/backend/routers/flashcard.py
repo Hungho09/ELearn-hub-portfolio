@@ -692,6 +692,9 @@ def get_user_stats(
     level = user.current_level if user else 1
     nxt = next_level_xp(level)
 
+    # User badges
+    user_badges = [b.badge_code for b in user.badges] if user else []
+
     return UserStats(
         total_reviews=total_reviews,
         total_unique_words=total_unique_words,
@@ -704,6 +707,7 @@ def get_user_stats(
         xpPoints=xp,
         currentLevel=level,
         nextLevelXp=nxt,
+        badges=user_badges,
     )
 
 

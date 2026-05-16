@@ -9,7 +9,9 @@ import {
   Target,
   BrainCircuit,
   Flame,
+  Star,
 } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -182,6 +184,27 @@ export default function HomePage() {
               <p className="text-muted-foreground mt-1">
                 Chọn ngôn ngữ để bắt đầu học tập ngay hôm nay
               </p>
+
+              {/* Mini XP Bar */}
+              {(session?.user?.currentLevel ?? stats?.currentLevel) !== undefined && (
+                <div className="mt-3 flex items-center gap-3 max-w-md">
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <Star className="size-4 text-cyan-500" />
+                    <span className="font-semibold text-cyan-600">
+                      Lv.{session?.user?.currentLevel ?? stats?.currentLevel}
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <Progress
+                      value={((stats?.xpPoints ?? session?.user?.xpPoints ?? 0) / (stats?.nextLevelXp ?? ((session?.user?.currentLevel ?? 1) ** 2) * 50 + 50)) * 100}
+                      className="h-2"
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {stats?.xpPoints ?? session?.user?.xpPoints ?? 0} / {stats?.nextLevelXp ?? ((session?.user?.currentLevel ?? 1) ** 2) * 50 + 50} XP
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Stats */}
@@ -193,6 +216,7 @@ export default function HomePage() {
                   wordsLearning={stats.words_learning}
                   streakDays={stats.streak_days}
                   reviewsToday={stats.reviews_today}
+                  currentLevel={session?.user?.currentLevel ?? stats.currentLevel ?? 1}
                 />
               </div>
             )}

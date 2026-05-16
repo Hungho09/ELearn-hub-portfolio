@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Sparkles, RotateCcw, ArrowLeft, Flame, BarChart3 } from 'lucide-react';
+import { Sparkles, RotateCcw, ArrowLeft, Flame, BarChart3, Star } from 'lucide-react';
 
 interface SessionStats {
   correct: number;
@@ -18,11 +18,15 @@ interface UserStats {
   words_learning: number;
   words_new: number;
   streak_days: number;
+  xpPoints?: number;
+  currentLevel?: number;
+  nextLevelXp?: number;
 }
 
 interface SessionCompleteProps {
   sessionStats: SessionStats;
   userStats: UserStats | null;
+  earnedXp: number;
   onRestart: () => void;
   onBack: () => void;
 }
@@ -30,12 +34,18 @@ interface SessionCompleteProps {
 export function SessionComplete({
   sessionStats,
   userStats,
+  earnedXp,
   onRestart,
   onBack,
 }: SessionCompleteProps) {
   const accuracyPercent = sessionStats.total > 0
     ? Math.round(((sessionStats.correct + sessionStats.close) / sessionStats.total) * 100)
     : 0;
+
+  const level = userStats?.currentLevel ?? 1;
+  const xp = userStats?.xpPoints ?? 0;
+  const nextLevelXp = userStats?.nextLevelXp ?? ((level ** 2) * 50 + 50);
+  const levelProgress = nextLevelXp > 0 ? Math.min(xp / nextLevelXp, 1) * 100 : 0;
 
   return (
     <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
@@ -49,6 +59,32 @@ export function SessionComplete({
         <h2 className="text-3xl font-bold text-foreground">Hoàn thành buổi học!</h2>
         <p className="text-muted-foreground mt-2">Tuyệt vời, bạn đã hoàn thành bài ôn tập từ vựng!</p>
       </div>
+
+      {/* XP Banner */}
+      {earnedXp > 0 && (
+        <div className="w-full max-w-lg">
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 text-center">
+            <div className="animate-bounce">
+              <p className="text-2xl font-extrabold text-white">+{earnedXp} XP</p>
+            </div>
+            <p className="text-sm text-white/90 mt-1">Tiến bộ trong buổi học</p>
+          </div>
+        </div>
+      )}
+
+      {/* Level Progress */}
+      {(userStats?.currentLevel !== undefined && userStats.xpPoints !== undefined) && (
+        <div className="w-full max-w-lg bg-card border rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Star className="size-4 text-cyan-500" />
+              <span className="text-sm font-semibold">Cấp độ {level}</span>
+            </div>
+            <span className="text-xs text-muted-foreground">{xp} / {nextLevelXp} XP</span>
+          </div>
+          <Progress value={levelProgress} className="h-3" />
+        </div>
+      )}
 
       {/* Session Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-lg">
@@ -125,6 +161,12 @@ export function SessionComplete({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tổng lần ôn</span>
                 <span className="font-semibold">{userStats.total_reviews}</span>
+              </div>
+              <div className="flex justify-between border-t pt-2">
+                <span className="text-muted-foreground">Cấp độ</span>
+                <span className="font-semibold text-cyan-600 flex items-center gap-1">
+                  <Star className="size-3" /> {userStats.currentLevel ?? 1}
+                </span>
               </div>
             </div>
           </CardContent>

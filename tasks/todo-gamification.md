@@ -30,29 +30,29 @@
 | 2.1 | Integrate XP + level-up + badge logic into `POST /review` handler | ✅ | P0 |
 | 2.2 | Add `next_level_xp` to `GET /stats` response | ✅ | P0 |
 | 2.3 | Update `POST /review` response model to include `xp_earned` and `unlocked_badges` | ✅ | P0 |
-| 2.4 | Seed test user (gamer@learnhub.com, L8, 3800 XP, 3 badges) in `seed.py` | ⬜ | P1 |
+| 2.4 | Seed test user (gamer@learnhub.com, L8, 3800 XP, 3 badges) in `seed.py` | ✅ | P1 |
 
 ## Phase 3: Frontend Bridge
 
 | # | Task | Status | Priority |
 |---|------|--------|----------|
-| 3.1 | Add `xpPoints`, `currentLevel` to `next-auth.d.ts` Session.User + JWT | ⬜ | P0 |
+| 3.1 | Add `xpPoints`, `currentLevel` to `next-auth.d.ts` Session.User + JWT | ✅ | P0 |
 | 3.2 | Persist XP/level in JWT via `auth.ts`; add `trigger === "update"` handler | ⬜ | P0 |
 
 ## Phase 4: Frontend UI
 
 | # | Task | Status | Priority |
 |---|------|--------|----------|
-| 4.1 | `english/page.tsx` — accumulate `earnedXp` per review | ⬜ | P0 |
-| 4.2 | `english/page.tsx` — fetch fresh stats + `update()` on session complete | ⬜ | P0 |
-| 4.3 | `SessionComplete.tsx` — "+X XP" bounce banner | ⬜ | P1 |
-| 4.4 | `SessionComplete.tsx` — level progress bar (XP / next level XP) | ⬜ | P0 |
-| 4.5 | `LevelUpModal.tsx` (new) — confetti on level change | ⬜ | P1 |
-| 4.6 | `BadgeUnlock.tsx` (new) — toast when badges unlocked mid-session | ⬜ | P1 |
-| 4.7 | `BadgeGrid.tsx` (new) — badge showcase grid with lock icons | ⬜ | P2 |
-| 4.8 | `LearningStats.tsx` — add Level card (Shield icon, Cyan) | ⬜ | P0 |
-| 4.9 | `stats/page.tsx` — add level + XP progress section | ⬜ | P1 |
-| 4.10 | `app/page.tsx` — mini XP bar next to greeting | ⬜ | P2 |
+| 4.1 | `english/page.tsx` — accumulate `earnedXp` per review | ✅ | P0 |
+| 4.2 | `english/page.tsx` — fetch fresh stats + `update()` on session complete | ✅ | P0 |
+| 4.3 | `SessionComplete.tsx` — "+X XP" bounce banner | ✅ | P1 |
+| 4.4 | `SessionComplete.tsx` — level progress bar (XP / next level XP) | ✅ | P0 |
+| 4.5 | `LevelUpModal.tsx` (new) — confetti on level change | ✅ | P1 |
+| 4.6 | `BadgeUnlock.tsx` (new) — toast when badges unlocked mid-session | ✅ | P1 |
+| 4.7 | `BadgeGrid.tsx` (new) — badge showcase grid with lock icons | ✅ | P2 |
+| 4.8 | `LearningStats.tsx` — add Level card (Shield icon, Cyan) | ✅ | P0 |
+| 4.9 | `stats/page.tsx` — add level + XP progress section | ✅ | P1 |
+| 4.10 | `app/page.tsx` — mini XP bar next to greeting | ✅ | P2 |
 
 ## Phase 5: Tests & Polish
 

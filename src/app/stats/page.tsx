@@ -14,6 +14,7 @@ import {
   Clock,
   TrendingUp,
   Layers,
+  Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import { Progress } from '@/components/ui/progress';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Sidebar } from '@/components/home/Sidebar';
+import { BadgeGrid } from '@/components/study/BadgeGrid';
 import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -35,6 +37,10 @@ interface UserStatsData {
   words_new: number;
   streak_days: number;
   reviews_today: number;
+  xpPoints?: number;
+  currentLevel?: number;
+  nextLevelXp?: number;
+  badges?: string[];
 }
 
 interface CategoryProgress {
@@ -103,6 +109,11 @@ export default function StatsPage() {
         ? 'Trung bình'
         : 'Cần cải thiện'
     : '-';
+
+  const level = stats?.currentLevel ?? 1;
+  const xp = stats?.xpPoints ?? 0;
+  const nextLevelXp = stats?.nextLevelXp ?? ((level ** 2) * 50 + 50);
+  const levelProgress = nextLevelXp > 0 ? Math.min((xp / nextLevelXp) * 100, 100) : 0;
 
   // ─── Render ───────────────────────────────────────────────
   return (
@@ -208,6 +219,44 @@ export default function StatsPage() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Level & XP Progress */}
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Star className="size-5 text-cyan-500" />
+                      Cấp độ & XP
+                    </h2>
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="size-14 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
+                        <Star className="size-7 text-cyan-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-semibold">Cấp độ {level}</span>
+                          <span className="text-xs text-muted-foreground">{xp} / {nextLevelXp} XP</span>
+                        </div>
+                        <Progress value={levelProgress} className="h-3" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Cần thêm {Math.max(0, nextLevelXp - xp)} XP để lên cấp {level + 1}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Badge Showcase */}
+                {stats.badges !== undefined && (
+                  <Card>
+                    <CardContent className="p-6">
+                      <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                        <Trophy className="size-5 text-amber-500" />
+                        Huy hiệu ({stats.badges.length} / 6)
+                      </h2>
+                      <BadgeGrid unlockedBadges={stats.badges} />
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Progress Overview */}
                 <Card>

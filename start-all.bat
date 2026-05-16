@@ -129,7 +129,7 @@ REM Kill the backend and frontend processes
 echo.
 echo Stopping all services...
 taskkill /fi "WINDOWTITLE eq LearnHub Backend*" >nul 2>nul
-taskkill /fi "WINDOWTITLE eq LearnHub Frontend*" >nul 2>nul
+taskkill /fi "WINDOWTITLE eq next-server*" >nul 2>nul
 echo All services stopped.
 
 endlocal
