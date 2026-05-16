@@ -9,6 +9,7 @@ Clothing, Sports, Nature, Communication, Law & Government, Music & Art
 from database import engine, SessionLocal
 from models import Base, Vocabulary
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 
 VOCABULARY_DATA = [
