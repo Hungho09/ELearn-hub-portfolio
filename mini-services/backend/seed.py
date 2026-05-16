@@ -7,9 +7,10 @@ Clothing, Sports, Nature, Communication, Law & Government, Music & Art
 """
 
 from database import engine, SessionLocal
-from models import Base, Vocabulary
+from models import Base, Vocabulary, UserBadge
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
+from gamification import FIRST_BLOOD, STREAK_3, MASTER_10
 
 
 VOCABULARY_DATA = [
