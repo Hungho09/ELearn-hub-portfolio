@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Volume2, Lightbulb, SkipForward, Languages } from 'lucide-react';
+import { Volume2, Lightbulb, SkipForward } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VocabCard {
@@ -17,35 +17,33 @@ interface VocabCard {
   part_of_speech: string | null;
   category: string | null;
   difficulty_level: number;
+  direction: 'en_to_vi' | 'vi_to_en';
 }
 
 interface StudyCardProps {
   card: VocabCard;
-  cardMode: 'en_to_vi' | 'vi_to_en';
   userInput: string;
   showHint: boolean;
   submitting: boolean;
   onInputChange: (value: string) => void;
   onSubmit: () => void;
   onSkip: () => void;
-  onToggleMode: () => void;
   onShowHint: () => void;
   inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 export function StudyCard({
   card,
-  cardMode,
   userInput,
   showHint,
   submitting,
   onInputChange,
   onSubmit,
   onSkip,
-  onToggleMode,
   onShowHint,
   inputRef,
 }: StudyCardProps) {
+  const cardMode = card.direction;
   const promptText = cardMode === 'en_to_vi' ? card.english : card.vietnamese;
   const promptLabel = cardMode === 'en_to_vi' ? 'English' : 'Tiếng Việt';
   const answerLabel = cardMode === 'en_to_vi' ? 'Tiếng Việt' : 'English';
@@ -55,12 +53,11 @@ export function StudyCard({
 
   return (
     <div className="space-y-4">
-      {/* Mode Toggle & Info */}
+      {/* Direction badge & info */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" size="sm" onClick={onToggleMode} className="gap-2">
-          <Languages className="size-3.5" />
-          {cardMode === 'en_to_vi' ? 'EN → VI' : 'VI → EN'}
-        </Button>
+        <Badge variant="secondary" className="text-xs font-medium">
+          {cardMode === 'en_to_vi' ? '🇬🇧 EN → VI 🇻🇳' : '🇻🇳 VI → EN 🇬🇧'}
+        </Badge>
         <div className="flex items-center gap-2">
           {card.category && (
             <Badge variant="outline" className="text-xs">{card.category}</Badge>
@@ -183,7 +180,7 @@ export function StudyCard({
       {/* Keyboard shortcuts hint */}
       <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
         <span>
-          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[10px] shadow-[inset_0_1px_0_hsla(var(--background)/0.5)]">Tab</kbd> Switch direction
+          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[10px] shadow-[inset_0_1px_0_hsla(var(--background)/0.5)]">Enter</kbd> Check / Continue
         </span>
         <span>
           <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[10px] shadow-[inset_0_1px_0_hsla(var(--background)/0.5)]">Esc</kbd> Skip card

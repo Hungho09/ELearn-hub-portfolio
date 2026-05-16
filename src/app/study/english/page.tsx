@@ -39,6 +39,7 @@ interface VocabCard {
   category: string | null;
   difficulty_level: number;
   accepted_answers?: string[];
+  direction: 'en_to_vi' | 'vi_to_en';
 }
 
 interface FlashcardSessionData {
@@ -92,7 +93,6 @@ interface ReviewResult {
   unlockedBadges?: string[];
 }
 
-type CardMode = 'en_to_vi' | 'vi_to_en';
 type CardPhase = 'prompt' | 'result';
 type PageView = 'session' | 'complete';
 
@@ -160,7 +160,6 @@ export default function StudyEnglishPage() {
   const [cards, setCards] = useState<VocabCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardPhase, setCardPhase] = useState<CardPhase>('prompt');
-  const [cardMode, setCardMode] = useState<CardMode>('en_to_vi');
   const [pageView, setPageView] = useState<PageView>('session');
 
   // Input state
@@ -262,7 +261,7 @@ export default function StudyEnglishPage() {
 
     setSubmitting(true);
     try {
-      const result = await checkAnswer(currentCard.id, userInput.trim(), cardMode);
+      const result = await checkAnswer(currentCard.id, userInput.trim(), currentCard.direction);
       setCheckResult(result);
       setCardPhase('result');
     } catch (err) {
@@ -271,7 +270,7 @@ export default function StudyEnglishPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [currentCard, submitting, userInput, cardMode]);
+  }, [currentCard, submitting, userInput]);
 
   const handleContinue = useCallback(async () => {
     if (!currentCard || !checkResult || submitting) return;
@@ -285,7 +284,7 @@ export default function StudyEnglishPage() {
         uid,
         currentCard.id,
         checkResult.rating,
-        cardMode,
+        currentCard.direction,
         responseTime,
         userInput.trim(),
         true
@@ -336,7 +335,7 @@ export default function StudyEnglishPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [currentCard, checkResult, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, userInput, prevLevel]);
+  }, [currentCard, checkResult, submitting, cardStartTime, userId, currentIndex, cards.length, userInput, prevLevel]);
 
   const handleSkip = useCallback(async () => {
     if (!currentCard || submitting) return;
@@ -346,7 +345,7 @@ export default function StudyEnglishPage() {
 
     try {
       const uid = userId || 'guest';
-      const review = await submitReview(uid, currentCard.id, 1, cardMode, responseTime, '', true);
+      const review = await submitReview(uid, currentCard.id, 1, currentCard.direction, responseTime, '', true);
 
       // Accumulate gamification
       if (review.xpEarned) {
@@ -391,7 +390,7 @@ export default function StudyEnglishPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [currentCard, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, prevLevel]);
+  }, [currentCard, submitting, cardStartTime, userId, currentIndex, cards.length, prevLevel]);
 
   const handleRestart = useCallback(() => {
     sessionCompleteRef.current = false;
@@ -405,13 +404,6 @@ export default function StudyEnglishPage() {
     loadSession();
   }, [loadSession, update, stats]);
 
-  const toggleMode = useCallback(() => {
-    setCardMode(prev => prev === 'en_to_vi' ? 'vi_to_en' : 'en_to_vi');
-    setCardPhase('prompt');
-    setUserInput('');
-    setShowHint(false);
-    setCheckResult(null);
-  }, []);
 
   // ─── Keyboard shortcuts ───────────────────────────────────
   useEffect(() => {
@@ -438,7 +430,9 @@ export default function StudyEnglishPage() {
           break;
         case 'Tab':
           e.preventDefault();
-          toggleMode();
+          if (cardPhase === 'prompt') {
+            handleSkip();
+          }
           break;
         case 'Escape':
           e.preventDefault();
@@ -450,7 +444,7 @@ export default function StudyEnglishPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [cardPhase, userInput, handleSubmitAnswer, handleContinue, handleSkip, toggleMode]);
+  }, [cardPhase, userInput, handleSubmitAnswer, handleContinue, handleSkip]);
 
   // ─── Computed values ──────────────────────────────────────
   const progressPercent = cards.length > 0 ? ((currentIndex) / cards.length) * 100 : 0;
@@ -540,14 +534,12 @@ export default function StudyEnglishPage() {
                 {cardPhase === 'prompt' && (
                   <StudyCard
                     card={currentCard}
-                    cardMode={cardMode}
                     userInput={userInput}
                     showHint={showHint}
                     submitting={submitting}
                     onInputChange={setUserInput}
                     onSubmit={handleSubmitAnswer}
                     onSkip={handleSkip}
-                    onToggleMode={toggleMode}
                     onShowHint={() => setShowHint(true)}
                     inputRef={inputRef}
                   />

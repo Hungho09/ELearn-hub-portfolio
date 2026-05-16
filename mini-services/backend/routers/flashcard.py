@@ -19,6 +19,7 @@ Endpoints:
 - GET  /api/flashcards/training-stats - Get model training statistics
 """
 
+import random
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -169,9 +170,14 @@ def get_flashcard_session(
 
     total_vocab = db.query(func.count(Vocabulary.id)).scalar() or 0
 
+    def _with_direction(vocab):
+        d = vocab.to_card_dict()
+        d["direction"] = random.choice(["en_to_vi", "vi_to_en"])
+        return VocabularyCardResponse(**d)
+
     return FlashcardSession(
-        due_cards=[VocabularyCardResponse(**v.to_card_dict()) for v in due_vocab],
-        new_cards=[VocabularyCardResponse(**v.to_card_dict()) for v in new_vocab],
+        due_cards=[_with_direction(v) for v in due_vocab],
+        new_cards=[_with_direction(v) for v in new_vocab],
         total_due=len(due_ids),
         total_new=total_vocab - total_reviewed,
         total_learned=total_reviewed,

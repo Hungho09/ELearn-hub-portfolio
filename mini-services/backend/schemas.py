@@ -110,6 +110,7 @@ class VocabularyCardResponse(BaseModel):
     category: Optional[str] = None
     difficulty_level: int = 1
     accepted_answers: list[str] = Field(default_factory=list, description="Alternative accepted answers")
+    direction: str = Field(default="en_to_vi", pattern="^(en_to_vi|vi_to_en)$", description="Randomized study direction for this card")
 
 
 # ─── Flashcard Session Schemas ───────────────────────────────────
