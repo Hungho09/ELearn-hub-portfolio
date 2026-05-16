@@ -195,10 +195,14 @@ export default function StudyEnglishPage() {
   const [newLevel, setNewLevel] = useState(1);
 
   const userId = session?.user?.id || session?.user?.email || 'guest';
+  // Track whether user has finished a session — blocks auto-reload
+  const sessionCompleteRef = useRef(false);
 
   // ─── Load session data ────────────────────────────────────
   const loadSession = useCallback(async () => {
     if (status === 'loading') return;
+    // Don't auto-reload if user just finished a session
+    if (sessionCompleteRef.current) return;
     try {
       setLoading(true);
       setError(null);
@@ -221,9 +225,8 @@ export default function StudyEnglishPage() {
       setUnlockedBadges([]);
       setShowLevelUp(false);
       setShowBadgeUnlock(false);
-      const lvl = session?.user?.currentLevel ?? 1;
-      setPrevLevel(lvl);
-      setNewLevel(lvl);
+      setPrevLevel(session?.user?.currentLevel ?? 1);
+      setNewLevel(session?.user?.currentLevel ?? 1);
 
       try {
         const statsData = await getStats(uid);
@@ -237,7 +240,7 @@ export default function StudyEnglishPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId, status, session?.user?.currentLevel]);
+  }, [userId, status]);
 
   useEffect(() => {
     loadSession();
@@ -314,20 +317,14 @@ export default function StudyEnglishPage() {
           setCheckResult(null);
           setCardStartTime(Date.now());
         } else {
-          // Finished session — fetch fresh stats + update session
+          // Finished session — fetch fresh stats, show complete view
+          sessionCompleteRef.current = true;
           setPageView('complete');
           getStats(uid).then((freshStats) => {
             setStats(freshStats);
             if (freshStats.currentLevel && freshStats.currentLevel > prevLevel) {
               setNewLevel(freshStats.currentLevel);
               setShowLevelUp(true);
-            }
-            // Update NextAuth session silently
-            if (update) {
-              update({
-                xpPoints: freshStats.xpPoints ?? 0,
-                currentLevel: freshStats.currentLevel ?? prevLevel,
-              });
             }
           }).catch(() => {});
         }
@@ -339,7 +336,7 @@ export default function StudyEnglishPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [currentCard, checkResult, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, userInput, prevLevel, update]);
+  }, [currentCard, checkResult, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, userInput, prevLevel]);
 
   const handleSkip = useCallback(async () => {
     if (!currentCard || submitting) return;
@@ -376,18 +373,13 @@ export default function StudyEnglishPage() {
           setCheckResult(null);
           setCardStartTime(Date.now());
         } else {
+          sessionCompleteRef.current = true;
           setPageView('complete');
           getStats(uid).then((freshStats) => {
             setStats(freshStats);
             if (freshStats.currentLevel && freshStats.currentLevel > prevLevel) {
               setNewLevel(freshStats.currentLevel);
               setShowLevelUp(true);
-            }
-            if (update) {
-              update({
-                xpPoints: freshStats.xpPoints ?? 0,
-                currentLevel: freshStats.currentLevel ?? prevLevel,
-              });
             }
           }).catch(() => {});
         }
@@ -399,11 +391,19 @@ export default function StudyEnglishPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [currentCard, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, prevLevel, update]);
+  }, [currentCard, submitting, cardStartTime, userId, cardMode, currentIndex, cards.length, prevLevel]);
 
   const handleRestart = useCallback(() => {
+    sessionCompleteRef.current = false;
+    // Sync NextAuth session with latest XP/level before reloading
+    if (update && stats) {
+      update({
+        xpPoints: stats.xpPoints ?? 0,
+        currentLevel: stats.currentLevel ?? 1,
+      });
+    }
     loadSession();
-  }, [loadSession]);
+  }, [loadSession, update, stats]);
 
   const toggleMode = useCallback(() => {
     setCardMode(prev => prev === 'en_to_vi' ? 'vi_to_en' : 'en_to_vi');

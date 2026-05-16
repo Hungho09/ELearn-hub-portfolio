@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const API_SERVICE_URL = "http://127.0.0.1:3001";
+import { API_SERVICE_URL, fetchWithRetry } from "@/lib/api-config";
 
 /**
  * POST /api/flashcards/review?user_id=xxx
@@ -32,28 +31,19 @@ export async function POST(request: NextRequest) {
 
     const backendUrl = `${API_SERVICE_URL}/api/flashcards/review?user_id=${encodeURIComponent(userId)}`;
 
-    let res: Response;
-    try {
-      res = await fetch(backendUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vocabulary_id: Number(vocabulary_id),
-          rating: Number(rating),
-          direction,
-          response_time_ms: response_time_ms ? Number(response_time_ms) : null,
-          session_id: session_id || null,
-          user_answer: user_answer || null,
-          auto_rating: auto_rating ?? null,
-        }),
-      });
-    } catch (fetchError) {
-      console.error("Review proxy: Backend unreachable:", fetchError);
-      return NextResponse.json(
-        { error: "Backend service unavailable. Please try again later." },
-        { status: 503 }
-      );
-    }
+    const res = await fetchWithRetry(backendUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vocabulary_id: Number(vocabulary_id),
+        rating: Number(rating),
+        direction,
+        response_time_ms: response_time_ms ? Number(response_time_ms) : null,
+        session_id: session_id || null,
+        user_answer: user_answer || null,
+        auto_rating: auto_rating ?? null,
+      }),
+    });
 
     // Parse response - handle both JSON and non-JSON responses
     const contentType = res.headers.get("content-type") || "";
@@ -69,7 +59,6 @@ export async function POST(request: NextRequest) {
           errorDetail = `Backend error (${res.status})`;
         }
       } else {
-        // Backend returned non-JSON (e.g., HTML error page)
         errorDetail = `Backend error (${res.status}): ${res.statusText}`;
       }
       return NextResponse.json(
@@ -92,7 +81,7 @@ export async function POST(request: NextRequest) {
     console.error("Review proxy error:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to submit review" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

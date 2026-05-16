@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const API_SERVICE_URL = "http://127.0.0.1:3001";
+import { API_SERVICE_URL, fetchWithRetry } from "@/lib/api-config";
 
 /**
  * POST /api/flashcards/check-answer
  * Proxies answer checking to Python api-service for auto-grading.
  *
  * Body: { vocabulary_id, user_answer, direction }
- * Response: { vocabulary_id, correct_answer, user_answer, rating, accuracy, is_correct, match_type, similarity, pronunciation, example_english, example_vietnamese }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +19,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const res = await fetch(
+    const res = await fetchWithRetry(
       `${API_SERVICE_URL}/api/flashcards/check-answer`,
       {
         method: "POST",
@@ -35,7 +33,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!res.ok) {
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       return NextResponse.json(
         { error: data.detail || "Failed to check answer" },
         { status: res.status }
@@ -48,7 +46,7 @@ export async function POST(request: NextRequest) {
     console.error("Check-answer proxy error:", error);
     return NextResponse.json(
       { error: "Failed to check answer" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

@@ -249,6 +249,9 @@ def check_answer(user_answer: str, correct_answer: str, direction: str = "en_to_
         return _grade_from_labse(labse_sim, norm_user, norm_correct)
 
     # ── 4. Levenshtein fallback ───────────────────────────
+    # For vi→en: user types English, correct answer is English → same language, Levenshtein works.
+    # For en→vi: user types Vietnamese, correct answer is Vietnamese → same language, Levenshtein works.
+    # Both directions compare user_answer against correct_answer in SAME language.
     return _grade_from_levenshtein(norm_user_no_diacritics, norm_correct_no_diacritics, norm_user, norm_correct)
 
 

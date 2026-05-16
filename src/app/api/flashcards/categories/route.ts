@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const API_SERVICE_URL = "http://127.0.0.1:3001";
+import { API_SERVICE_URL, fetchWithRetry } from "@/lib/api-config";
 
 /**
  * GET /api/flashcards/categories?user_id=xxx
@@ -11,12 +10,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("user_id") || "guest";
 
-    const res = await fetch(
+    const res = await fetchWithRetry(
       `${API_SERVICE_URL}/api/flashcards/categories?user_id=${encodeURIComponent(userId)}`
     );
 
     if (!res.ok) {
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       return NextResponse.json(
         { error: data.detail || "Failed to fetch categories" },
         { status: res.status }
@@ -27,6 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error("Categories proxy error:", error);
-    return NextResponse.json({ error: "Failed to fetch categories" }, { status: 500 });
+    // Return graceful fallback — empty categories instead of 500
+    return NextResponse.json([]);
   }
 }
