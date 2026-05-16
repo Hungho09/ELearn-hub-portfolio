@@ -63,6 +63,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as { role?: string }).role;
         token.avatar = (user as { avatar?: string | null }).avatar;
+        token.xpPoints = (user as { xpPoints?: number }).xpPoints;
+        token.currentLevel = (user as { currentLevel?: number }).currentLevel;
       }
 
       // When update() is called from the client, persist the updated fields
@@ -72,6 +74,12 @@ export const authOptions: NextAuthOptions = {
         }
         if (updateData.avatar) {
           token.avatar = updateData.avatar;
+        }
+        if (updateData.xpPoints !== undefined) {
+          token.xpPoints = updateData.xpPoints;
+        }
+        if (updateData.currentLevel !== undefined) {
+          token.currentLevel = updateData.currentLevel;
         }
       }
 

@@ -1026,6 +1026,70 @@ def seed_database():
                 db.commit()
                 print(f"[seed] Updated existing user {admin_email} to admin role")
 
+        # ── Seed test gamification user ─────────────────────────────────────
+        test_email = "gamer@learnhub.com"
+        existing_test_user = db.query(User).filter(User.email == test_email).first()
+        if not existing_test_user:
+            test_user = User(
+                id="u_gamer_test",
+                email=test_email,
+                name="Gamer Test",
+                xp_points=3800,
+                current_level=8,
+                last_reviewed_at=datetime.now(timezone.utc),
+            )
+            db.add(test_user)
+
+            # Add 3 badges for test user
+            test_badge_codes = [FIRST_BLOOD, STREAK_3, MASTER_10]
+            for badge_code in test_badge_codes:
+                badge = UserBadge(
+                    user_id=test_user.id,
+                    badge_code=badge_code,
+                    unlocked_at=datetime.now(timezone.utc)
+                )
+                db.add(badge)
+
+            db.commit()
+            print(f"[seed] Test user created: {test_email} / L{test_user.current_level} ({test_user.xp_points} XP, 3 badges)")
+        else:
+            # Update existing test user to ensure correct gamification state
+            if existing_test_user.xp_points != 3800 or existing_test_user.current_level != 8:
+                existing_test_user.xp_points = 3800
+                existing_test_user.current_level = 8
+                existing_test_user.last_reviewed_at = datetime.now(timezone.utc)
+
+                # Ensure test user has exactly the 3 badges (clear and re-add)
+                db.query(UserBadge).filter(UserBadge.user_id == existing_test_user.id).delete()
+                test_badge_codes = [FIRST_BLOOD, STREAK_3, MASTER_10]
+                for badge_code in test_badge_codes:
+                    badge = UserBadge(
+                        user_id=existing_test_user.id,
+                        badge_code=badge_code,
+                        unlocked_at=datetime.now(timezone.utc)
+                    )
+                    db.add(badge)
+
+                db.commit()
+                print(f"[seed] Updated test user: {test_email} / L{existing_test_user.current_level} ({existing_test_user.xp_points} XP, 3 badges)")
+            else:
+                # Check if badges are correct
+                existing_badges = db.query(UserBadge.badge_code).filter(UserBadge.user_id == existing_test_user.id).all()
+                existing_badge_codes = [badge[0] for badge in existing_badges]
+                expected_badges = [FIRST_BLOOD, STREAK_3, MASTER_10]
+                if set(existing_badge_codes) != set(expected_badges):
+                    # Reset badges
+                    db.query(UserBadge).filter(UserBadge.user_id == existing_test_user.id).delete()
+                    for badge_code in expected_badges:
+                        badge = UserBadge(
+                            user_id=existing_test_user.id,
+                            badge_code=badge_code,
+                            unlocked_at=datetime.now(timezone.utc)
+                        )
+                        db.add(badge)
+                    db.commit()
+                    print(f"[seed] Reset badges for test user: {test_email}")
+
     except Exception as e:
         print(f"[seed] Error seeding database: {e}")
         db.rollback()
