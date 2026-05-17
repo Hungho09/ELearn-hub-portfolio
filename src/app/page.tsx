@@ -5,12 +5,16 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import {
   GraduationCap,
+  Globe,
   Menu,
   Target,
   BrainCircuit,
   Flame,
   Star,
 } from 'lucide-react';
+import {
+  US
+} from 'country-flag-icons/react/3x2'
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
@@ -45,7 +49,7 @@ const LANGUAGES = [
     id: 'english',
     name: 'English',
     nativeName: 'Tiếng Anh',
-    flag: '🇬🇧',
+    flag: <US title="United States" className="size-7" />,
     description: 'Học từ vựng tiếng Anh với phương pháp Active Recall — nhập đáp án và hệ thống tự đánh giá.',
     available: true,
   },
@@ -53,7 +57,7 @@ const LANGUAGES = [
     id: 'japanese',
     name: 'Japanese',
     nativeName: 'Tiếng Nhật',
-    flag: '🇯🇵',
+    flag: <Globe className="size-7 text-red-500" />,
     description: 'Học Kanji, Hiragana, Katakana và từ vựng tiếng Nhật.',
     available: false,
   },
@@ -61,7 +65,7 @@ const LANGUAGES = [
     id: 'korean',
     name: 'Korean',
     nativeName: 'Tiếng Hàn',
-    flag: '🇰🇷',
+    flag: <Globe className="size-7 text-indigo-500" />,
     description: 'Học Hangul và từ vựng tiếng Hàn cho người mới bắt đầu.',
     available: false,
   },
@@ -69,7 +73,7 @@ const LANGUAGES = [
     id: 'german',
     name: 'German',
     nativeName: 'Tiếng Đức',
-    flag: '🇩🇪',
+    flag: <Globe className="size-7 text-amber-500" />,
     description: 'Học từ vựng tiếng Đức với hệ thống ôn tập thông minh.',
     available: false,
   },
@@ -77,7 +81,7 @@ const LANGUAGES = [
     id: 'french',
     name: 'French',
     nativeName: 'Tiếng Pháp',
-    flag: '🇫🇷',
+    flag: <Globe className="size-7 text-blue-400" />,
     description: 'Học từ vựng tiếng Pháp từ cơ bản đến nâng cao.',
     available: false,
   },
@@ -85,7 +89,7 @@ const LANGUAGES = [
     id: 'chinese',
     name: 'Chinese',
     nativeName: 'Tiếng Trung',
-    flag: '🇨🇳',
+    flag: <Globe className="size-7 text-red-600" />,
     description: 'Học Hán tự và từ vựng tiếng Trung thông dụng.',
     available: false,
   },

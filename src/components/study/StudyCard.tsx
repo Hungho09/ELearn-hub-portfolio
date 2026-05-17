@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Volume2, Lightbulb, SkipForward } from 'lucide-react';
+import { Volume2, Lightbulb, SkipForward, Languages } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VocabCard {
@@ -55,8 +55,9 @@ export function StudyCard({
     <div className="space-y-4">
       {/* Direction badge & info */}
       <div className="flex items-center justify-between">
-        <Badge variant="secondary" className="text-xs font-medium">
-          {cardMode === 'en_to_vi' ? '🇬🇧 EN → VI 🇻🇳' : '🇻🇳 VI → EN 🇬🇧'}
+        <Badge variant="secondary" className="text-xs font-medium gap-1.5">
+          <Languages className="size-3" />
+          {cardMode === 'en_to_vi' ? 'EN → VI' : 'VI → EN'}
         </Badge>
         <div className="flex items-center gap-2">
           {card.category && (

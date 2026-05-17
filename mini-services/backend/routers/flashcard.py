@@ -173,6 +173,22 @@ def get_flashcard_session(
     def _with_direction(vocab):
         d = vocab.to_card_dict()
         d["direction"] = random.choice(["en_to_vi", "vi_to_en"])
+        # Get latest review log for this user and vocab
+        latest_log = (
+            db.query(ReviewLog)
+            .filter(ReviewLog.user_id == user_id, ReviewLog.vocabulary_id == vocab.id)
+            .order_by(ReviewLog.reviewed_at.desc())
+            .first()
+        )
+        if latest_log:
+            next_review_at = latest_log.next_review_at
+            interval_days = latest_log.interval_days
+            print(f"[DEMO] Card {vocab.id} direction={d['direction']} next_review_at={next_review_at} interval={interval_days}d")
+        else:
+            state = get_initial_state()
+            next_review_at = datetime.now(timezone.utc) + timedelta(days=state["interval_days"])
+            interval_days = state["interval_days"]
+            print(f"[DEMO] Card {vocab.id} direction={d['direction']} new card next_review_at={next_review_at} interval={interval_days}d")
         return VocabularyCardResponse(**d)
 
     return FlashcardSession(

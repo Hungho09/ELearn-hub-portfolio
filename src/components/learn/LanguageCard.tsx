@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Lock, ArrowRight, Flame } from 'lucide-react';
+import { Globe, Lock, ArrowRight, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface LanguageCardProps {
@@ -12,8 +12,8 @@ interface LanguageCardProps {
   name: string;
   /** Language name in native language */
   nativeName: string;
-  /** Flag emoji */
-  flag: string;
+  /** Globe icon with color accent */
+  flag: React.ReactNode;
   /** Short description */
   description: string;
   /** Whether the language is available for study */
@@ -68,7 +68,7 @@ export function LanguageCard({
         {/* Header: Flag + Name */}
         <div className="flex items-start gap-4">
           <div className={cn(
-            'flex size-14 items-center justify-center rounded-xl text-3xl shrink-0 transition-transform duration-300 group-hover:scale-105',
+            'flex size-14 items-center justify-center rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-105',
             available ? 'bg-primary/10' : 'bg-muted'
           )}>
             {flag}

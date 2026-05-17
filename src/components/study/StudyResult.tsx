@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, AlertTriangle, ArrowRight, Volume2, Brain } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, ArrowRight, Volume2, Brain, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CheckAnswerResult {
@@ -151,8 +151,8 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
             {/* Example sentence */}
             {result.example_english && (
               <div className="w-full max-w-md rounded-xl bg-muted/50 p-4 border border-muted">
-                <p className="text-sm text-foreground">🇬🇧 {result.example_english}</p>
-                <p className="text-sm text-muted-foreground mt-1">🇻🇳 {result.example_vietnamese}</p>
+                <p className="text-sm text-foreground flex items-center gap-1.5"><Globe className="size-3.5 shrink-0 text-blue-500" /> {result.example_english}</p>
+                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5"><Globe className="size-3.5 shrink-0 text-red-500" /> {result.example_vietnamese}</p>
               </div>
             )}
 
