@@ -7,9 +7,9 @@ Clothing, Sports, Nature, Communication, Law & Government, Music & Art
 """
 
 from database import engine, SessionLocal
-from models import Base, Vocabulary, UserBadge
+from models import Base, Vocabulary, UserBadge, ReviewLog
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from gamification import FIRST_BLOOD, STREAK_3, MASTER_10
 
 
@@ -1042,6 +1042,7 @@ def seed_database():
             id="u_gamer_test",
             email=test_email,
             name="Gamer Test",
+            password=hash_password("Abc123"),
             xp_points=3800,
             current_level=8,
             last_reviewed_at=datetime.now(timezone.utc),
@@ -1058,8 +1059,50 @@ def seed_database():
             )
             db.add(badge)
 
+        # Seed some review history for demo - make first 5 words appear "due" for review
+        # Get first 5 vocabulary words
+        first_five_vocab = db.query(Vocabulary).limit(5).all()
+        now = datetime.now(timezone.utc)
+        yesterday = now - timedelta(days=1)
+
+        for i, vocab in enumerate(first_five_vocab):
+            # Create a review log from yesterday with varying ratings
+            # This will make them appear as "due" in today's session
+            rating = 3 if i % 2 == 0 else 2  # Alternating Good/Hard
+            review_log = ReviewLog(
+                user_id=test_user.id,
+                vocabulary_id=vocab.id,
+                rating=rating,
+                ease_factor=2.5,
+                interval_days=1,
+                repetitions=1,
+                reviewed_at=yesterday,
+                next_review_at=yesterday + timedelta(days=1),  # Due today
+                direction="en_to_vi"
+            )
+            db.add(review_log)
+
+        # Also add some mastered words (high ease factor, old review)
+        mastered_vocab = db.query(Vocabulary).offset(5).limit(3).all()
+        for vocab in mastered_vocab:
+            # Create a review log from 30 days ago with perfect rating
+            mastered_date = now - timedelta(days=30)
+            review_log = ReviewLog(
+                user_id=test_user.id,
+                vocabulary_id=vocab.id,
+                rating=4,  # Easy
+                ease_factor=3.0,
+                interval_days=30,
+                repetitions=5,
+                reviewed_at=mastered_date,
+                next_review_at=mastered_date + timedelta(days=30),  # Not due for a month
+                direction="en_to_vi"
+            )
+            db.add(review_log)
+
         db.commit()
-        print(f"[seed] Test user created: {test_email} / L{test_user.current_level} ({test_user.xp_points} XP, 3 badges)")
+        print(f"[seed] Test user created: {test_email} / Abc@123 / Level {test_user.current_level} ({test_user.xp_points} XP, 3 badges)")
+        print(f"[seed] Seeded review history for demo: 5 due cards, 3 mastered cards")
 
     except Exception as e:
         print(f"[seed] Error seeding database: {e}")
