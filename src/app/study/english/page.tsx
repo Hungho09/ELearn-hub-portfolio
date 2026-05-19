@@ -76,7 +76,7 @@ interface CheckAnswerResult {
   pronunciation: string | null;
   example_english: string | null;
   example_vietnamese: string | null;
-  grader: 'labse' | 'levenshtein' | 'exact';
+  grader: 'comet' | 'levenshtein' | 'exact';
 }
 
 interface ReviewResult {

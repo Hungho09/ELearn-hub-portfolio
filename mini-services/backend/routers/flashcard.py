@@ -10,11 +10,11 @@ The TGCL model can both PREDICT and LEARN from user data:
 Endpoints:
 - GET  /api/flashcards/session       - Get due cards + new cards for study session
 - POST /api/flashcards/review        - Submit a review (TGCL predicts + learns, SM-2 fallback)
-- POST /api/flashcards/check-answer  - Check a typed answer and auto-grade (LaBSE or Levenshtein)
+- POST /api/flashcards/check-answer  - Check a typed answer and auto-grade (COMET or Levenshtein)
 - GET  /api/flashcards/stats         - Get user learning statistics
 - GET  /api/flashcards/categories    - Get progress by category
 - GET  /api/flashcards/model-info    - Get info about the active scheduling model
-- GET  /api/flashcards/grader-info   - Get info about the active grading model (LaBSE/Levenshtein)
+- GET  /api/flashcards/grader-info   - Get info about the active grading model (COMET/Levenshtein)
 - POST /api/flashcards/train         - Batch train model on review data
 - GET  /api/flashcards/training-stats - Get model training statistics
 """
@@ -40,7 +40,7 @@ from schemas import (
     CheckAnswerResponse,
 )
 from spaced_repetition import calculate_sm2, get_initial_state
-from grader import check_answer as grade_answer, get_labse_status as grader_status
+from grader import check_answer as grade_answer, get_comet_status as grader_status
 from gamification import (
     calculate_xp,
     calculate_new_level,
@@ -207,11 +207,11 @@ def check_flashcard_answer(
 ):
     """Check a user's typed answer against the correct translation.
 
-    Uses the auto-grading module (LaBSE semantic similarity when available,
+    Uses the auto-grading module (COMET translation quality estimation when available,
     Levenshtein distance as fallback) to compare answers with support for:
     - Exact matching
     - Vietnamese diacritics tolerance (e.g., "xin chao" matches "xin chào")
-    - Semantic similarity via LaBSE cross-lingual embeddings
+    - Semantic similarity via COMET cross-lingual quality estimation
     - Fuzzy matching via Levenshtein distance (fallback)
 
     Returns a rating, accuracy score, match details, and grader used.
@@ -240,7 +240,7 @@ def check_flashcard_answer(
     if match_type == "diacritics_ignored":
         match_type = "close"
     elif match_type == "semantic":
-        # LaBSE semantic match — pass through as-is for frontend to display
+        # COMET semantic match — pass through as-is for frontend to display
         pass
     elif match_type == "none":
         match_type = "incorrect"
@@ -264,6 +264,8 @@ def check_flashcard_answer(
         example_english=vocab.example_english,
         example_vietnamese=vocab.example_vietnamese,
         grader=grade_result.get("grader", "levenshtein"),
+        comet_score=grade_result.get("comet_score"),
+        embed_similarity=grade_result.get("embed_similarity"),
     )
 
 
@@ -605,9 +607,9 @@ def get_model_info():
 def get_grader_info():
     """Get information about the active answer grading model.
 
-    Returns the status of the LaBSE semantic similarity model:
-    - If LaBSE is available: grading uses cross-lingual semantic similarity
-    - If LaBSE is not available: grading falls back to Levenshtein distance
+    Returns the status of the COMET translation quality model:
+    - If COMET is available: grading uses cross-lingual quality estimation
+    - If COMET is not available: grading falls back to Levenshtein distance
     """
     return grader_status()
 

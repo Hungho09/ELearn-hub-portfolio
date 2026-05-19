@@ -144,12 +144,13 @@ def startup():
     except Exception as e:
         print(f"[startup] TGCL model not available: {e}. SM-2 fallback will be used.")
 
-    # Pre-load the LaBSE model for semantic grading
+    # Pre-load the COMET model for semantic grading
     try:
-        from grader import _load_labse_model
-        _load_labse_model()
+        from grader import _load_comet_model, _load_embed_model
+        _load_comet_model()
+        _load_embed_model()
     except Exception as e:
-        print(f"[startup] LaBSE model not available: {e}. Levenshtein fallback will be used.")
+        print(f"[startup] Grader models not available: {e}. Levenshtein fallback will be used.")
 
 
 # ─── Include Routers ──────────────────────────────────────────────
@@ -173,14 +174,17 @@ def health_check():
     except Exception:
         tcgl_status = "unavailable"
 
-    # Check LaBSE grader status
-    labse_status = "not_loaded"
+    # Check COMET + embedding grader status
+    comet_status = "not_loaded"
+    embed_status = "not_loaded"
     try:
-        from grader import get_labse_status
-        labse_info = get_labse_status()
-        labse_status = "loaded" if labse_info["available"] else "not_available"
+        from grader import get_comet_status
+        comet_info = get_comet_status()
+        comet_status = "loaded" if comet_info["comet_available"] else "not_available"
+        embed_status = "loaded" if comet_info["embed_available"] else "not_available"
     except Exception:
-        labse_status = "unavailable"
+        comet_status = "unavailable"
+        embed_status = "unavailable"
 
     return {
         "status": "ok",
@@ -188,7 +192,8 @@ def health_check():
         "version": "2.0.0",
         "database": "sqlite",
         "tcgl_model": tcgl_status,
-        "labse_grader": labse_status,
+        "comet_grader": comet_status,
+        "embed_model": embed_status,
         "routers": {
             "auth": ["/api/auth/register", "/api/auth/verify"],
             "user": ["/api/user/profile", "/api/user/avatar"],

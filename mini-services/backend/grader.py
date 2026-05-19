@@ -1,22 +1,24 @@
 """Auto-grading module for comparing user-typed answers with correct translations.
 
-Uses LaBSE (Language-agnostic BERT Sentence Embedding) for semantic similarity,
-with fallback to Levenshtein distance if the model is unavailable.
+Uses a two-layer approach:
+  1. COMET (Unbabel/wmt22-comet-da) for translation quality estimation
+  2. Multilingual sentence embedding similarity as a semantic gate to detect
+     unrelated answers that COMET alone might score too generously
 
-LaBSE excels at cross-lingual semantic matching:
-- "Xin chào" vs "Hello" → 0.92 (same meaning ✅)
-- "Xin chào" vs "Goodbye" → 0.69 (different meaning)
-- "Đẹp" vs "Beautiful" → 0.96 (same meaning ✅)
-- "Đẹp" vs "Xấu" → 0.54 (opposite meaning)
+The semantic gate prevents cases like:
+  - "tạm biệt" vs "hi" → COMET ~0.54 (both are greetings, but different meaning)
+  - "cảm ơn" vs "rice" → COMET ~0.63 (completely unrelated)
 
-Grading logic (LaBSE mode):
+Falls back to Levenshtein distance if neither model is available.
+
+Grading logic (COMET + semantic gate mode):
 - Exact match → rating 4 (Easy), accuracy 1.0
 - Match ignoring Vietnamese diacritics → rating 4 (Easy), accuracy 0.95
-- LaBSE semantic similarity:
-    - similarity >= 0.85 → rating 4 (Easy), accuracy proportional
-    - similarity >= 0.70 → rating 3 (Good), accuracy proportional
-    - similarity >= 0.50 → rating 2 (Hard), accuracy proportional
-    - similarity < 0.50 → rating 1 (Again), accuracy proportional
+- COMET score adjusted by embedding similarity:
+    - combined >= 0.80 → rating 4 (Easy)
+    - combined >= 0.65 → rating 3 (Good)
+    - combined >= 0.45 → rating 2 (Hard)
+    - combined < 0.45 → rating 1 (Again)
 
 Grading logic (Levenshtein fallback):
 - Exact match → rating 4 (Easy), accuracy 1.0
@@ -32,81 +34,221 @@ import unicodedata
 import threading
 import time
 
-# ─── LaBSE Model (Lazy Loading) ────────────────────────────────────
+# ─── COMET Model (Lazy Loading) ───────────────────────────────────
 
-_labse_model = None
-_labse_loading = False
-_labse_available = None  # None = not checked, True/False = result
-_labse_lock = threading.Lock()
-_labse_load_time = None
-
-
-def is_labse_available() -> bool:
-    """Check if LaBSE model is available and loaded."""
-    return _labse_available is True and _labse_model is not None
+_comet_model = None
+_comet_loading = False
+_comet_available = None  # None = not checked, True/False = result
+_comet_lock = threading.Lock()
+_comet_load_time = None
 
 
-def get_labse_status() -> dict:
-    """Get detailed LaBSE model status for diagnostics."""
+# ─── Sentence Embedding Model (Semantic Gate) ─────────────────────
+
+# We use a lightweight multilingual model for semantic similarity.
+# This acts as a "gate" to detect unrelated answers that COMET might
+# score too generously (e.g., "hi" vs "tạm biệt" are both greetings
+# but have different meanings).
+_embed_model = None
+_embed_loading = False
+_embed_available = None
+_embed_lock = threading.Lock()
+_embed_load_time = None
+
+# Model: paraphrase-multilingual-MiniLM-L12-v2
+# - Multilingual (supports EN, VI, and 50+ languages)
+# - Only ~90MB download (vs ~1.2GB for LaBSE)
+# - Good semantic similarity for short texts
+_EMBED_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
+
+def is_comet_available() -> bool:
+    """Check if COMET model is available and loaded."""
+    return _comet_available is True and _comet_model is not None
+
+
+def is_embed_available() -> bool:
+    """Check if sentence embedding model is available and loaded."""
+    return _embed_available is True and _embed_model is not None
+
+
+def get_comet_status() -> dict:
+    """Get detailed model status for diagnostics."""
     return {
-        "available": _labse_available,
-        "loading": _labse_loading,
-        "model_loaded": _labse_model is not None,
-        "load_time_seconds": round(_labse_load_time, 2) if _labse_load_time else None,
-        "grader_mode": "labse" if is_labse_available() else "levenshtein",
+        "comet_available": _comet_available,
+        "comet_loading": _comet_loading,
+        "comet_model_loaded": _comet_model is not None,
+        "comet_load_time_seconds": round(_comet_load_time, 2) if _comet_load_time else None,
+        "embed_available": _embed_available,
+        "embed_loading": _embed_loading,
+        "embed_model_loaded": _embed_model is not None,
+        "embed_load_time_seconds": round(_embed_load_time, 2) if _embed_load_time else None,
+        "embed_model_name": _EMBED_MODEL_NAME,
+        "grader_mode": _get_grader_mode(),
     }
 
 
-def _load_labse_model():
-    """Load the LaBSE model (called lazily on first use)."""
-    global _labse_model, _labse_available, _labse_loading, _labse_load_time
+def _get_grader_mode() -> str:
+    """Determine the current grading mode based on available models."""
+    if is_comet_available() and is_embed_available():
+        return "comet+embed"
+    elif is_comet_available():
+        return "comet_only"
+    else:
+        return "levenshtein"
 
-    with _labse_lock:
-        if _labse_available is not None:
-            return  # Already determined
 
-        _labse_loading = True
+def _load_comet_model():
+    """Load the COMET model (called lazily on first use)."""
+    global _comet_model, _comet_available, _comet_loading, _comet_load_time
+
+    with _comet_lock:
+        if _comet_available is not None:
+            return
+
+        _comet_loading = True
+        start = time.time()
+
+        try:
+            from comet import download_model, load_from_checkpoint
+            print("[Grader] Loading COMET model (Unbabel/wmt22-comet-da)...")
+            model_path = download_model("Unbabel/wmt22-comet-da")
+            _comet_model = load_from_checkpoint(model_path)
+            _comet_load_time = time.time() - start
+            _comet_available = True
+            print(f"[Grader] ✅ COMET model loaded in {_comet_load_time:.1f}s")
+        except ImportError:
+            _comet_available = False
+            print("[Grader] ⚠️ unbabel-comet not installed.")
+        except Exception as e:
+            _comet_available = False
+            print(f"[Grader] ⚠️ COMET model failed to load: {e}")
+        finally:
+            _comet_loading = False
+
+
+def _load_embed_model():
+    """Load the sentence embedding model for semantic gating."""
+    global _embed_model, _embed_available, _embed_loading, _embed_load_time
+
+    with _embed_lock:
+        if _embed_available is not None:
+            return
+
+        _embed_loading = True
         start = time.time()
 
         try:
             from sentence_transformers import SentenceTransformer
-            print("[Grader] Loading LaBSE model (sentence-transformers/LaBSE)...")
-            _labse_model = SentenceTransformer('sentence-transformers/LaBSE')
-            _labse_load_time = time.time() - start
-            _labse_available = True
-            print(f"[Grader] ✅ LaBSE model loaded in {_labse_load_time:.1f}s — semantic grading enabled!")
+            print(f"[Grader] Loading embedding model ({_EMBED_MODEL_NAME})...")
+            _embed_model = SentenceTransformer(_EMBED_MODEL_NAME)
+            _embed_load_time = time.time() - start
+            _embed_available = True
+            print(f"[Grader] ✅ Embedding model loaded in {_embed_load_time:.1f}s")
         except ImportError:
-            _labse_available = False
-            print("[Grader] ⚠️ sentence-transformers not installed. Using Levenshtein fallback.")
+            _embed_available = False
+            print("[Grader] ⚠️ sentence-transformers not installed. Semantic gate disabled.")
         except Exception as e:
-            _labse_available = False
-            print(f"[Grader] ⚠️ LaBSE model failed to load: {e}. Using Levenshtein fallback.")
+            _embed_available = False
+            print(f"[Grader] ⚠️ Embedding model failed to load: {e}. Semantic gate disabled.")
         finally:
-            _labse_loading = False
+            _embed_loading = False
 
 
-def _compute_labse_similarity(text1: str, text2: str) -> float:
-    """Compute cosine similarity between two texts using LaBSE embeddings.
+def _compute_comet_score(source: str, hypothesis: str, reference: str) -> float:
+    """Compute COMET score for a translation.
 
-    Returns a value between 0.0 and 1.0.
+    Args:
+        source: The original text.
+        hypothesis: The user's translation.
+        reference: The correct translation.
+
+    Returns:
+        A score between 0.0 and 1.0, or -1.0 if COMET is unavailable.
     """
-    global _labse_model
+    global _comet_model
 
-    if _labse_model is None:
-        _load_labse_model()
+    if _comet_model is None:
+        _load_comet_model()
 
-    if not is_labse_available():
-        return -1.0  # Signal that LaBSE is not available
+    if not is_comet_available():
+        return -1.0
+
+    try:
+        data = [{"src": source, "mt": hypothesis, "ref": reference}]
+        predictions = _comet_model.predict(data, batch_size=1)
+        score = predictions.scores[0]
+        return max(0.0, min(1.0, score))
+    except Exception as e:
+        print(f"[Grader] COMET scoring error: {e}")
+        return -1.0
+
+
+def _compute_embed_similarity(text1: str, text2: str) -> float:
+    """Compute cosine similarity between two texts using multilingual embeddings.
+
+    This is the "semantic gate" — it detects whether two texts have related
+    meanings regardless of language.
+
+    Args:
+        text1: First text (can be any language).
+        text2: Second text (can be any language).
+
+    Returns:
+        A similarity score between 0.0 and 1.0, or -1.0 if unavailable.
+    """
+    global _embed_model
+
+    if _embed_model is None:
+        _load_embed_model()
+
+    if not is_embed_available():
+        return -1.0
 
     try:
         from sentence_transformers.util import cos_sim
-        embeddings = _labse_model.encode([text1, text2], normalize_embeddings=True)
+        embeddings = _embed_model.encode([text1, text2], normalize_embeddings=True)
         similarity = cos_sim(embeddings[0], embeddings[1])
-        # Clamp to [0, 1]
         return max(0.0, min(1.0, similarity.item()))
     except Exception as e:
-        print(f"[Grader] LaBSE similarity error: {e}")
+        print(f"[Grader] Embedding similarity error: {e}")
         return -1.0
+
+
+def _compute_combined_score(comet_score: float, embed_sim: float) -> float:
+    """Combine COMET score with embedding similarity for a more accurate grade.
+
+    The embedding similarity acts as a "gate":
+    - If embed_sim is high (texts are semantically related), trust COMET score
+    - If embed_sim is low (texts are unrelated), penalize heavily
+    - If embed_sim is medium, blend the two scores
+
+    This prevents cases like:
+    - "tạm biệt" vs "hi": COMET=0.54, embed_sim=~0.35 → combined=~0.30
+    - "cảm ơn" vs "rice": COMET=0.63, embed_sim=~0.05 → combined=~0.19
+    """
+    if embed_sim < 0.0:
+        # Embedding model not available, use COMET alone
+        return comet_score
+
+    if embed_sim >= 0.70:
+        # High semantic similarity — texts are clearly related
+        # Trust COMET score with a small boost from embedding
+        combined = 0.7 * comet_score + 0.3 * embed_sim
+    elif embed_sim >= 0.45:
+        # Medium semantic similarity — somewhat related
+        # Blend COMET and embedding equally
+        combined = 0.5 * comet_score + 0.5 * embed_sim
+    elif embed_sim >= 0.25:
+        # Low semantic similarity — barely related
+        # Penalize: embedding similarity drags score down significantly
+        combined = 0.3 * comet_score + 0.7 * embed_sim
+    else:
+        # Very low semantic similarity — unrelated texts
+        # Heavy penalty: even if COMET is generous, this is likely wrong
+        combined = 0.15 * comet_score + 0.85 * embed_sim
+
+    return max(0.0, min(1.0, combined))
 
 
 # ─── String Utilities ───────────────────────────────────────────────
@@ -187,15 +329,22 @@ def compute_similarity(s1: str, s2: str) -> float:
 # ─── Main Grading Function ─────────────────────────────────────────
 
 
-def check_answer(user_answer: str, correct_answer: str, direction: str = "en_to_vi") -> dict:
+def check_answer(user_answer: str, correct_answer: str, direction: str = "en_to_vi",
+                 source_text: str = None) -> dict:
     """Compare a user-typed answer against the correct translation.
 
-    Uses LaBSE semantic similarity when available, falls back to Levenshtein.
+    Uses a two-layer approach:
+    1. COMET for translation quality estimation
+    2. Multilingual sentence embedding similarity as a semantic gate
+
+    Falls back to Levenshtein distance if models are unavailable.
 
     Args:
         user_answer: The answer typed by the user.
         correct_answer: The correct translation to compare against.
         direction: "en_to_vi" or "vi_to_en"
+        source_text: The original text (English or Vietnamese depending on direction).
+                     If None, the correct_answer is used as source (less accurate but works).
 
     Returns:
         Dictionary with:
@@ -203,10 +352,12 @@ def check_answer(user_answer: str, correct_answer: str, direction: str = "en_to_
         - accuracy: float (0.0-1.0) — how close the answer was
         - is_correct: bool — whether rating >= 3 (Good or better)
         - match_type: str — "exact", "diacritics_ignored", "semantic", "partial", or "none"
-        - similarity: float (0.0-1.0) — similarity score
+        - similarity: float (0.0-1.0) — final similarity score
         - normalized_user: str — normalized user answer
         - normalized_correct: str — normalized correct answer
-        - grader: str — "labse" or "levenshtein"
+        - grader: str — "comet", "comet+embed", or "levenshtein"
+        - comet_score: float — raw COMET score (for debugging)
+        - embed_similarity: float — raw embedding similarity (for debugging)
     """
     # Normalize both strings
     norm_user = normalize_string(user_answer)
@@ -223,6 +374,8 @@ def check_answer(user_answer: str, correct_answer: str, direction: str = "en_to_
             "normalized_user": norm_user,
             "normalized_correct": norm_correct,
             "grader": "exact",
+            "comet_score": None,
+            "embed_similarity": None,
         }
 
     # ── 2. Diacritics-ignored match ───────────────────────
@@ -239,55 +392,78 @@ def check_answer(user_answer: str, correct_answer: str, direction: str = "en_to_
             "normalized_user": norm_user,
             "normalized_correct": norm_correct,
             "grader": "exact",
+            "comet_score": None,
+            "embed_similarity": None,
         }
 
-    # ── 3. Try LaBSE semantic similarity ──────────────────
-    labse_sim = _compute_labse_similarity(user_answer, correct_answer)
+    # ── 3. COMET + Embedding semantic scoring ─────────────
+    # Determine source text for COMET
+    if source_text:
+        src = source_text
+    else:
+        # Without explicit source, use correct_answer as source
+        # This is a simplification — the caller should provide source_text
+        src = correct_answer
 
-    if labse_sim >= 0.0:
-        # LaBSE is available — use semantic similarity for grading
-        return _grade_from_labse(labse_sim, norm_user, norm_correct)
+    comet_score = _compute_comet_score(
+        source=src,
+        hypothesis=user_answer,
+        reference=correct_answer,
+    )
+
+    if comet_score >= 0.0:
+        # COMET is available — also compute embedding similarity as gate
+        embed_sim = _compute_embed_similarity(user_answer, correct_answer)
+
+        # Combine scores for final grading
+        combined = _compute_combined_score(comet_score, embed_sim)
+
+        # Determine grader label
+        if embed_sim >= 0.0:
+            grader_label = "comet+embed"
+        else:
+            grader_label = "comet"
+
+        return _grade_from_combined(combined, comet_score, embed_sim, norm_user, norm_correct, grader_label)
 
     # ── 4. Levenshtein fallback ───────────────────────────
-    # For vi→en: user types English, correct answer is English → same language, Levenshtein works.
-    # For en→vi: user types Vietnamese, correct answer is Vietnamese → same language, Levenshtein works.
-    # Both directions compare user_answer against correct_answer in SAME language.
     return _grade_from_levenshtein(norm_user_no_diacritics, norm_correct_no_diacritics, norm_user, norm_correct)
 
 
-def _grade_from_labse(similarity: float, norm_user: str, norm_correct: str) -> dict:
-    """Grade based on LaBSE semantic similarity score.
+def _grade_from_combined(combined: float, comet_score: float, embed_sim: float,
+                          norm_user: str, norm_correct: str, grader_label: str) -> dict:
+    """Grade based on combined COMET + embedding similarity score.
 
-    Thresholds calibrated for cross-lingual EN-VI matching:
-    - 0.85+ : Easy (rating 4) — very close semantic match
-    - 0.70+ : Good (rating 3) — correct meaning, possibly different wording
-    - 0.50+ : Hard (rating 2) — partially correct or related meaning
-    - <0.50 : Again (rating 1) — incorrect or unrelated
+    Thresholds calibrated for the combined score:
+    - 0.80+ : Easy (rating 4) — high quality, semantically equivalent
+    - 0.65+ : Good (rating 3) — good translation, minor issues
+    - 0.45+ : Hard (rating 2) — partially correct
+    - <0.45 : Again (rating 1) — incorrect or unrelated
     """
-    if similarity >= 0.85:
+    if combined >= 0.80:
         rating = 4
         match_type = "semantic"
-    elif similarity >= 0.70:
+    elif combined >= 0.65:
         rating = 3
         match_type = "semantic"
-    elif similarity >= 0.50:
+    elif combined >= 0.45:
         rating = 2
         match_type = "semantic"
     else:
         rating = 1
-        match_type = "partial" if similarity > 0.3 else "none"
-
-    accuracy = similarity
+        match_type = "partial" if combined > 0.25 else "none"
 
     return {
         "rating": rating,
-        "accuracy": round(accuracy, 4),
+        "accuracy": round(combined, 4),
         "is_correct": rating >= 3,
         "match_type": match_type,
-        "similarity": round(similarity, 4),
+        "similarity": round(combined, 4),
         "normalized_user": norm_user,
         "normalized_correct": norm_correct,
-        "grader": "labse",
+        "grader": grader_label,
+        "comet_score": round(comet_score, 4),
+        "embed_similarity": round(embed_sim, 4) if embed_sim >= 0.0 else None,
     }
 
 
@@ -317,6 +493,8 @@ def _grade_from_levenshtein(norm_user_no_diacritics: str, norm_correct_no_diacri
         "normalized_user": norm_user,
         "normalized_correct": norm_correct,
         "grader": "levenshtein",
+        "comet_score": None,
+        "embed_similarity": None,
     }
 
 

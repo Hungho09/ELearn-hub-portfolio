@@ -210,7 +210,9 @@ class CheckAnswerResponse(BaseModel):
     pronunciation: Optional[str] = None
     example_english: Optional[str] = None
     example_vietnamese: Optional[str] = None
-    grader: str = "levenshtein"  # "labse" or "levenshtein" or "exact"
+    grader: str = "levenshtein"  # "comet", "comet+embed", "levenshtein", or "exact"
+    comet_score: Optional[float] = None  # Raw COMET score (for debugging)
+    embed_similarity: Optional[float] = None  # Raw embedding similarity (for debugging)
 
 
 # ─── Vocabulary Enrich Schemas ────────────────────────────────────

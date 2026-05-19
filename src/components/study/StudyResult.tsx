@@ -3,7 +3,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, AlertTriangle, ArrowRight, Volume2, Brain, Globe } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, ArrowRight, Volume2, Brain } from 'lucide-react';
+import { US, VN} from 'country-flag-icons/react/3x2'
 import { cn } from '@/lib/utils';
 
 interface CheckAnswerResult {
@@ -18,7 +19,7 @@ interface CheckAnswerResult {
   pronunciation: string | null;
   example_english: string | null;
   example_vietnamese: string | null;
-  grader: 'labse' | 'levenshtein' | 'exact';
+  grader: 'comet' | 'levenshtein' | 'exact';
 }
 
 interface StudyResultProps {
@@ -76,7 +77,7 @@ const MATCH_CONFIG = {
 };
 
 const GRADER_LABELS = {
-  labse: { label: 'LaBSE AI', icon: Brain, color: 'text-violet-600 dark:text-violet-400' },
+  comet: { label: 'COMET AI', icon: Brain, color: 'text-violet-600 dark:text-violet-400' },
   levenshtein: { label: 'Levenshtein', icon: AlertTriangle, color: 'text-muted-foreground' },
   exact: { label: 'Exact', icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400' },
 };
@@ -110,7 +111,7 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
               <Badge variant="outline" className="text-xs">
                 {config.detailLabel}
               </Badge>
-              {result.grader === 'labse' && (
+              {result.grader === 'comet' && (
                 <Badge variant="outline" className={cn('text-xs gap-1', graderInfo.color)}>
                   <GraderIcon className="size-3" />
                   {graderInfo.label}
@@ -151,8 +152,8 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
             {/* Example sentence */}
             {result.example_english && (
               <div className="w-full max-w-md rounded-xl bg-muted/50 p-4 border border-muted">
-                <p className="text-sm text-foreground flex items-center gap-1.5"><Globe className="size-3.5 shrink-0 text-blue-500" /> {result.example_english}</p>
-                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5"><Globe className="size-3.5 shrink-0 text-red-500" /> {result.example_vietnamese}</p>
+                <p className="text-sm text-foreground flex items-center gap-1.5"><US title="United States" className="size-3.5 shrink-0" /> {result.example_english}</p>
+                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5"><VN title="Vietnam" className="size-3.5 shrink-0" /> {result.example_vietnamese}</p>
               </div>
             )}
 

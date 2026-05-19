@@ -7,16 +7,16 @@ The TGCL model is the primary flashcard scheduling algorithm.
 
 ## Setup Notes
 
-- Để thay đổi vị trí chứa model tải về của LaBSE, bạn có thể đặt biến môi trường `HF_HOME`.
+- Để thay đổi vị trí chứa model tải về của COMET, bạn có thể đặt biến môi trường `HF_HOME`.
   - Trên Windows PowerShell:
     ```powershell
-    $env:HF_HOME = "D:\path\to\huggingface-cache"
+    $env:HF_HOME = "D:\\path\\to\\huggingface-cache"
     ```
   - Trên Linux/macOS:
     ```bash
     export HF_HOME="/path/to/huggingface-cache"
     ```
-- `HF_HOME` sẽ định nghĩa thư mục cache chung cho Hugging Face, bao gồm LaBSE và các model khác.
+- `HF_HOME` sẽ định nghĩa thư mục cache chung cho Hugging Face, bao gồm COMET và các model khác.
 - Khi chạy backend hoặc cài đặt thư viện, hãy đảm bảo biến môi trường này đã được thiết lập trước.
 
 ## Cài đặt phụ thuộc TGCL
@@ -109,8 +109,11 @@ Input: Graph(nodes=vocab words, edges=review history, times=time deltas)
 The flashcard system uses typed answers with auto-grading (`grader.py`):
 - **Exact match** → Rating 4 (Easy), 100% accuracy
 - **Match ignoring Vietnamese diacritics** → Rating 3 (Good), 80% accuracy
-- **Partial match** (Levenshtein similarity ≥ 0.7) → Rating 3 (Good)
-- **Partial match** (Levenshtein similarity ≥ 0.4) → Rating 2 (Hard)
+- **COMET semantic match** (score >= 0.85) → Rating 4 (Easy)
+- **COMET semantic match** (score >= 0.70) → Rating 3 (Good)
+- **COMET semantic match** (score >= 0.50) → Rating 2 (Hard)
+- **Partial match** (Levenshtein similarity >= 0.7) → Rating 3 (Good)
+- **Partial match** (Levenshtein similarity >= 0.4) → Rating 2 (Hard)
 - **No match** → Rating 1 (Again)
 
 ## To Retrain the Model from Scratch
