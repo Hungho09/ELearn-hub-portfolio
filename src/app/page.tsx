@@ -13,7 +13,7 @@ import {
   Star,
 } from 'lucide-react';
 import {
-  US
+  US, JP, KR, DE, FR, CN
 } from 'country-flag-icons/react/3x2'
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -57,7 +57,7 @@ const LANGUAGES = [
     id: 'japanese',
     name: 'Japanese',
     nativeName: 'Tiếng Nhật',
-    flag: <Globe className="size-7 text-red-500" />,
+    flag: <JP title="Japan" className="size-7" />,
     description: 'Học Kanji, Hiragana, Katakana và từ vựng tiếng Nhật.',
     available: false,
   },
@@ -65,7 +65,7 @@ const LANGUAGES = [
     id: 'korean',
     name: 'Korean',
     nativeName: 'Tiếng Hàn',
-    flag: <Globe className="size-7 text-indigo-500" />,
+    flag: <KR title="Korean" className="size-7" />,
     description: 'Học Hangul và từ vựng tiếng Hàn cho người mới bắt đầu.',
     available: false,
   },
@@ -73,7 +73,7 @@ const LANGUAGES = [
     id: 'german',
     name: 'German',
     nativeName: 'Tiếng Đức',
-    flag: <Globe className="size-7 text-amber-500" />,
+    flag: <DE title="Germany" className="size-7" />,
     description: 'Học từ vựng tiếng Đức với hệ thống ôn tập thông minh.',
     available: false,
   },
@@ -81,7 +81,7 @@ const LANGUAGES = [
     id: 'french',
     name: 'French',
     nativeName: 'Tiếng Pháp',
-    flag: <Globe className="size-7 text-blue-400" />,
+    flag: <FR title="France" className="size-7" />,
     description: 'Học từ vựng tiếng Pháp từ cơ bản đến nâng cao.',
     available: false,
   },
@@ -89,7 +89,7 @@ const LANGUAGES = [
     id: 'chinese',
     name: 'Chinese',
     nativeName: 'Tiếng Trung',
-    flag: <Globe className="size-7 text-red-600" />,
+    flag: <CN title="China" className="size-7" />,
     description: 'Học Hán tự và từ vựng tiếng Trung thông dụng.',
     available: false,
   },
