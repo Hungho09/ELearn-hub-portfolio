@@ -44,8 +44,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error("Check-answer proxy error:", error);
+    const isConnError =
+      error instanceof Error &&
+      (error.message.includes("EADDRINUSE") ||
+        error.message.includes("ECONNREFUSED") ||
+        error.message.includes("fetch failed"));
     return NextResponse.json(
-      { error: "Failed to check answer" },
+      {
+        error: isConnError
+          ? "Backend service is starting up. Please try again in a few seconds."
+          : "Failed to check answer",
+      },
       { status: 503 }
     );
   }

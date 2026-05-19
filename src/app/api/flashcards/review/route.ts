@@ -79,8 +79,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     console.error("Review proxy error:", error);
+    const isConnError =
+      error instanceof Error &&
+      (error.message.includes("EADDRINUSE") ||
+        error.message.includes("ECONNREFUSED") ||
+        error.message.includes("fetch failed"));
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to submit review" },
+      {
+        error: isConnError
+          ? "Backend service is starting up or unavailable. Please try again in a few seconds."
+          : error instanceof Error
+            ? error.message
+            : "Failed to submit review",
+      },
       { status: 503 }
     );
   }
