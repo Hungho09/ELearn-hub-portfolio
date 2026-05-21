@@ -1059,46 +1059,68 @@ def seed_database():
             )
             db.add(badge)
 
-        # Seed some review history for demo - make first 5 words appear "due" for review
-        # Get first 5 vocabulary words
-        first_five_vocab = db.query(Vocabulary).limit(5).all()
-        now = datetime.now(timezone.utc)
-        yesterday = now - timedelta(days=1)
-
-        for i, vocab in enumerate(first_five_vocab):
-            # Create a review log from yesterday with varying ratings
-            # This will make them appear as "due" in today's session
-            rating = 3 if i % 2 == 0 else 2  # Alternating Good/Hard
-            review_log = ReviewLog(
-                user_id=test_user.id,
-                vocabulary_id=vocab.id,
-                rating=rating,
-                ease_factor=2.5,
-                interval_days=1,
-                repetitions=1,
-                reviewed_at=yesterday,
-                next_review_at=yesterday + timedelta(days=1),  # Due today
-                direction="en_to_vi"
-            )
-            db.add(review_log)
-
-        # Also add some mastered words (high ease factor, old review)
-        mastered_vocab = db.query(Vocabulary).offset(5).limit(3).all()
-        for vocab in mastered_vocab:
-            # Create a review log from 30 days ago with perfect rating
-            mastered_date = now - timedelta(days=30)
-            review_log = ReviewLog(
-                user_id=test_user.id,
-                vocabulary_id=vocab.id,
-                rating=4,  # Easy
-                ease_factor=3.0,
-                interval_days=30,
-                repetitions=5,
-                reviewed_at=mastered_date,
-                next_review_at=mastered_date + timedelta(days=30),  # Not due for a month
-                direction="en_to_vi"
-            )
-            db.add(review_log)
+        # Seed a beautiful, highly realistic, and database-honest review log history for the test user gamer@learnhub.com
+        # Spanning the last 90 days, producing ~60 active study days with 5-15 reviews each.
+        import random
+        # Seed the random number generator deterministically for consistent seeding
+        random.seed(12345)
+        
+        vocabularies = db.query(Vocabulary).all()
+        vocab_count = len(vocabularies)
+        
+        if vocab_count > 0:
+            now = datetime.now(timezone.utc)
+            total_days_to_seed = 90
+            logs_added = 0
+            
+            for day_offset in range(total_days_to_seed, -1, -1):
+                # Study on ~65% of the days
+                # But guarantee study on yesterday and today to preserve due cards / today's active streak
+                is_yesterday_or_today = day_offset <= 1
+                if not is_yesterday_or_today and random.random() > 0.65:
+                    continue
+                
+                # Number of reviews on this day
+                num_reviews = random.randint(5, 15) if not is_yesterday_or_today else random.randint(8, 12)
+                study_date = now - timedelta(days=day_offset)
+                
+                # Track reviewed words on this day to prevent duplicate logs of the same word in the same day
+                reviewed_vocab_ids = set()
+                
+                for _ in range(num_reviews):
+                    vocab = random.choice(vocabularies)
+                    if vocab.id in reviewed_vocab_ids:
+                        continue
+                    reviewed_vocab_ids.add(vocab.id)
+                    
+                    # Randomize time of study on that day (daytime hours: 8:00 to 22:00)
+                    hour = random.randint(8, 22)
+                    minute = random.randint(0, 59)
+                    second = random.randint(0, 59)
+                    log_time = study_date.replace(hour=hour, minute=minute, second=second)
+                    
+                    rating = random.choice([1, 2, 3, 4, 3, 4])  # Weighted towards Good (3) and Easy (4)
+                    ease_factor = round(random.uniform(1.8, 3.0), 2)
+                    interval_days = random.choice([1, 3, 7, 14, 30])
+                    repetitions = random.randint(1, 5)
+                    response_time = random.randint(1000, 8000)
+                    
+                    review_log = ReviewLog(
+                        user_id=test_user.id,
+                        vocabulary_id=vocab.id,
+                        rating=rating,
+                        ease_factor=ease_factor,
+                        interval_days=interval_days,
+                        repetitions=repetitions,
+                        reviewed_at=log_time,
+                        next_review_at=log_time + timedelta(days=interval_days),
+                        response_time_ms=response_time,
+                        direction=random.choice(["en_to_vi", "vi_to_en"])
+                    )
+                    db.add(review_log)
+                    logs_added += 1
+            
+            print(f"[seed] Seeded {logs_added} realistic review logs for {test_user.email} across {total_days_to_seed} days.")
 
         db.commit()
         print(f"[seed] Test user created: {test_email} / Abc@123 / Level {test_user.current_level} ({test_user.xp_points} XP, 3 badges)")

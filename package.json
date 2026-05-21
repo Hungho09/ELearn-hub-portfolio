@@ -3,14 +3,14 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
-    "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
+    "dev": "bun --bun next dev -p 3000",
+    "build": "bun --bun next build && bun -e \"require('fs').cpSync('.next/static', '.next/standalone/.next/static', {recursive:true}); require('fs').cpSync('public', '.next/standalone/public', {recursive:true})\"",
+    "start": "NODE_ENV=production bun .next/standalone/server.js",
     "lint": "eslint .",
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:push": "bun prisma db push",
+    "db:generate": "bun prisma generate",
+    "db:migrate": "bun prisma migrate dev",
+    "db:reset": "bun prisma migrate reset"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

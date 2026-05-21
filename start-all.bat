@@ -91,7 +91,7 @@ if not exist "node_modules\" (
 )
 
 REM Start Next.js in background
-start "LearnHub Frontend" /min npx next dev -p 3000
+start "LearnHub Frontend" /min %PKG_MGR% run dev
 echo   - Frontend started (port: 3000)
 
 REM Wait for frontend to be ready
@@ -129,7 +129,7 @@ REM Kill the backend and frontend processes
 echo.
 echo Stopping all services...
 taskkill /fi "WINDOWTITLE eq LearnHub Backend*" >nul 2>nul
-taskkill /fi "WINDOWTITLE eq next-server*" >nul 2>nul
+taskkill /fi "WINDOWTITLE eq LearnHub Frontend*" >nul 2>nul
 echo All services stopped.
 
 endlocal
