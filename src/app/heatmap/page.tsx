@@ -118,6 +118,10 @@ export default function HeatmapPage() {
   // Data mode: 'real' (honest DB) vs 'demo' (active year simulation)
   const [dataMode, setDataMode] = useState<'real' | 'demo'>('real');
 
+  // Year Selection State (GitHub-style fixed year calendar)
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+
   // Stats & logs from database
   const [stats, setStats] = useState<UserStatsData | null>(null);
   const [dbLogs, setDbLogs] = useState<DBReviewLog[]>([]);
@@ -134,6 +138,20 @@ export default function HeatmapPage() {
 
   const userId = session?.user?.id || session?.user?.email || 'guest';
   const userName = session?.user?.name || 'Học viên';
+
+  // Available years dynamically derived from review logs, always including current and previous year
+  const availableYears = useMemo(() => {
+    const yearsSet = new Set<number>();
+    yearsSet.add(currentYear);
+    yearsSet.add(currentYear - 1);
+    dbLogs.forEach(log => {
+      try {
+        const yr = new Date(log.reviewed_at).getFullYear();
+        if (!isNaN(yr)) yearsSet.add(yr);
+      } catch {}
+    });
+    return Array.from(yearsSet).sort((a, b) => b - a); // descending order
+  }, [dbLogs, currentYear]);
 
   // Client-side mount confirmation to prevent recharts hydration mismatch
   useEffect(() => {
@@ -177,20 +195,17 @@ export default function HeatmapPage() {
     loadData();
   }, [loadData]);
 
-  // 2. Generate Timezone-safe Heatmap Data
+  // 2. Generate Timezone-safe Heatmap Data for the Selected Year (Jan 1 to Dec 31)
   const heatmapData = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
-    
-    // Find the Saturday of the current week
-    const endDate = new Date(today);
-    endDate.setDate(today.getDate() + (6 - dayOfWeek));
-
-    // Generate exactly 53 weeks (371 days) ending on Saturday
     const days: HeatmapDay[] = [];
-    const totalDays = 371;
+    
+    // We generate from Jan 1st of selectedYear to Dec 31st of selectedYear
+    // We use noon index (12:00:00) to prevent DST and standard local timezone jumps from skipping a day
+    const startDate = new Date(selectedYear, 0, 1, 12, 0, 0);
+    const endDate = new Date(selectedYear, 11, 31, 12, 0, 0);
 
     // Chế độ dữ liệu Thật (Real DB data)
     if (dataMode === 'real') {
@@ -209,9 +224,10 @@ export default function HeatmapPage() {
         }
       });
 
-      for (let i = totalDays - 1; i >= 0; i--) {
-        const targetDate = new Date(endDate);
-        targetDate.setDate(endDate.getDate() - i);
+      let current = new Date(startDate);
+      while (current <= endDate) {
+        const targetDate = new Date(current);
+        targetDate.setHours(0, 0, 0, 0);
         const dateStr = getLocalDateString(targetDate);
         
         const isFuture = targetDate > today;
@@ -267,6 +283,8 @@ export default function HeatmapPage() {
           isDemo: false,
           isFuture
         } as any);
+
+        current.setDate(current.getDate() + 1);
       }
     } 
     // Chế độ dữ liệu Demo (Seeded year representation)
@@ -278,13 +296,14 @@ export default function HeatmapPage() {
         return x - Math.floor(x);
       };
 
-      for (let i = totalDays - 1; i >= 0; i--) {
-        const targetDate = new Date(endDate);
-        targetDate.setDate(endDate.getDate() - i);
+      let current = new Date(startDate);
+      let dayIndex = 0;
+      while (current <= endDate) {
+        const targetDate = new Date(current);
+        targetDate.setHours(0, 0, 0, 0);
         const dateStr = getLocalDateString(targetDate);
 
         const isFuture = targetDate > today;
-        const dayIndex = (totalDays - 1) - i;
         const seedVal = dayIndex + 42;
         const rand1 = seededRandom(seedVal);
         const rand2 = seededRandom(seedVal + 1);
@@ -333,11 +352,14 @@ export default function HeatmapPage() {
           isDemo: true,
           isFuture
         } as any);
+
+        current.setDate(current.getDate() + 1);
+        dayIndex++;
       }
     }
 
     return days;
-  }, [dbLogs, dataMode, stats]);
+  }, [dbLogs, dataMode, stats, selectedYear]);
 
   // Sync selected day when dataMode or data changes
   useEffect(() => {
@@ -565,8 +587,20 @@ export default function HeatmapPage() {
     const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
+    // Mathematically clamp targetX to keep the tooltip fully within the viewport.
+    // Tooltip has min-w-[210px] styled with border/padding, so 220px is a safe cushion.
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const tooltipWidth = 220;
+    const padding = 16;
+
+    let targetX = rect.left + scrollLeft + rect.width / 2;
+    const minX = scrollLeft + tooltipWidth / 2 + padding;
+    const maxX = scrollLeft + viewportWidth - tooltipWidth / 2 - padding;
+
+    targetX = Math.max(minX, Math.min(maxX, targetX));
+
     setTooltipPos({
-      x: rect.left + scrollLeft + rect.width / 2,
+      x: targetX,
       y: rect.top + scrollTop - 10
     });
     setHoveredDay(day);
@@ -703,33 +737,53 @@ export default function HeatmapPage() {
             {/* MAIN YEARLY HEATMAP CONTAINER */}
             <Card className="border border-border/60 bg-card/65 backdrop-blur-md overflow-hidden shadow-card">
               <CardHeader className="pb-3 border-b border-border/40">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <CardTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
                     <Activity className="size-5 text-emerald-500" />
                     Heatmap Ôn Tập Từng Ngày
                   </CardTitle>
                   
-                  {/* Visual scale indicators */}
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground select-none">
-                    <span>Ít học</span>
-                    <div className="size-3.5 rounded bg-muted/20 border border-border/10" />
-                    <div className="size-3.5 rounded bg-emerald-500/20" />
-                    <div className="size-3.5 rounded bg-emerald-500/40" />
-                    <div className="size-3.5 rounded bg-emerald-500/70" />
-                    <div className="size-3.5 rounded bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.4)]" />
-                    <span>Học nhiều</span>
+                  <div className="flex flex-wrap items-center gap-3.5">
+                    {/* Glassmorphic Year Selector Segmented Control */}
+                    <div className="flex items-center gap-1 bg-muted/40 p-1.5 rounded-xl border border-border/40 shrink-0">
+                      {availableYears.map((yr) => (
+                        <button
+                          key={yr}
+                          onClick={() => setSelectedYear(yr)}
+                          className={cn(
+                            "px-3 py-1 rounded-lg text-[11px] font-bold transition-all focus:outline-none cursor-pointer",
+                            selectedYear === yr
+                              ? "bg-emerald-500 text-emerald-950 font-extrabold shadow-sm"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/35"
+                          )}
+                        >
+                          Năm {yr}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Visual scale indicators */}
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground select-none">
+                      <span>Ít học</span>
+                      <div className="size-3.5 rounded bg-muted/20 border border-border/10" />
+                      <div className="size-3.5 rounded bg-emerald-500/20" />
+                      <div className="size-3.5 rounded bg-emerald-500/40" />
+                      <div className="size-3.5 rounded bg-emerald-500/70" />
+                      <div className="size-3.5 rounded bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.4)]" />
+                      <span>Học nhiều</span>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
               
               <CardContent className="p-6">
                 <div className="w-full overflow-x-auto custom-scrollbar pb-2">
-                  <div className="min-w-[940px] flex gap-2">
+                  <div className="min-w-[670px] w-fit mx-auto flex gap-2">
                     
-                    {/* Weekday indicators */}
-                    <div className="grid grid-rows-7 gap-1 text-[10px] text-muted-foreground/80 pr-2 pt-6 select-none font-medium text-right w-6">
+                    {/* Weekday indicators (perfectly aligned to 10px squares and 2px gaps) */}
+                    <div className="grid grid-rows-7 gap-[2px] text-[10px] text-muted-foreground/80 pr-2 pt-5 select-none font-medium text-right w-6">
                       {WEEKDAYS.map((day, idx) => (
-                        <div key={day} className={cn("h-3.5 flex items-center justify-end", idx % 2 === 0 ? "opacity-0" : "")}>
+                        <div key={day} className={cn("h-[10px] flex items-center justify-end", idx % 2 === 0 ? "opacity-0" : "")}>
                           {day}
                         </div>
                       ))}
@@ -738,11 +792,10 @@ export default function HeatmapPage() {
                     {/* Main Grid Wrapper */}
                     <div className="flex-1 flex flex-col relative pt-5">
                       
-                      {/* Accurate Month Label position overlays */}
+                      {/* Accurate Month Label position overlays (aligned to 12px columns: 10px square + 2px gap) */}
                       <div className="absolute top-0 left-0 w-full h-4 select-none">
                         {monthLabels.map((lbl, idx) => {
-                          // size-3.5 is 14px + gap-[3px] is 3px = 17px
-                          const leftPos = lbl.colIndex * 17;
+                          const leftPos = lbl.colIndex * 12;
                           return (
                             <span 
                               key={`${lbl.text}-${idx}`} 
@@ -755,16 +808,16 @@ export default function HeatmapPage() {
                         })}
                       </div>
 
-                      {/* Heatmap Grid of Squares */}
-                      <div className="flex gap-[3px]">
+                      {/* Heatmap Grid of Squares (using standard 10px sizing and 2px gaps) */}
+                      <div className="flex gap-[2px]">
                         {heatmapWeeks.map((week, wIdx) => (
-                          <div key={wIdx} className="grid grid-rows-7 gap-[3px]">
+                          <div key={wIdx} className="grid grid-rows-7 gap-[2px]">
                             {week.map((day, dIdx) => {
                               if (!day) {
                                 return (
                                   <div 
                                     key={`empty-${wIdx}-${dIdx}`} 
-                                    className="size-3.5 rounded-[2px] bg-transparent pointer-events-none" 
+                                    className="size-[10px] rounded-[1.5px] bg-transparent pointer-events-none" 
                                   />
                                 );
                               }
@@ -779,9 +832,9 @@ export default function HeatmapPage() {
                                   onClick={() => !isFuture && setSelectedDay(day)}
                                   onMouseEnter={(e) => handleMouseEnter(day, e)}
                                   onMouseLeave={handleMouseLeave}
-                                  whileHover={!isFuture ? { scale: 1.25, zIndex: 10 } : {}}
+                                  whileHover={!isFuture ? { scale: 1.3, zIndex: 10 } : {}}
                                   className={cn(
-                                    "size-3.5 rounded-[2px] border transition-colors relative",
+                                    "size-[10px] rounded-[1.5px] border transition-colors relative",
                                     isFuture 
                                       ? "bg-muted/5 dark:bg-muted/5 border-dashed border-border/20 cursor-not-allowed select-none opacity-40"
                                       : cn(getCellColorClass(day.count), "cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"),
@@ -811,7 +864,7 @@ export default function HeatmapPage() {
                     <span>Ô có viền nhấp nháy đại diện cho <strong>Ngày hôm nay ({formatDateVN(new Date())})</strong></span>
                   </div>
                   <div className="font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
-                    Tính kiên định: {Math.round((totalStudyDays / 365) * 100)}% ({totalStudyDays}/365 ngày ôn tập)
+                    Tính kiên định: {Math.round((totalStudyDays / (heatmapData.length || 365)) * 100)}% ({totalStudyDays}/{heatmapData.length} ngày ôn tập)
                   </div>
                 </div>
               </CardContent>
