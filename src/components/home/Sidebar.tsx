@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Home,
   BarChart3,
+  Calendar,
   Settings,
   Shield,
   LogOut,
@@ -30,6 +31,7 @@ interface NavItem {
 const learningItems: NavItem[] = [
   { label: 'Trang chủ', icon: Home, href: '/' },
   { label: 'Thống kê', icon: BarChart3, href: '/stats' },
+  { label: 'Lịch sử học', icon: Calendar, href: '/heatmap' },
 ];
 
 /** Admin navigation items (only shown for admin users) */

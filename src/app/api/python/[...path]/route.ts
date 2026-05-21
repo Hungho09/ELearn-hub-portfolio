@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PYTHON_API_URL = 'http://127.0.0.1:8001';
+const PYTHON_API_URL = process.env.API_SERVICE_URL || 'http://127.0.0.1:3001';
 
 /**
  * Proxy API route that forwards requests to the Python FastAPI backend.
- * This avoids the need for the Caddy gateway to directly access port 8001.
+ * This avoids the need for the Caddy gateway to directly access port 3001.
  * Frontend calls: /api/python/api/auth/login
- * This proxies to: http://127.0.0.1:8001/api/auth/login
+ * This proxies to: http://127.0.0.1:3001/api/auth/login
  */
 export async function GET(
   request: NextRequest,
