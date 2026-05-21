@@ -572,7 +572,7 @@ export default function HeatmapPage() {
   }, [heatmapWeeks]);
 
   const getCellColorClass = (count: number) => {
-    if (count === 0) return 'bg-muted/20 dark:bg-muted/10 border-border/10';
+    if (count === 0) return 'bg-muted/30 dark:bg-muted/15 border-border/40';
     if (count < 5) return 'bg-emerald-500/20 text-emerald-900 border-emerald-500/10';
     if (count < 12) return 'bg-emerald-500/40 text-emerald-800 border-emerald-500/20';
     if (count < 22) return 'bg-emerald-500/70 text-emerald-200 border-emerald-500/40';
@@ -765,7 +765,7 @@ export default function HeatmapPage() {
                     {/* Visual scale indicators */}
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground select-none">
                       <span>Ít học</span>
-                      <div className="size-3.5 rounded bg-muted/20 border border-border/10" />
+                      <div className="size-3.5 rounded bg-muted/30 dark:bg-muted/15 border border-border/40" />
                       <div className="size-3.5 rounded bg-emerald-500/20" />
                       <div className="size-3.5 rounded bg-emerald-500/40" />
                       <div className="size-3.5 rounded bg-emerald-500/70" />
