@@ -151,10 +151,10 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
         className={cn('flex items-center gap-2.5 px-4 py-5 w-full hover:bg-white/10 dark:hover:bg-white/5 transition-colors', collapsed && 'justify-center px-2')}
       >
         <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[#A29BFE] shadow-[0_4px_15px_rgba(108,92,231,0.3)] transition-all hover:scale-105">
-          <GraduationCap className="size-5 text-primary-foreground dark:text-[#080811]" />
+          <GraduationCap className="size-5 text-white" />
         </div>
         {!collapsed && (
-          <span className="text-lg font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#A29BFE]">LearnHub</span>
+          <span className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#A29BFE]">LearnHub</span>
         )}
       </button>
 

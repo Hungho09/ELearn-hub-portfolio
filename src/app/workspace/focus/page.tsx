@@ -368,11 +368,13 @@ export default function ZenFocusPage() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen w-screen overflow-hidden bg-[#070713] text-foreground font-sans relative">
+      <div className="flex h-screen w-screen overflow-hidden bg-transparent text-foreground font-sans relative">
 
-        {/* Glow Aurora Background */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[130px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#A29BFE]/10 blur-[130px] pointer-events-none" />
+        {/* Glow Aurora Background - Isolated to prevent parent auto-scrolling */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 dark:bg-primary/5 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#A29BFE]/5 dark:bg-[#A29BFE]/3 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
+        </div>
 
         {/* Sidebar (Có thể ẩn khi bật Zen Mode để loại bỏ xao nhãng) */}
         <AnimatePresence>
@@ -393,22 +395,22 @@ export default function ZenFocusPage() {
         <main className="flex-1 overflow-y-auto px-6 py-6 md:px-10 flex flex-col justify-between relative z-10 transition-all duration-300">
 
           {/* Top Header */}
-          <div className="flex items-center justify-between w-full border-b border-white/5 pb-4">
+          <div className="flex items-center justify-between w-full border-b border-border/40 pb-4">
             <div className="flex items-center gap-4">
               {!isZenMode && (
                 <button
                   onClick={() => router.push('/workspace')}
-                  className="flex size-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 hover:bg-white/15 transition-all text-slate-300 hover:text-white"
+                  className="flex size-9 items-center justify-center rounded-xl border border-border/40 bg-card hover:bg-accent/15 transition-all text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="size-4" />
                 </button>
               )}
               <div>
-                <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
                   <span>Zen Focus Space</span>
                   <span className="size-2 rounded-full bg-primary animate-pulse" />
                 </h1>
-                {!isZenMode && <p className="text-xs text-slate-400">Thiết lập sự yên tĩnh tuyệt đối cho riêng mình</p>}
+                {!isZenMode && <p className="text-xs text-muted-foreground">Thiết lập sự yên tĩnh tuyệt đối cho riêng mình</p>}
               </div>
             </div>
 
@@ -417,9 +419,9 @@ export default function ZenFocusPage() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setIsZenMode(!isZenMode)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-sm font-semibold ${isZenMode
-                      ? 'border-primary/50 bg-primary/20 text-white shadow-[0_0_15px_rgba(108,92,231,0.3)] animate-pulse'
-                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/15 hover:text-white'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-all text-sm font-semibold bg-card hover:bg-accent/15 ${isZenMode
+                      ? 'border-primary/50 bg-primary/20 text-primary-foreground shadow-[0_0_15px_rgba(108,92,231,0.3)] animate-pulse'
+                      : 'border-border/40 text-muted-foreground hover:text-foreground'
                     }`}
                 >
                   {isZenMode ? (
@@ -453,8 +455,8 @@ export default function ZenFocusPage() {
                   <button
                     onClick={() => selectTimerPreset('work')}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${mode === 'work' && duration === 25 * 60
-                        ? 'bg-primary/20 border-primary/50 text-white shadow-[0_0_10px_rgba(108,92,231,0.2)]'
-                        : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                        ? 'bg-primary/20 border-primary/50 text-primary shadow-[0_0_10px_rgba(108,92,231,0.2)]'
+                        : 'bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-accent/10'
                       }`}
                   >
                     🎯 Học (25m)
@@ -462,8 +464,8 @@ export default function ZenFocusPage() {
                   <button
                     onClick={() => selectTimerPreset('deepWork')}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${mode === 'work' && duration === 50 * 60
-                        ? 'bg-primary/20 border-primary/50 text-white shadow-[0_0_10px_rgba(108,92,231,0.2)]'
-                        : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                        ? 'bg-primary/20 border-primary/50 text-primary shadow-[0_0_10px_rgba(108,92,231,0.2)]'
+                        : 'bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-accent/10'
                       }`}
                   >
                     🔥 Học sâu (50m)
@@ -471,8 +473,8 @@ export default function ZenFocusPage() {
                   <button
                     onClick={() => selectTimerPreset('shortBreak')}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${mode === 'shortBreak'
-                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
-                        : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-600 dark:text-emerald-400'
+                        : 'bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-accent/10'
                       }`}
                   >
                     ☕ Nghỉ ngắn (5m)
@@ -480,8 +482,8 @@ export default function ZenFocusPage() {
                   <button
                     onClick={() => selectTimerPreset('longBreak')}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${mode === 'longBreak'
-                        ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-400'
-                        : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                        ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-600 dark:text-cyan-400'
+                        : 'bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-accent/10'
                       }`}
                   >
                     🌊 Nghỉ dài (15m)
@@ -490,7 +492,7 @@ export default function ZenFocusPage() {
               )}
 
               {/* Circular LED Neon Timer */}
-              <div className="relative flex items-center justify-center size-72 md:size-80 rounded-full border border-white/5 bg-white/[0.02] shadow-[inset_0_4px_30px_rgba(255,255,255,0.01)] backdrop-blur-md">
+              <div className="relative flex items-center justify-center size-72 md:size-80 rounded-full border border-border/40 bg-card/45 backdrop-blur-md shadow-sm">
 
                 {/* SVG Ring Progress */}
                 <svg className="absolute size-72 md:size-80 transform -rotate-90 pointer-events-none">
@@ -499,7 +501,7 @@ export default function ZenFocusPage() {
                     cx={160}
                     cy={160}
                     r={radius}
-                    className="stroke-white/[0.03]"
+                    className="stroke-muted-foreground/10 dark:stroke-white/[0.03]"
                     strokeWidth={strokeWidth}
                     fill="transparent"
                   />
@@ -528,13 +530,13 @@ export default function ZenFocusPage() {
 
                 {/* Inner Content */}
                 <div className="z-10 flex flex-col items-center">
-                  <span className="text-xs uppercase tracking-widest text-slate-400 font-semibold mb-1">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-1">
                     {mode === 'work' ? 'Đang học tập' : 'Đang nghỉ ngơi'}
                   </span>
-                  <span className="text-5xl md:text-6xl font-black font-mono tracking-tight text-white select-none">
+                  <span className="text-5xl md:text-6xl font-black font-mono tracking-tight text-foreground select-none">
                     {formatTime(timeLeft)}
                   </span>
-                  <span className="text-[10px] text-slate-400 mt-2">
+                  <span className="text-[10px] text-muted-foreground mt-2">
                     {mode === 'work' ? '🎯 Giữ tập trung' : '☕ Thư giãn đầu óc'}
                   </span>
                 </div>
@@ -546,7 +548,7 @@ export default function ZenFocusPage() {
                   <TooltipTrigger asChild>
                     <button
                       onClick={handleReset}
-                      className="flex size-11 items-center justify-center rounded-full border border-white/10 bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition-all hover:scale-105 active:scale-95"
+                      className="flex size-11 items-center justify-center rounded-full border border-border/40 bg-card text-muted-foreground hover:text-foreground transition-all hover:scale-105 active:scale-95"
                     >
                       <RotateCcw className="size-5" />
                     </button>
@@ -556,11 +558,11 @@ export default function ZenFocusPage() {
 
                 <button
                   onClick={handleStartPause}
-                  className={`flex size-16 items-center justify-center rounded-full text-white transition-all hover:scale-105 active:scale-95 shadow-lg ${isRunning
-                      ? 'bg-red-500/80 hover:bg-red-500 shadow-red-500/20'
+                  className={`flex size-16 items-center justify-center rounded-full text-primary-foreground transition-all hover:scale-105 active:scale-95 shadow-lg ${isRunning
+                      ? 'bg-red-500/85 hover:bg-red-500 shadow-red-500/20'
                       : mode === 'work'
-                        ? 'bg-primary hover:bg-primary/90 dark:bg-[#A29BFE] dark:hover:bg-[#A29BFE]/90 shadow-primary/20'
-                        : 'bg-emerald-500 hover:bg-emerald-500/90 shadow-emerald-500/20'
+                        ? 'bg-primary hover:bg-primary/95 shadow-primary/20'
+                        : 'bg-emerald-500 hover:bg-emerald-500/95 shadow-emerald-500/20'
                     }`}
                 >
                   {isRunning ? <Pause className="size-7 fill-white" /> : <Play className="size-7 fill-white ml-1" />}
@@ -593,10 +595,10 @@ export default function ZenFocusPage() {
                 >
 
                   {/* Box 1: YouTube Live Lofi Player & Sound Mixer */}
-                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-md relative overflow-hidden flex flex-col md:flex-row gap-5 items-stretch">
+                  <div className="rounded-2xl border border-border/40 bg-card/45 p-5 backdrop-blur-md relative overflow-hidden flex flex-col md:flex-row gap-5 items-stretch shadow-sm">
 
                     {/* YouTube Embed Mini Player */}
-                    <div className="flex-1 rounded-xl overflow-hidden border border-white/10 bg-black/40 min-h-[160px] relative group">
+                    <div className="flex-1 rounded-xl overflow-hidden border border-border/40 bg-black/5 dark:bg-black/40 min-h-[160px] relative group">
                       <iframe
                         src={`${youtubeUrl}?autoplay=1&mute=1&enablejsapi=1`}
                         title="Lofi Music"
@@ -615,13 +617,13 @@ export default function ZenFocusPage() {
                     </div>
 
                     {/* Ambient Sound Mixer */}
-                    <div className="flex flex-col justify-between w-full md:w-56 shrink-0 border-l border-white/5 pl-0 md:pl-5 pt-4 md:pt-0">
+                    <div className="flex flex-col justify-between w-full md:w-56 shrink-0 border-l border-border/40 pl-0 md:pl-5 pt-4 md:pt-0">
                       <div>
-                        <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-3 flex items-center gap-1.5">
+                        <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-3 flex items-center gap-1.5">
                           <Volume2 className="size-4 text-primary" />
                           Âm thanh môi trường
                         </h3>
-                        <p className="text-[11px] text-slate-500 mb-4">Sử dụng Web Audio để tự động tổng hợp âm thanh thiên nhiên offline cực hay.</p>
+                        <p className="text-[11px] text-muted-foreground/75 mb-4">Sử dụng Web Audio để tự động tổng hợp âm thanh thiên nhiên offline cực hay.</p>
                       </div>
 
                       <div className="flex flex-col gap-3">
@@ -629,8 +631,8 @@ export default function ZenFocusPage() {
                         <button
                           onClick={handleToggleRain}
                           className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl border transition-all text-xs font-semibold ${isRainOn
-                              ? 'bg-[#A29BFE]/15 border-[#A29BFE]/30 text-white shadow-[0_0_10px_rgba(162,155,254,0.1)]'
-                              : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                              ? 'bg-primary/15 border-primary/30 text-primary shadow-[0_0_10px_rgba(108,92,231,0.1)]'
+                              : 'bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-accent/10'
                             }`}
                         >
                           <span className="flex items-center gap-2">
@@ -644,8 +646,8 @@ export default function ZenFocusPage() {
                         <button
                           onClick={handleToggleWind}
                           className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl border transition-all text-xs font-semibold ${isWindOn
-                              ? 'bg-emerald-500/15 border-emerald-500/30 text-white shadow-[0_0_10px_rgba(16,185,129,0.1)]'
-                              : 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.1)]'
+                              : 'bg-card border-border/40 text-muted-foreground hover:text-foreground hover:bg-accent/10'
                             }`}
                         >
                           <span className="flex items-center gap-2">
@@ -666,14 +668,14 @@ export default function ZenFocusPage() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="rounded-xl border border-white/10 bg-[#0c0c1e] p-4 flex flex-col gap-3 shadow-2xl relative z-30"
+                        className="rounded-xl border border-border/80 bg-popover/95 backdrop-blur-xl p-4 flex flex-col gap-3 shadow-2xl relative z-30"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-200">Cấu hình nhạc YouTube Lofi</span>
+                          <span className="text-xs font-bold text-foreground">Cấu hình nhạc YouTube Lofi</span>
                           <button
                             type="button"
                             onClick={() => setShowYtConfig(false)}
-                            className="text-xs text-slate-400 hover:text-white"
+                            className="text-xs text-muted-foreground hover:text-foreground"
                           >
                             Đóng
                           </button>
@@ -684,25 +686,25 @@ export default function ZenFocusPage() {
                             placeholder="Dán link YouTube hoặc Livestream bất kỳ..."
                             value={customYtInput}
                             onChange={(e) => setCustomYtInput(e.target.value)}
-                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50"
+                            className="flex-1 bg-background/50 border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary/50"
                           />
                           <Button type="submit" size="sm" className="text-xs bg-primary hover:bg-primary/95 text-white">
                             Áp dụng
                           </Button>
                         </div>
-                        <p className="text-[10px] text-slate-500">Mẹo: Bạn có thể dán link MV ca nhạc, Lofi Piano, hoặc bài giảng tiếng Anh yêu thích.</p>
+                        <p className="text-[10px] text-muted-foreground/70">Mẹo: Bạn có thể dán link MV ca nhạc, Lofi Piano, hoặc bài giảng tiếng Anh yêu thích.</p>
                       </motion.form>
                     )}
                   </AnimatePresence>
 
                   {/* Box 2: Focus Goals (Glassmorphic Todo list) */}
-                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur-md flex flex-col gap-4">
+                  <div className="rounded-2xl border border-border/40 bg-card/45 p-5 backdrop-blur-md flex flex-col gap-4 shadow-sm">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold flex items-center gap-1.5">
-                        <CheckCircle2 className="size-4 text-emerald-400" />
+                      <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5">
+                        <CheckCircle2 className="size-4 text-emerald-500" />
                         Mục tiêu học tập phiên này
                       </h3>
-                      <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full px-2.5 py-0.5 font-bold">
+                      <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-full px-2.5 py-0.5 font-bold">
                         {todos.filter((t) => t.completed).length}/{todos.length} Đã xong
                       </span>
                     </div>
@@ -714,7 +716,7 @@ export default function ZenFocusPage() {
                         placeholder="Thêm mục tiêu nhỏ cần hoàn thành..."
                         value={newTodoText}
                         onChange={(e) => setNewTodoText(e.target.value)}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-primary/40 focus:bg-white/[0.08] transition-all"
+                        className="flex-1 bg-background/50 border border-border rounded-xl px-4 py-2 text-xs text-foreground focus:outline-none focus:border-primary/40 focus:bg-background/80 transition-all"
                       />
                       <button
                         type="submit"
@@ -728,8 +730,8 @@ export default function ZenFocusPage() {
                     <div className="max-h-[180px] overflow-y-auto flex flex-col gap-2 pr-1 custom-scrollbar">
                       <AnimatePresence initial={false}>
                         {todos.length === 0 ? (
-                          <div className="text-center py-6 text-slate-500 text-xs flex flex-col items-center gap-2">
-                            <Circle className="size-6 text-slate-600 animate-pulse" />
+                          <div className="text-center py-6 text-muted-foreground/60 text-xs flex flex-col items-center gap-2">
+                            <Circle className="size-6 text-muted-foreground/40 animate-pulse" />
                             <span>Chưa có mục tiêu nào được thiết lập. Hãy gieo hạt mục tiêu đầu tiên!</span>
                           </div>
                         ) : (
@@ -739,25 +741,25 @@ export default function ZenFocusPage() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, x: -20 }}
-                              className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group"
+                              className="flex items-center justify-between p-3 rounded-xl border border-border/30 bg-card/20 hover:bg-accent/10 transition-all group"
                             >
                               <div
                                 onClick={() => handleToggleTodo(todo.id)}
                                 className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
                               >
                                 {todo.completed ? (
-                                  <CheckCircle2 className="size-4.5 text-emerald-400 shrink-0" />
+                                  <CheckCircle2 className="size-4.5 text-emerald-500 shrink-0" />
                                 ) : (
-                                  <Circle className="size-4.5 text-slate-500 hover:text-white shrink-0 transition-colors" />
+                                  <Circle className="size-4.5 text-muted-foreground hover:text-foreground shrink-0 transition-colors" />
                                 )}
-                                <span className={`text-xs truncate ${todo.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>
+                                <span className={`text-xs truncate ${todo.completed ? 'line-through text-muted-foreground/60' : 'text-foreground'}`}>
                                   {todo.text}
                                 </span>
                               </div>
 
                               <button
                                 onClick={() => handleDeleteTodo(todo.id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-red-400 p-1"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive p-1"
                               >
                                 <Trash2 className="size-3.5" />
                               </button>
@@ -776,7 +778,7 @@ export default function ZenFocusPage() {
           </div>
 
           {/* Bottom simple warning/tips */}
-          <div className="text-center text-[10px] text-slate-500 select-none pb-2 mt-4">
+          <div className="text-center text-[10px] text-muted-foreground/70 select-none pb-2 mt-4">
             Zen Focus Space sử dụng Web Audio API để tái tạo sóng tiếng ồn tự nhiên ngoại tuyến. Mọi dữ liệu mục tiêu được lưu an toàn trên máy của bạn.
           </div>
 

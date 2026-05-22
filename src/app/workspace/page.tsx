@@ -41,13 +41,17 @@ export default function WorkspaceLobbyPage() {
     <TooltipProvider>
       <div className="flex h-screen w-screen overflow-hidden bg-transparent text-foreground font-sans relative">
 
-        {/* Aurora Background Blobs - Adaptive Glassmorphism */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 dark:bg-primary/5 blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#A29BFE]/5 dark:bg-[#A29BFE]/3 blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: '12s' }} />
-        <div className="absolute top-[30%] right-[20%] w-[300px] h-[300px] rounded-full bg-emerald-500/5 dark:bg-emerald-500/[0.02] blur-[80px] pointer-events-none" />
+        {/* Aurora Background Blobs - Isolated to prevent parent auto-scrolling */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 dark:bg-primary/5 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#A29BFE]/5 dark:bg-[#A29BFE]/3 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
+          <div className="absolute top-[30%] right-[20%] w-[300px] h-[300px] rounded-full bg-emerald-500/5 dark:bg-emerald-500/[0.02] blur-[80px]" />
+        </div>
 
         {/* Sidebar */}
-        <Sidebar collapsed={false} />
+        <div className="h-full shrink-0 overflow-hidden">
+          <Sidebar collapsed={false} />
+        </div>
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto px-6 py-8 md:px-12 flex flex-col justify-between relative z-10">

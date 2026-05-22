@@ -135,7 +135,7 @@ export default function PublicStudyHubPage() {
     socket.onopen = () => {
       console.log("[WebSocket] Kết nối thành công đến máy chủ 3002!");
       setIsConnected(true);
-      
+
       // 1. Broadcast gói tin "join" thông báo sự hiện diện của mình cho phòng học
       socket.send(JSON.stringify({
         type: "join",
@@ -343,7 +343,7 @@ export default function PublicStudyHubPage() {
   };
 
   // ─── Tương tác của Người Dùng ──────────────────────────────────────
-  
+
   // Gửi chat
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
@@ -382,7 +382,7 @@ export default function PublicStudyHubPage() {
   // Thay đổi trạng thái học tập của bản thân
   const handleStatusChange = (newStatus: string) => {
     setMyStatus(newStatus);
-    
+
     // Broadcast trạng thái mới lên WebSocket
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify({
@@ -396,7 +396,7 @@ export default function PublicStudyHubPage() {
         }
       }));
     }
-    
+
     addSystemMessage(`Bạn đã đổi trạng thái thành: "${newStatus}"`);
   };
 
@@ -457,11 +457,18 @@ export default function PublicStudyHubPage() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground font-sans relative transition-colors duration-300">
-        
-        {/* Glowing Aurora Background */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 dark:bg-primary/5 blur-[130px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 blur-[130px] pointer-events-none" />
+      <div className="flex h-screen w-screen overflow-hidden bg-transparent text-foreground font-sans relative transition-colors duration-300">
+
+        {/* Glowing Aurora Background - Isolated to prevent parent auto-scrolling */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 dark:bg-primary/5 blur-[130px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-500/10 dark:bg-emerald-500/5 blur-[130px]" />
+        </div>
+
+        {/* Sidebar */}
+        <div className="h-full shrink-0 overflow-hidden">
+          <Sidebar collapsed={false} />
+        </div>
 
         {/* Real-time Floating Emojis Layer */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-50">
@@ -488,12 +495,9 @@ export default function PublicStudyHubPage() {
           </AnimatePresence>
         </div>
 
-        {/* Sidebar */}
-        <Sidebar collapsed={false} />
-
         {/* Main Content Area */}
         <main className="flex-1 overflow-hidden px-6 py-6 md:px-8 flex flex-col justify-between relative z-10">
-          
+
           {/* Top Header */}
           <div className="flex items-center justify-between w-full border-b border-border/40 pb-4">
             <div className="flex items-center gap-4">
@@ -516,9 +520,8 @@ export default function PublicStudyHubPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowConfig(!showConfig)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all bg-card hover:bg-accent/15 ${
-                  isConnected ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'border-destructive/30 text-destructive'
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all bg-card hover:bg-accent/15 ${isConnected ? 'border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'border-destructive/30 text-destructive'
+                  }`}
               >
                 {isConnected ? (
                   <>
@@ -590,7 +593,7 @@ export default function PublicStudyHubPage() {
 
           {/* Core Grid Layout (Companions + Chat Panel) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full max-w-7xl mx-auto flex-1 min-h-0 py-4 overflow-hidden">
-            
+
             {/* Left Column: Grid of Study Companions (Takes 7 cols) */}
             <div className="lg:col-span-7 flex flex-col justify-between gap-4 overflow-hidden">
               <div className="flex items-center justify-between">
@@ -602,16 +605,16 @@ export default function PublicStudyHubPage() {
               </div>
 
               {/* Grid of real students connected via WebSocket */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[460px]">
-                
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0">
+
                 {/* You Card (Visualizing yourself inside the space) */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="p-4 rounded-2xl border border-primary/40 bg-primary/5 dark:bg-primary/10 backdrop-blur-md flex gap-3.5 items-start relative overflow-hidden transition-all shadow-sm"
+                  className="p-4 rounded-2xl border border-primary/40 bg-primary/5 dark:bg-primary/10 glass-sheet flex gap-3.5 items-start relative overflow-hidden transition-all shadow-sm hover:scale-[1.01]"
                 >
                   <div className="absolute top-2 right-2 flex size-2 rounded-full bg-primary shadow-[0_0_8px_rgba(108,92,231,0.5)] animate-pulse" />
-                  
+
                   <img
                     src={myAvatar}
                     alt={myName}
@@ -654,7 +657,7 @@ export default function PublicStudyHubPage() {
                   >
                     {/* Glowing active indicator */}
                     <div className="absolute top-2 right-2 flex size-2 rounded-full animate-pulse bg-emerald-500 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
-                    
+
                     <img
                       src={c.avatar}
                       alt={c.name}
@@ -671,7 +674,7 @@ export default function PublicStudyHubPage() {
                           {c.timeStudied}p
                         </span>
                       </div>
-                      
+
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <span className="text-[9px] uppercase px-1 rounded-sm font-bold tracking-wider bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/10">
                           Thực tế 🟢
@@ -709,7 +712,7 @@ export default function PublicStudyHubPage() {
 
             {/* Right Column: Glassmorphic Study Chat Room (Takes 5 cols) */}
             <div className="lg:col-span-5 rounded-3xl glass-sheet p-5 flex flex-col justify-between h-[480px] lg:h-auto overflow-hidden">
-              
+
               {/* Chat Header */}
               <div className="flex items-center justify-between border-b border-border/50 pb-3">
                 <h3 className="text-sm font-bold text-foreground flex items-center gap-2 select-none">
@@ -731,22 +734,20 @@ export default function PublicStudyHubPage() {
                     ) : (
                       <div className="size-8 rounded-lg border border-border bg-primary/10 flex items-center justify-center font-bold text-xs text-primary shrink-0 select-none">🔔</div>
                     )}
-                    
+
                     <div className={`flex flex-col max-w-[78%] ${msg.isMe ? 'items-end' : ''}`}>
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className={`text-[10px] font-bold ${
-                          msg.isMe ? 'text-primary' : 'text-emerald-600 dark:text-emerald-400'
-                        }`}>
+                        <span className={`text-[10px] font-bold ${msg.isMe ? 'text-primary' : 'text-emerald-600 dark:text-emerald-400'
+                          }`}>
                           {msg.sender}
                         </span>
                         <span className="text-[8px] text-muted-foreground/50">{msg.timestamp}</span>
                       </div>
                       <div
-                        className={`text-xs px-3 py-2 rounded-2xl leading-relaxed ${
-                          msg.isMe
-                            ? 'bg-primary text-white dark:text-background rounded-tr-none'
+                        className={`text-xs px-3 py-2 rounded-2xl leading-relaxed ${msg.isMe
+                            ? 'bg-primary text-primary-foreground rounded-tr-none'
                             : 'bg-muted border border-border/50 text-foreground rounded-tl-none'
-                        }`}
+                          }`}
                       >
                         {msg.text}
                       </div>
