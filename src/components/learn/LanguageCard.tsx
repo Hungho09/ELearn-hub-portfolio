@@ -47,29 +47,31 @@ export function LanguageCard({
 
   return (
     <Card
-      variant={available ? 'interactive' : 'default'}
+      variant={available ? 'interactive-glass' : 'glass'}
       className={cn(
-        'group relative overflow-hidden transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
-        !available && 'cursor-not-allowed'
+        'group relative overflow-hidden transition-all duration-300 hover:scale-[1.03]',
+        !available && 'cursor-not-allowed opacity-50'
       )}
       onClick={available ? onStart : undefined}
     >
-      {/* Decorative gradient overlay — richer on hover */}
+      {/* Decorative neon glow overlay on hover */}
       {available && (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       )}
 
-      {/* Frosted overlay for unavailable */}
+      {/* Frosted ice overlay for unavailable */}
       {!available && (
-        <div className="absolute inset-0 bg-muted/40 backdrop-blur-[1px] rounded-xl z-[1]" />
+        <div className="absolute inset-0 bg-white/5 backdrop-blur-[2px] rounded-2xl z-[1]" />
       )}
 
-      <CardContent className={cn('relative p-6', !available && 'opacity-60')}>
+      <CardContent className={cn('relative p-6 z-[2]', !available && 'opacity-70')}>
         {/* Header: Flag + Name */}
         <div className="flex items-start gap-4">
           <div className={cn(
-            'flex size-14 items-center justify-center rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-105',
-            available ? 'bg-primary/10' : 'bg-muted'
+            'flex size-14 items-center justify-center rounded-2xl shrink-0 transition-transform duration-300 group-hover:scale-110 shadow-sm border',
+            available 
+              ? 'bg-white/45 dark:bg-white/10 border-white/40 dark:border-white/5' 
+              : 'bg-muted/30 border-border/20'
           )}>
             {flag}
           </div>

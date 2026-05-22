@@ -145,7 +145,7 @@ export default function HomePage() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-screen overflow-hidden bg-transparent">
         {/* Left Sidebar */}
         <div className="hidden md:block shrink-0">
           <Sidebar collapsed={false} />
@@ -253,36 +253,36 @@ export default function HomePage() {
               <h2 className="text-lg font-semibold text-foreground mb-4">
                 Mẹo học tập
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5">
+                <Card variant="interactive-glass" className="border-primary/20 bg-gradient-to-br from-[#6C5CE7]/5 via-transparent to-[#6C5CE7]/10 hover:shadow-[0_8px_30px_rgba(108,92,231,0.08)] hover:scale-[1.03]">
                   <CardContent className="p-5">
-                    <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                    <div className="size-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-3">
                       <Target className="size-4 text-primary" />
                     </div>
                     <h3 className="font-semibold text-foreground text-sm">Active Recall</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                       Nhập đáp án thay vì tự đánh giá. Hệ thống tự chấm điểm giúp bạn học trung thực hơn.
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-emerald-500/10">
+                <Card variant="interactive-glass" className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/10 hover:shadow-[0_8px_30px_rgba(16,185,129,0.08)] hover:scale-[1.03]">
                   <CardContent className="p-5">
-                    <div className="size-8 rounded-lg bg-emerald-500/10 flex items-center justify-center mb-3">
+                    <div className="size-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
                       <BrainCircuit className="size-4 text-emerald-500" />
                     </div>
                     <h3 className="font-semibold text-foreground text-sm">Spaced Repetition</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                       Thuật toán TGCL thông minh lên lịch ôn tập tối ưu dựa trên đường quên của bạn.
                     </p>
                   </CardContent>
                 </Card>
-                <Card className="border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-orange-500/10">
+                <Card variant="interactive-glass" className="border-orange-500/20 bg-gradient-to-br from-orange-500/5 via-transparent to-orange-500/10 hover:shadow-[0_8px_30px_rgba(249,115,22,0.08)] hover:scale-[1.03]">
                   <CardContent className="p-5">
-                    <div className="size-8 rounded-lg bg-orange-500/10 flex items-center justify-center mb-3">
+                    <div className="size-8 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-3">
                       <Flame className="size-4 text-orange-500" />
                     </div>
                     <h3 className="font-semibold text-foreground text-sm">Streak</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                       Duy trì chuỗi ngày học để xây dựng thói quen. Mỗi ngày ôn tập đều đặn là bước tiến lớn!
                     </p>
                   </CardContent>

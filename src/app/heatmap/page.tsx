@@ -606,11 +606,11 @@ export default function HeatmapPage() {
     : 0;
 
   const getCellColorClass = (count: number) => {
-    if (count === 0) return 'bg-muted/30 dark:bg-muted/15 border-border/40';
-    if (count < 5) return 'bg-emerald-500/20 text-emerald-900 border-emerald-500/10';
-    if (count < 12) return 'bg-emerald-500/40 text-emerald-800 border-emerald-500/20';
-    if (count < 22) return 'bg-emerald-500/70 text-emerald-200 border-emerald-500/40';
-    return 'bg-emerald-500 text-emerald-950 border-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]';
+    if (count === 0) return 'bg-white/10 dark:bg-white/5 border-white/10 dark:border-white/5';
+    if (count < 5) return 'bg-emerald-500/20 text-emerald-900 dark:text-emerald-300 border-emerald-500/15 shadow-[0_0_8px_rgba(16,185,129,0.1)]';
+    if (count < 12) return 'bg-emerald-500/45 text-emerald-800 dark:text-emerald-200 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.2)]';
+    if (count < 22) return 'bg-emerald-500/70 text-emerald-200 border-emerald-500/45 shadow-[0_0_16px_rgba(16,185,129,0.35)]';
+    return 'bg-emerald-400 text-emerald-950 border-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.6)] font-bold';
   };
 
   const handleMouseEnter = (day: HeatmapDay, e: React.MouseEvent) => {
@@ -645,7 +645,7 @@ export default function HeatmapPage() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-screen overflow-hidden bg-transparent">
 
         {/* Sidebar Nav */}
         <div className="hidden md:block shrink-0">
@@ -766,7 +766,7 @@ export default function HeatmapPage() {
             )}
 
             {/* MAIN YEARLY HEATMAP CONTAINER */}
-            <Card className="border border-border/60 bg-card/65 backdrop-blur-md overflow-hidden shadow-card">
+            <Card variant="glass" className="overflow-hidden shadow-card">
               <CardHeader className="pb-3 border-b border-border/40">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   <CardTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
@@ -918,7 +918,7 @@ export default function HeatmapPage() {
                     pointerEvents: 'none',
                     zIndex: 50,
                   }}
-                  className="bg-card/95 border border-border/80 p-3 rounded-lg shadow-xl backdrop-blur-md min-w-[210px] text-xs space-y-1.5"
+                  className="glass-sheet border-white/20 dark:border-white/5 p-3.5 rounded-2xl shadow-xl min-w-[210px] text-xs space-y-1.5"
                 >
                   <p className="font-bold text-foreground border-b border-border/30 pb-1 flex items-center justify-between">
                     <span>{formatDateVN(hoveredDay.date)}</span>
@@ -970,7 +970,7 @@ export default function HeatmapPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
               {/* Selected Day Log list breakdown */}
-              <Card className="lg:col-span-2 border border-border/60 bg-card/65 backdrop-blur-md shadow-card">
+              <Card variant="glass" className="lg:col-span-2 shadow-card">
                 <CardHeader className="pb-3 border-b border-border/40">
                   <CardTitle className="text-base font-semibold flex items-center justify-between">
                     <span className="flex items-center gap-2">
@@ -1083,7 +1083,7 @@ export default function HeatmapPage() {
               <div className="space-y-6">
 
                 {/* Active streak widget */}
-                <Card className="border border-border/60 bg-gradient-to-br from-orange-500/10 via-card to-card backdrop-blur-md shadow-card">
+                <Card variant="interactive-glass" className="bg-gradient-to-br from-orange-500/10 via-transparent to-transparent shadow-card hover:scale-105 duration-300">
                   <CardContent className="p-5 flex items-center justify-between">
                     <div className="space-y-1">
                       <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider">Chuỗi Học Hiện Tại</p>
@@ -1102,7 +1102,7 @@ export default function HeatmapPage() {
                 </Card>
 
                 {/* Cognitive State Gauge */}
-                <Card className="border border-border/60 bg-card/65 backdrop-blur-md shadow-card">
+                <Card variant="glass" className="shadow-card">
                   <CardHeader className="pb-3 border-b border-border/40">
                     <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                       <Brain className="size-4 text-cyan-500" />
@@ -1143,7 +1143,7 @@ export default function HeatmapPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* Spaced repetition curve simulator */}
-              <Card className="border border-border/60 bg-card/65 backdrop-blur-md shadow-card">
+              <Card variant="glass" className="shadow-card">
                 <CardHeader className="pb-3 border-b border-border/40">
                   <div className="flex justify-between items-start gap-2">
                     <div>
@@ -1217,7 +1217,7 @@ export default function HeatmapPage() {
               </Card>
 
               {/* AI Retention trend */}
-              <Card className="border border-border/60 bg-card/65 backdrop-blur-md shadow-card">
+              <Card variant="glass" className="shadow-card">
                 <CardHeader className="pb-3 border-b border-border/40">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <TrendingUp className="size-4.5 text-emerald-400" />
@@ -1281,7 +1281,7 @@ export default function HeatmapPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
               {/* Density hours chart (span 2) */}
-              <Card className="md:col-span-2 border border-border/60 bg-card/65 backdrop-blur-md shadow-card">
+              <Card variant="glass" className="md:col-span-2 shadow-card">
                 <CardHeader className="pb-3 border-b border-border/40">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <Clock className="size-4.5 text-purple-400" />
@@ -1323,7 +1323,7 @@ export default function HeatmapPage() {
               </Card>
 
               {/* aggregates */}
-              <Card className="border border-border/60 bg-card/65 backdrop-blur-md shadow-card">
+              <Card variant="glass" className="shadow-card">
                 <CardHeader className="pb-3 border-b border-border/40">
                   <CardTitle className="text-base font-semibold flex items-center gap-2">
                     <Trophy className="size-4.5 text-amber-500" />
