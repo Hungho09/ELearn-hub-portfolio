@@ -19,6 +19,7 @@ import {
 import { Sidebar } from '@/components/home/Sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { useSession } from 'next-auth/react';
 
 // Định nghĩa kiểu dữ liệu người học
 interface Companion {
@@ -64,13 +65,56 @@ const STATUS_OPTIONS = [
 
 export default function PublicStudyHubPage() {
   const router = useRouter();
+  const { data: session } = useSession();
 
   // ─── Trạng thái Người dùng ─────────────────────────────────────────
   const [myPeerId] = useState(() => 'user_' + Math.random().toString(36).substring(2, 9));
   const [myName, setMyName] = useState('Học viên');
-  const [myAvatar] = useState(() => 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + myPeerId);
+  const [myAvatar, setMyAvatar] = useState(() => 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + myPeerId);
   const [myStatus, setMyStatus] = useState("Đang tập trung cao độ 🎯");
   const [myTimeStudied, setMyTimeStudied] = useState(0);
+
+  // Hàm chuyển đổi đường dẫn avatar tương đối thành tuyệt đối để đồng bộ hóa WebSocket chính xác
+  const getAbsoluteAvatarUrl = (avtPath: string | null | undefined) => {
+    if (!avtPath) {
+      return `https://api.dicebear.com/7.x/avataaars/svg?seed=${myPeerId}`;
+    }
+    // Nếu đã là đường dẫn tuyệt đối hoặc data URL
+    if (avtPath.startsWith('http://') || avtPath.startsWith('https://') || avtPath.startsWith('data:')) {
+      return avtPath;
+    }
+    // Nếu là đường dẫn tương đối (ví dụ /uploads/... hoặc /images/...)
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}${avtPath}`;
+    }
+    return avtPath;
+  };
+
+  // Đồng bộ thông tin tài khoản thật từ NextAuth Session (nếu có)
+  useEffect(() => {
+    if (session?.user) {
+      const name = session.user.name || 'Học viên';
+      const rawAvatar = session.user.avatar || session.user.image;
+      const avt = getAbsoluteAvatarUrl(rawAvatar);
+      
+      setMyName(name);
+      setMyAvatar(avt);
+
+      // Nếu socket đang mở, gửi gói tin cập nhật sự hiện diện với thông tin thật
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({
+          type: "status_update",
+          payload: {
+            peerId: myPeerId,
+            userName: name,
+            avatar: avt,
+            status: myStatus,
+            timeStudied: myTimeStudied
+          }
+        }));
+      }
+    }
+  }, [session, myPeerId, myStatus, myTimeStudied]);
 
   // ─── Trạng thái WebSocket & Server URL ──────────────────────────────
   const [serverUrl, setServerUrl] = useState('ws://localhost:3002');
