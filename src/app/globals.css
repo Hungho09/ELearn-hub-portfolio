@@ -43,7 +43,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 8px 24px rgba(108, 92, 231, 0.1);
+  --shadow-card-hover: 0 12px 32px rgba(108, 92, 231, 0.12);
   --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-btn-hover: 0 4px 12px rgba(108, 92, 231, 0.12);
 
@@ -53,37 +53,37 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: #ffffff;
-  --foreground: #1a1a2e;
-  --card: #ffffff;
-  --card-foreground: #1a1a2e;
-  --popover: #ffffff;
-  --popover-foreground: #1a1a2e;
+  --radius: 1rem;
+  --background: #fafafc;
+  --foreground: #101026;
+  --card: rgba(255, 255, 255, 0.45);
+  --card-foreground: #101026;
+  --popover: rgba(255, 255, 255, 0.8);
+  --popover-foreground: #101026;
   --primary: #6C5CE7;
   --primary-foreground: #ffffff;
-  --secondary: #E8E0FF;
+  --secondary: rgba(108, 92, 231, 0.08);
   --secondary-foreground: #6C5CE7;
-  --muted: #F5F5F7;
+  --muted: #f1f1f6;
   --muted-foreground: #666680;
-  --accent: #E8E0FF;
+  --accent: rgba(108, 92, 231, 0.08);
   --accent-foreground: #6C5CE7;
   --destructive: #FF5252;
-  --border: #E8E8ED;
-  --input: #E8E8ED;
+  --border: rgba(228, 228, 235, 0.5);
+  --input: rgba(228, 228, 235, 0.5);
   --ring: #6C5CE7;
   --chart-1: #6C5CE7;
   --chart-2: #A29BFE;
   --chart-3: #74B9FF;
   --chart-4: #55EFC4;
   --chart-5: #FDCB6E;
-  --sidebar: #FAFAFA;
-  --sidebar-foreground: #1a1a2e;
+  --sidebar: rgba(250, 250, 252, 0.4);
+  --sidebar-foreground: #101026;
   --sidebar-primary: #6C5CE7;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #E8E0FF;
+  --sidebar-accent: rgba(108, 92, 231, 0.08);
   --sidebar-accent-foreground: #6C5CE7;
-  --sidebar-border: #E8E8ED;
+  --sidebar-border: rgba(228, 228, 235, 0.4);
   --sidebar-ring: #6C5CE7;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -93,42 +93,42 @@
 }
 
 .dark {
-  --background: #0f0f1a;
-  --foreground: #e8e8ed;
-  --card: #1a1a2e;
-  --card-foreground: #e8e8ed;
-  --popover: #1a1a2e;
-  --popover-foreground: #e8e8ed;
+  --background: #080811;
+  --foreground: #eef2f6;
+  --card: rgba(13, 13, 27, 0.4);
+  --card-foreground: #eef2f6;
+  --popover: rgba(13, 13, 27, 0.8);
+  --popover-foreground: #eef2f6;
   --primary: #A29BFE;
-  --primary-foreground: #0f0f1a;
-  --secondary: #2d2d44;
+  --primary-foreground: #080811;
+  --secondary: rgba(162, 155, 254, 0.08);
   --secondary-foreground: #A29BFE;
-  --muted: #1a1a2e;
-  --muted-foreground: #9999aa;
-  --accent: #2d2d44;
+  --muted: rgba(255, 255, 255, 0.05);
+  --muted-foreground: #94a3b8;
+  --accent: rgba(162, 155, 254, 0.08);
   --accent-foreground: #A29BFE;
   --destructive: #ff6b6b;
-  --border: #2d2d44;
-  --input: #2d2d44;
+  --border: rgba(255, 255, 255, 0.06);
+  --input: rgba(255, 255, 255, 0.06);
   --ring: #A29BFE;
   --chart-1: #A29BFE;
   --chart-2: #6C5CE7;
   --chart-3: #74B9FF;
   --chart-4: #55EFC4;
   --chart-5: #FDCB6E;
-  --sidebar: #0f0f1a;
-  --sidebar-foreground: #e8e8ed;
+  --sidebar: rgba(8, 8, 17, 0.3);
+  --sidebar-foreground: #eef2f6;
   --sidebar-primary: #A29BFE;
-  --sidebar-primary-foreground: #0f0f1a;
-  --sidebar-accent: #2d2d44;
+  --sidebar-primary-foreground: #080811;
+  --sidebar-accent: rgba(162, 155, 254, 0.08);
   --sidebar-accent-foreground: #A29BFE;
-  --sidebar-border: #2d2d44;
+  --sidebar-border: rgba(255, 255, 255, 0.04);
   --sidebar-ring: #A29BFE;
 
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-card-hover: 0 8px 24px rgba(162, 155, 254, 0.2);
-  --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-btn-hover: 0 4px 12px rgba(162, 155, 254, 0.15);
+  --shadow-card: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --shadow-card-hover: 0 12px 40px 0 rgba(162, 155, 254, 0.15);
+  --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-btn-hover: 0 4px 12px rgba(162, 155, 254, 0.2);
 }
 
 @layer base {
@@ -138,6 +138,41 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Glassmorphism custom classes */
+.glass-sheet {
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
+}
+
+.dark .glass-sheet {
+  background: rgba(13, 13, 27, 0.45);
+  backdrop-filter: blur(25px) saturate(140%);
+  -webkit-backdrop-filter: blur(25px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.glass-sheet-interactive {
+  @apply transition-all duration-300 ease-[var(--ease-out)];
+}
+
+.glass-sheet-interactive:hover {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(108, 92, 231, 0.35);
+  box-shadow: 0 12px 32px 0 rgba(108, 92, 231, 0.08);
+  transform: translateY(-2px);
+}
+
+.dark .glass-sheet-interactive:hover {
+  background: rgba(20, 20, 42, 0.55);
+  border-color: rgba(162, 155, 254, 0.2);
+  box-shadow: 0 12px 32px 0 rgba(162, 155, 254, 0.12);
+  transform: translateY(-2px);
 }
 
 /* Keyframe definitions for Tailwind v4 @theme */
@@ -154,6 +189,35 @@
 @keyframes pulse-glow {
   0%, 100% { opacity: 0.6; box-shadow: 0 0 8px rgba(108, 92, 231, 0.2); }
   50% { opacity: 1; box-shadow: 0 0 16px rgba(108, 92, 231, 0.4); }
+}
+
+/* Aurora background anims */
+@keyframes aurora-blob-1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(50px, -70px) scale(1.2); }
+  66% { transform: translate(-30px, 30px) scale(0.85); }
+}
+
+@keyframes aurora-blob-2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-60px, 50px) scale(1.25); }
+}
+
+@keyframes aurora-blob-3 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  40% { transform: translate(40px, -40px) scale(0.9); }
+}
+
+.animate-aurora-1 {
+  animation: aurora-blob-1 25s infinite ease-in-out;
+}
+
+.animate-aurora-2 {
+  animation: aurora-blob-2 30s infinite ease-in-out;
+}
+
+.animate-aurora-3 {
+  animation: aurora-blob-3 27s infinite ease-in-out;
 }
 
 /* Custom scrollbar using theme tokens */

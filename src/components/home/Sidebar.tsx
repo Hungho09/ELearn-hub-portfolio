@@ -103,18 +103,18 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
         key={item.label}
         onClick={() => handleNavClick(item)}
         className={cn(
-          'flex w-full items-center gap-3 rounded-full px-3 py-2 text-sm font-medium transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
+          'group flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
           isActive
-            ? 'bg-primary text-primary-foreground shadow-btn hover:shadow-btn-hover hover:scale-[1.01]'
-            : 'text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-[1.01]'
+            ? 'bg-primary/15 text-primary dark:text-[#A29BFE] dark:bg-[#A29BFE]/15 border border-primary/25 dark:border-[#A29BFE]/20 shadow-[0_0_15px_rgba(108,92,231,0.12)] hover:scale-[1.02]'
+            : 'text-muted-foreground hover:bg-white/15 dark:hover:bg-white/5 hover:text-foreground hover:scale-[1.02]'
         )}
       >
-        <Icon className="size-5 shrink-0" />
+        <Icon className={cn("size-5 shrink-0 transition-transform duration-300 group-hover:scale-110", isActive ? "text-primary dark:text-[#A29BFE] animate-pulse" : "text-muted-foreground")} />
         {!collapsed && (
           <>
             <span className="flex-1 text-left">{item.label}</span>
             {item.badge && (
-              <span className="flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
+              <span className="flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white shadow-sm">
                 {item.badge}
               </span>
             )}
@@ -128,7 +128,7 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
       return (
         <Tooltip key={item.label}>
           <TooltipTrigger asChild>{button}</TooltipTrigger>
-          <TooltipContent side="right">{item.label}</TooltipContent>
+          <TooltipContent side="right" className="glass-sheet border-border/40 text-foreground">{item.label}</TooltipContent>
         </Tooltip>
       );
     }
@@ -139,41 +139,41 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'flex h-full flex-col border-r border-border bg-card/80 backdrop-blur-md transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
+        'flex h-full flex-col border-r border-border bg-card/45 backdrop-blur-xl transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
         collapsed ? 'w-[72px]' : 'w-[240px]'
       )}
     >
       {/* Logo */}
       <button
         onClick={handleLogoClick}
-        className={cn('flex items-center gap-2.5 px-4 py-5 w-full hover:bg-muted/50 transition-colors', collapsed && 'justify-center px-2')}
+        className={cn('flex items-center gap-2.5 px-4 py-5 w-full hover:bg-white/10 dark:hover:bg-white/5 transition-colors', collapsed && 'justify-center px-2')}
       >
-        <div className="flex size-9 items-center justify-center rounded-xl bg-primary shadow-btn hover:shadow-btn-hover transition-shadow">
-          <GraduationCap className="size-5 text-primary-foreground" />
+        <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[#A29BFE] shadow-[0_4px_15px_rgba(108,92,231,0.3)] transition-all hover:scale-105">
+          <GraduationCap className="size-5 text-primary-foreground dark:text-[#080811]" />
         </div>
         {!collapsed && (
-          <span className="text-lg font-bold tracking-tight text-foreground">LearnHub</span>
+          <span className="text-lg font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#A29BFE]">LearnHub</span>
         )}
       </button>
 
-      <Separator />
+      <Separator className="bg-border/30" />
 
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <div className="flex flex-col gap-1">
           {/* Learning Section */}
           {!collapsed && (
-            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
               Học tập
             </p>
           )}
           {learningItems.map(renderNavItem)}
 
-          <Separator className="my-3" />
+          <Separator className="my-3 bg-border/20" />
 
           {/* Account Section */}
           {!collapsed && (
-            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
               Tài khoản
             </p>
           )}
@@ -182,9 +182,9 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
           {/* Admin Section (only for admin users) */}
           {isAdmin && (
             <>
-              <Separator className="my-3" />
+              <Separator className="my-3 bg-border/20" />
               {!collapsed && (
-                <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
                   Quản trị
                 </p>
               )}
@@ -196,41 +196,41 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
           <button
             onClick={handleAuthAction}
             className={cn(
-              'flex w-full items-center gap-3 rounded-full px-3 py-2 text-sm font-medium transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
-              'text-muted-foreground hover:bg-muted hover:text-foreground hover:scale-[1.01]'
+              'group flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]',
+              'text-muted-foreground hover:bg-white/15 dark:hover:bg-white/5 hover:text-foreground hover:scale-[1.02]'
             )}
           >
-            {session ? <LogOut className="size-5 shrink-0" /> : <LogIn className="size-5 shrink-0" />}
+            {session ? <LogOut className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5" /> : <LogIn className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5" />}
             {!collapsed && <span className="flex-1 text-left">{session ? 'Logout' : 'Login'}</span>}
           </button>
         </div>
       </ScrollArea>
 
-      <Separator />
+      <Separator className="bg-border/30" />
 
       {/* User section at bottom */}
       <button
         onClick={() => { router.push('/profile'); onNavigate?.(); }}
         className={cn(
-          'flex items-center gap-3 px-4 py-4 w-full hover:bg-muted/50 transition-colors text-left',
+          'flex items-center gap-3 px-4 py-4 w-full hover:bg-white/10 dark:hover:bg-white/5 transition-all text-left',
           collapsed && 'justify-center px-2'
         )}
       >
-        <Avatar className="size-9 ring-2 ring-primary/20">
+        <Avatar className="size-9 ring-2 ring-primary/30 shadow-[0_0_10px_rgba(108,92,231,0.1)] transition-transform hover:scale-105">
           <AvatarImage src={userAvatar} alt={userName} />
-          <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
+          <AvatarFallback className="bg-gradient-to-br from-primary/10 to-[#A29BFE]/10 text-primary dark:text-[#A29BFE] text-sm font-bold">
             {userInitial}
           </AvatarFallback>
         </Avatar>
         {!collapsed && (
           <div className="flex flex-1 items-center justify-between">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">{userName}</p>
-              <p className="truncate text-xs text-muted-foreground">{userRole}</p>
+              <p className="truncate text-sm font-bold text-foreground transition-colors hover:text-primary">{userName}</p>
+              <p className="truncate text-[10px] font-medium text-muted-foreground">{userRole}</p>
             </div>
-            <div className="relative rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+            <div className="relative rounded-md p-1.5 text-muted-foreground hover:bg-white/15 dark:hover:bg-white/5 hover:text-foreground transition-colors">
               <Bell className="size-4" />
-              {session && <span className="absolute -right-0.5 -top-0.5 flex size-2 rounded-full bg-destructive" />}
+              {session && <span className="absolute right-1 top-1 flex size-2 rounded-full bg-destructive animate-pulse" />}
             </div>
           </div>
         )}

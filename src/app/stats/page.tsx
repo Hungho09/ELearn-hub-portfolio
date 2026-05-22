@@ -118,7 +118,7 @@ export default function StatsPage() {
   // ─── Render ───────────────────────────────────────────────
   return (
     <TooltipProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-screen overflow-hidden bg-transparent">
         {/* Left Sidebar */}
         <div className="hidden md:block shrink-0">
           <Sidebar collapsed={false} />
@@ -178,50 +178,58 @@ export default function StatsPage() {
               <div className="mt-6 space-y-6">
                 {/* Top Stats Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <Card className="border-l-4 border-l-orange-500">
+                  <Card variant="interactive-glass" className="border-orange-500/20 bg-gradient-to-br from-orange-500/5 via-transparent to-orange-500/10 hover:shadow-[0_8px_30px_rgba(249,115,22,0.08)] hover:scale-[1.03] duration-300">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-1">
-                        <Flame className="size-4 text-orange-500" />
-                        <span className="text-xs text-muted-foreground">Chuỗi ngày</span>
+                        <div className="size-6 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
+                          <Flame className="size-3.5 text-orange-500" />
+                        </div>
+                        <span className="text-xs text-muted-foreground font-medium">Chuỗi ngày</span>
                       </div>
-                      <p className="text-2xl font-bold text-orange-500">{stats.streak_days}</p>
+                      <p className="text-2xl font-extrabold text-orange-500 mt-1">{stats.streak_days}</p>
                       <p className="text-[10px] text-muted-foreground">ngày liên tiếp</p>
                     </CardContent>
                   </Card>
-                  <Card className="border-l-4 border-l-primary">
+                  <Card variant="interactive-glass" className="border-primary/20 bg-gradient-to-br from-[#6C5CE7]/5 via-transparent to-[#6C5CE7]/10 hover:shadow-[0_8px_30px_rgba(108,92,231,0.08)] hover:scale-[1.03] duration-300">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-1">
-                        <BookOpen className="size-4 text-primary" />
-                        <span className="text-xs text-muted-foreground">Hôm nay</span>
+                        <div className="size-6 rounded-lg bg-[#6C5CE7]/10 border border-[#6C5CE7]/20 flex items-center justify-center">
+                          <BookOpen className="size-3.5 text-primary" />
+                        </div>
+                        <span className="text-xs text-muted-foreground font-medium">Hôm nay</span>
                       </div>
-                      <p className="text-2xl font-bold text-primary">{stats.reviews_today}</p>
+                      <p className="text-2xl font-extrabold text-primary mt-1">{stats.reviews_today}</p>
                       <p className="text-[10px] text-muted-foreground">lần ôn tập</p>
                     </CardContent>
                   </Card>
-                  <Card className="border-l-4 border-l-emerald-500">
+                  <Card variant="interactive-glass" className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/10 hover:shadow-[0_8px_30px_rgba(16,185,129,0.08)] hover:scale-[1.03] duration-300">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-1">
-                        <Trophy className="size-4 text-emerald-600" />
-                        <span className="text-xs text-muted-foreground">Thành thạo</span>
+                        <div className="size-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                          <Trophy className="size-3.5 text-emerald-600" />
+                        </div>
+                        <span className="text-xs text-muted-foreground font-medium">Thành thạo</span>
                       </div>
-                      <p className="text-2xl font-bold text-emerald-600">{stats.words_mastered}</p>
+                      <p className="text-2xl font-extrabold text-emerald-600 mt-1">{stats.words_mastered}</p>
                       <p className="text-[10px] text-muted-foreground">từ vựng</p>
                     </CardContent>
                   </Card>
-                  <Card className="border-l-4 border-l-purple-500">
+                  <Card variant="interactive-glass" className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 via-transparent to-purple-500/10 hover:shadow-[0_8px_30px_rgba(168,85,247,0.08)] hover:scale-[1.03] duration-300">
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-1">
-                        <Brain className="size-4 text-purple-600" />
-                        <span className="text-xs text-muted-foreground">Tổng ôn</span>
+                        <div className="size-6 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                          <Brain className="size-3.5 text-purple-600" />
+                        </div>
+                        <span className="text-xs text-muted-foreground font-medium">Tổng ôn</span>
                       </div>
-                      <p className="text-2xl font-bold text-purple-600">{stats.total_reviews}</p>
+                      <p className="text-2xl font-extrabold text-purple-600 mt-1">{stats.total_reviews}</p>
                       <p className="text-[10px] text-muted-foreground">lần</p>
                     </CardContent>
                   </Card>
                 </div>
 
                 {/* Level & XP Progress */}
-                <Card>
+                <Card variant="glass">
                   <CardContent className="p-6">
                     <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                       <Star className="size-5 text-cyan-500" />
@@ -247,7 +255,7 @@ export default function StatsPage() {
 
                 {/* Badge Showcase */}
                 {stats.badges !== undefined && (
-                  <Card>
+                  <Card variant="glass">
                     <CardContent className="p-6">
                       <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                         <Trophy className="size-5 text-amber-500" />
@@ -259,7 +267,7 @@ export default function StatsPage() {
                 )}
 
                 {/* Progress Overview */}
-                <Card>
+                <Card variant="glass">
                   <CardContent className="p-6">
                     <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                       <TrendingUp className="size-5 text-primary" />
@@ -275,23 +283,23 @@ export default function StatsPage() {
                       <Progress value={masteryPercent} className="h-3" />
 
                       {/* Breakdown */}
-                      <div className="grid grid-cols-3 gap-3 mt-4">
-                        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 p-3 text-center">
-                          <p className="text-xl font-bold text-emerald-600">{stats.words_mastered}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center">
-                            <Trophy className="size-3" /> Thành thạo
+                      <div className="grid grid-cols-3 gap-3 mt-4 text-center">
+                        <div className="rounded-xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/10 p-3">
+                          <p className="text-xl font-bold text-emerald-500">{stats.words_mastered}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center mt-1">
+                            <Trophy className="size-3 text-emerald-500" /> Thành thạo
                           </p>
                         </div>
-                        <div className="rounded-lg bg-amber-50 dark:bg-amber-950/20 p-3 text-center">
-                          <p className="text-xl font-bold text-amber-600">{stats.words_learning}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center">
-                            <Target className="size-3" /> Đang học
+                        <div className="rounded-xl bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/10 p-3">
+                          <p className="text-xl font-bold text-amber-500">{stats.words_learning}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center mt-1">
+                            <Target className="size-3 text-amber-500" /> Đang học
                           </p>
                         </div>
-                        <div className="rounded-lg bg-muted/50 p-3 text-center">
+                        <div className="rounded-xl bg-white/5 dark:bg-white/5 border border-white/10 p-3">
                           <p className="text-xl font-bold text-muted-foreground">{stats.words_new}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center">
-                            <Layers className="size-3" /> Chưa học
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center mt-1">
+                            <Layers className="size-3 text-muted-foreground" /> Chưa học
                           </p>
                         </div>
                       </div>
@@ -301,7 +309,7 @@ export default function StatsPage() {
 
                 {/* Study Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Card>
+                  <Card variant="glass">
                     <CardContent className="p-6">
                       <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                         <Target className="size-4 text-primary" />
@@ -343,7 +351,7 @@ export default function StatsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card variant="glass">
                     <CardContent className="p-6">
                       <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                         <Clock className="size-4 text-primary" />
@@ -371,7 +379,7 @@ export default function StatsPage() {
 
                 {/* Category Progress */}
                 {categories.length > 0 && (
-                  <Card>
+                  <Card variant="glass">
                     <CardContent className="p-6">
                       <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                         <Layers className="size-5 text-primary" />
@@ -425,7 +433,7 @@ export default function StatsPage() {
 
                 {/* No data state */}
                 {!loading && stats.total_reviews === 0 && (
-                  <Card>
+                  <Card variant="glass">
                     <CardContent className="p-8 text-center">
                       <BookOpen className="size-12 text-muted-foreground mx-auto mb-3" />
                       <h3 className="text-lg font-semibold text-foreground">Chưa có dữ liệu</h3>

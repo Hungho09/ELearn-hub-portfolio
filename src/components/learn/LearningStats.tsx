@@ -71,17 +71,24 @@ export function LearningStats({
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
       {statItems.map((stat) => {
         const Icon = stat.icon;
         return (
-          <Card key={stat.label} className={cn('border-l-4', stat.border)}>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Icon className={cn('size-4', stat.color)} />
-                <span className="text-xs text-muted-foreground">{stat.label}</span>
+          <Card 
+            key={stat.label} 
+            variant="interactive-glass" 
+            className={cn(
+              'border-l-4 py-4 transition-all duration-300 hover:scale-105', 
+              stat.border
+            )}
+          >
+            <CardContent className="p-3 flex flex-col justify-between h-full">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Icon className={cn('size-4 shrink-0', stat.color)} />
+                <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{stat.label}</span>
               </div>
-              <p className={cn('text-2xl font-bold', stat.color)}>{stat.value}</p>
+              <p className={cn('text-2xl font-black tracking-tight mt-1', stat.color)}>{stat.value}</p>
             </CardContent>
           </Card>
         );

@@ -2,7 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-type CardVariant = "default" | "interactive"
+type CardVariant = "default" | "interactive" | "glass" | "interactive-glass"
 
 interface CardProps extends React.ComponentProps<"div"> {
   variant?: CardVariant
@@ -14,10 +14,16 @@ function Card({ className, variant = "default", ...props }: CardProps) {
       data-slot="card"
       data-variant={variant}
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6",
-        "shadow-card transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]",
-        variant === "interactive" &&
-          "hover:-translate-y-0.5 hover:shadow-card-hover cursor-pointer",
+        "flex flex-col gap-6 rounded-2xl py-6",
+        "transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]",
+        // Default card styling
+        variant === "default" && "bg-card text-card-foreground border shadow-card",
+        // Interactive card styling
+        variant === "interactive" && "bg-card text-card-foreground border shadow-card hover:-translate-y-0.5 hover:shadow-card-hover cursor-pointer",
+        // Glass variant
+        variant === "glass" && "glass-sheet text-card-foreground",
+        // Interactive Glass variant
+        variant === "interactive-glass" && "glass-sheet glass-sheet-interactive text-card-foreground cursor-pointer",
         className
       )}
       {...props}

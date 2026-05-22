@@ -32,54 +32,59 @@ const MATCH_CONFIG = {
   exact: {
     icon: CheckCircle2,
     label: 'Chính xác!',
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
-    borderColor: 'border-emerald-300 dark:border-emerald-700',
-    badgeBg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/5 dark:bg-emerald-950/20',
+    borderColor: 'border-emerald-500/30 dark:border-emerald-500/20',
+    badgeBg: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20',
     detailLabel: 'Perfect match',
+    shadowClass: 'shadow-[0_0_25px_rgba(16,185,129,0.15)] dark:shadow-[0_0_30px_rgba(16,185,129,0.1)]',
   },
   semantic: {
     icon: CheckCircle2,
     label: 'Chính xác!',
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
-    borderColor: 'border-emerald-300 dark:border-emerald-700',
-    badgeBg: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+    color: 'text-emerald-500',
+    bgColor: 'bg-emerald-500/5 dark:bg-emerald-950/20',
+    borderColor: 'border-emerald-500/30 dark:border-emerald-500/20',
+    badgeBg: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20',
     detailLabel: 'Semantic match (AI)',
+    shadowClass: 'shadow-[0_0_25px_rgba(16,185,129,0.15)] dark:shadow-[0_0_30px_rgba(16,185,129,0.1)]',
   },
   close: {
     icon: AlertTriangle,
     label: 'Gần đúng!',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 dark:bg-amber-950/30',
-    borderColor: 'border-amber-300 dark:border-amber-700',
-    badgeBg: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+    color: 'text-amber-500',
+    bgColor: 'bg-amber-500/5 dark:bg-amber-950/20',
+    borderColor: 'border-amber-500/30 dark:border-amber-500/20',
+    badgeBg: 'bg-amber-500/10 text-amber-500 border border-amber-500/20',
     detailLabel: 'Minor differences',
+    shadowClass: 'shadow-[0_0_25px_rgba(245,158,11,0.15)] dark:shadow-[0_0_30px_rgba(245,158,11,0.1)]',
   },
   partial: {
     icon: AlertTriangle,
     label: 'Một phần đúng',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50 dark:bg-orange-950/30',
-    borderColor: 'border-orange-300 dark:border-orange-700',
-    badgeBg: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500/5 dark:bg-orange-950/20',
+    borderColor: 'border-orange-500/30 dark:border-orange-500/20',
+    badgeBg: 'bg-orange-500/10 text-orange-500 border border-orange-500/20',
     detailLabel: 'Partially correct',
+    shadowClass: 'shadow-[0_0_25px_rgba(249,115,22,0.15)] dark:shadow-[0_0_30px_rgba(249,115,22,0.1)]',
   },
   incorrect: {
     icon: XCircle,
     label: 'Chưa đúng',
-    color: 'text-red-600',
-    bgColor: 'bg-red-50 dark:bg-red-950/30',
-    borderColor: 'border-red-300 dark:border-red-700',
-    badgeBg: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+    color: 'text-red-500',
+    bgColor: 'bg-red-500/5 dark:bg-red-950/20',
+    borderColor: 'border-red-500/30 dark:border-red-500/20',
+    badgeBg: 'bg-red-500/10 text-red-500 border border-red-500/20',
     detailLabel: 'Not correct',
+    shadowClass: 'shadow-[0_0_25px_rgba(239,68,68,0.15)] dark:shadow-[0_0_30px_rgba(239,68,68,0.1)]',
   },
 };
 
 const GRADER_LABELS = {
-  comet: { label: 'COMET AI', icon: Brain, color: 'text-violet-600 dark:text-violet-400' },
+  comet: { label: 'COMET AI', icon: Brain, color: 'text-violet-500 dark:text-violet-400 border border-violet-500/20 bg-violet-500/10' },
   levenshtein: { label: 'Levenshtein', icon: AlertTriangle, color: 'text-muted-foreground' },
-  exact: { label: 'Exact', icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400' },
+  exact: { label: 'Exact', icon: CheckCircle2, color: 'text-emerald-500 dark:text-emerald-400' },
 };
 
 export function StudyResult({ result, submitting, onContinue }: StudyResultProps) {
@@ -94,25 +99,28 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
 
   return (
     <div className="space-y-4">
-      <Card className={cn('relative overflow-hidden shadow-card', config.bgColor, config.borderColor)}>
+      <Card variant="glass" className={cn('relative overflow-hidden backdrop-blur-2xl transition-all duration-500 group', config.bgColor, config.borderColor, config.shadowClass)}>
+        {/* Light-catch edge overlay */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/10 pointer-events-none group-hover:via-white/10 group-hover:to-white/20 transition-all duration-500" />
+        
         <CardContent className="relative p-6 md:p-8">
           <div className="flex flex-col items-center gap-5 animate-in fade-in slide-in-from-bottom-4 duration-400">
             {/* Result icon & label */}
-            <div className={cn('flex items-center gap-2 text-xl font-bold', config.color)}>
-              <Icon className="size-6" />
+            <div className={cn('flex items-center gap-2 text-xl font-extrabold tracking-wide uppercase', config.color)}>
+              <Icon className="size-6 animate-pulse" />
               {config.label}
             </div>
 
             {/* Accuracy badge + Grader badge */}
             <div className="flex items-center gap-3">
-              <Badge className={cn('text-sm px-3 py-1', config.badgeBg)}>
+              <Badge className={cn('text-sm px-3 py-1 font-semibold', config.badgeBg)}>
                 {Math.round(result.accuracy)}% accuracy
               </Badge>
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs border-white/20 dark:border-white/10">
                 {config.detailLabel}
               </Badge>
               {result.grader === 'comet' && (
-                <Badge variant="outline" className={cn('text-xs gap-1', graderInfo.color)}>
+                <Badge variant="outline" className={cn('text-xs gap-1 py-1 px-2.5 font-medium', graderInfo.color)}>
                   <GraderIcon className="size-3" />
                   {graderInfo.label}
                 </Badge>
@@ -123,27 +131,27 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
             <div className="w-full max-w-md space-y-3">
               {/* User's answer */}
               <div className={cn(
-                'rounded-xl p-4 border',
+                'rounded-xl p-4 border transition-colors duration-300',
                 result.is_correct
-                  ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800'
-                  : 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800'
+                  ? 'bg-emerald-500/5 border-emerald-500/20'
+                  : 'bg-red-500/5 border-red-500/20'
               )}>
-                <p className="text-xs text-muted-foreground mb-1">Câu trả lời của bạn</p>
+                <p className="text-xs text-muted-foreground mb-1 font-medium">Câu trả lời của bạn</p>
                 <p className={cn(
-                  'text-lg font-semibold',
-                  result.is_correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'
+                  'text-lg font-extrabold tracking-tight',
+                  result.is_correct ? 'text-emerald-500' : 'text-red-500'
                 )}>
                   {result.user_answer}
                 </p>
               </div>
 
               {/* Correct answer */}
-              <div className="rounded-xl p-4 border bg-primary/5 border-primary/20">
-                <p className="text-xs text-muted-foreground mb-1">Đáp án đúng</p>
-                <p className="text-lg font-bold text-foreground">{result.correct_answer}</p>
+              <div className="rounded-xl p-4 border bg-primary/5 border-primary/20 backdrop-blur-md">
+                <p className="text-xs text-muted-foreground mb-1 font-medium">Đáp án đúng</p>
+                <p className="text-lg font-black text-foreground tracking-tight">{result.correct_answer}</p>
                 {result.pronunciation && (
-                  <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                    <Volume2 className="size-3" />/{result.pronunciation}/
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1 font-medium">
+                    <Volume2 className="size-3.5 text-primary" />/{result.pronunciation}/
                   </p>
                 )}
               </div>
@@ -151,9 +159,9 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
 
             {/* Example sentence */}
             {result.example_english && (
-              <div className="w-full max-w-md rounded-xl bg-muted/50 p-4 border border-muted">
-                <p className="text-sm text-foreground flex items-center gap-1.5"><US title="United States" className="size-3.5 shrink-0" /> {result.example_english}</p>
-                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5"><VN title="Vietnam" className="size-3.5 shrink-0" /> {result.example_vietnamese}</p>
+              <div className="w-full max-w-md rounded-xl bg-white/5 dark:bg-black/20 p-4 border border-white/10 dark:border-white/5 backdrop-blur-md">
+                <p className="text-sm text-foreground flex items-center gap-1.5 font-medium leading-relaxed"><US title="United States" className="size-3.5 shrink-0 rounded-sm" /> {result.example_english}</p>
+                <p className="text-sm text-muted-foreground mt-1.5 flex items-center gap-1.5 leading-relaxed"><VN title="Vietnam" className="size-3.5 shrink-0 rounded-sm" /> {result.example_vietnamese}</p>
               </div>
             )}
 
@@ -161,7 +169,7 @@ export function StudyResult({ result, submitting, onContinue }: StudyResultProps
             <Button
               onClick={onContinue}
               disabled={submitting}
-              className="w-full max-w-md h-12 text-base font-semibold rounded-xl gap-2"
+              className="w-full max-w-md h-12 text-base font-semibold rounded-xl gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
               size="lg"
             >
               {submitting ? (

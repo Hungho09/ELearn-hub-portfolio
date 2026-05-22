@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   RotateCcw,
@@ -149,6 +150,83 @@ async function getStats(userId: string): Promise<UserStatsData> {
   return res.json();
 }
 
+// ─── Gamification & Neon Effects ─────────────────────────────
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  size: number;
+  angle: number;
+  speed: number;
+}
+
+function getParticleColor(matchType: string | undefined) {
+  if (!matchType) return '#6C5CE7';
+  if (matchType === 'exact' || matchType === 'semantic') return '#10B981'; // Emerald
+  if (matchType === 'close') return '#F59E0B'; // Amber
+  if (matchType === 'partial') return '#F97316'; // Orange
+  return '#EF4444'; // Red
+}
+
+function NeonParticles({ active, color }: { active: boolean; color: string }) {
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  useEffect(() => {
+    if (active) {
+      const newParticles = Array.from({ length: 32 }).map((_, i) => {
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = Math.random() * 110 + 60;
+        return {
+          id: Math.random() + i,
+          x: 0,
+          y: 0,
+          color,
+          size: Math.random() * 6 + 4,
+          angle,
+          speed,
+        };
+      });
+      setParticles(newParticles);
+      
+      const timer = setTimeout(() => {
+        setParticles([]);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [active, color]);
+
+  if (particles.length === 0) return null;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-50">
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          initial={{ x: '50%', y: '50%', scale: 1, opacity: 1 }}
+          animate={{
+            x: `calc(50% + ${Math.cos(p.angle) * p.speed}px)`,
+            y: `calc(50% + ${Math.sin(p.angle) * p.speed}px)`,
+            scale: 0.1,
+            opacity: 0,
+          }}
+          transition={{ duration: 0.8, ease: [0.1, 0.8, 0.3, 1] }}
+          className="absolute rounded-full"
+          style={{
+            width: p.size,
+            height: p.size,
+            backgroundColor: p.color,
+            boxShadow: `0 0 8px ${p.color}, 0 0 16px ${p.color}`,
+            left: -p.size / 2,
+            top: -p.size / 2,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────
 
 export default function StudyEnglishPage() {
@@ -182,8 +260,9 @@ export default function StudyEnglishPage() {
   // Timing
   const [cardStartTime, setCardStartTime] = useState<number>(Date.now());
 
-  // Animation
+  // Animation & Particles
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [triggerParticles, setTriggerParticles] = useState(false);
 
   // ─── Gamification state ────────────────────────────────────
   const [earnedXp, setEarnedXp] = useState(0);
@@ -264,6 +343,9 @@ export default function StudyEnglishPage() {
       const result = await checkAnswer(currentCard.id, userInput.trim(), currentCard.direction);
       setCheckResult(result);
       setCardPhase('result');
+      // Trigger dynamic neon particles spark blow
+      setTriggerParticles(true);
+      setTimeout(() => setTriggerParticles(false), 150);
     } catch (err) {
       console.error('Check answer error:', err);
       setError('Không thể kiểm tra đáp án. Vui lòng thử lại.');
@@ -452,7 +534,7 @@ export default function StudyEnglishPage() {
   // ─── Render ───────────────────────────────────────────────
   return (
     <TooltipProvider>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-screen overflow-hidden bg-transparent">
         {/* Left Sidebar */}
         <div className="hidden md:block shrink-0">
           <Sidebar collapsed={false} />
@@ -527,31 +609,58 @@ export default function StudyEnglishPage() {
 
             {/* ─── Session View ─────────────────────────── */}
             {!loading && pageView === 'session' && currentCard && (
-              <div className={cn(
-                'mt-6 transition-all duration-300',
-                isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
-              )}>
-                {cardPhase === 'prompt' && (
-                  <StudyCard
-                    card={currentCard}
-                    userInput={userInput}
-                    showHint={showHint}
-                    submitting={submitting}
-                    onInputChange={setUserInput}
-                    onSubmit={handleSubmitAnswer}
-                    onSkip={handleSkip}
-                    onShowHint={() => setShowHint(true)}
-                    inputRef={inputRef}
-                  />
-                )}
+              <div className="mt-6 flex flex-col items-center justify-center min-h-[460px] relative w-full" style={{ perspective: 1200 }}>
+                <NeonParticles active={triggerParticles} color={getParticleColor(checkResult?.match_type)} />
+                
+                <motion.div
+                  className="w-full h-full relative"
+                  style={{ transformStyle: 'preserve-3d' }}
+                  animate={{ rotateY: cardPhase === 'result' ? 180 : 0 }}
+                  transition={{ duration: 0.65, ease: [0.2, 0.8, 0.2, 1] }}
+                >
+                  {/* Front Side: Question Card */}
+                  <div
+                    className="w-full"
+                    style={{
+                      backfaceVisibility: 'hidden',
+                      position: cardPhase === 'result' ? 'absolute' : 'relative',
+                      zIndex: cardPhase === 'prompt' ? 10 : 0,
+                      pointerEvents: cardPhase === 'prompt' ? 'auto' : 'none',
+                    }}
+                  >
+                    <StudyCard
+                      card={currentCard}
+                      userInput={userInput}
+                      showHint={showHint}
+                      submitting={submitting}
+                      onInputChange={setUserInput}
+                      onSubmit={handleSubmitAnswer}
+                      onSkip={handleSkip}
+                      onShowHint={() => setShowHint(true)}
+                      inputRef={inputRef}
+                    />
+                  </div>
 
-                {cardPhase === 'result' && checkResult && (
-                  <StudyResult
-                    result={checkResult}
-                    submitting={submitting}
-                    onContinue={handleContinue}
-                  />
-                )}
+                  {/* Back Side: Result Card */}
+                  <div
+                    className="w-full animate-in duration-300"
+                    style={{
+                      backfaceVisibility: 'hidden',
+                      transform: 'rotateY(180deg)',
+                      position: cardPhase === 'prompt' ? 'absolute' : 'relative',
+                      zIndex: cardPhase === 'result' ? 10 : 0,
+                      pointerEvents: cardPhase === 'result' ? 'auto' : 'none',
+                    }}
+                  >
+                    {checkResult && (
+                      <StudyResult
+                        result={checkResult}
+                        submitting={submitting}
+                        onContinue={handleContinue}
+                      />
+                    )}
+                  </div>
+                </motion.div>
               </div>
             )}
 

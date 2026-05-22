@@ -72,26 +72,29 @@ export function StudyCard({
       </div>
 
       {/* Prompt Card */}
-      <Card className="relative overflow-hidden shadow-card bg-gradient-to-br from-primary/10 via-card to-primary/20 border-primary/30">
+      <Card variant="glass" className="relative overflow-hidden border-white/20 dark:border-white/10 bg-white/10 dark:bg-card/25 backdrop-blur-2xl shadow-2xl transition-all duration-500 hover:shadow-primary/15 hover:border-primary/40 group">
+        {/* Light-catch edge overlay */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/10 pointer-events-none group-hover:via-white/10 group-hover:to-white/25 transition-all duration-500" />
+
         {/* Decorative circles - animated */}
-        <div className="absolute top-0 right-0 size-32 bg-primary/8 rounded-full -translate-y-1/2 translate-x-1/2 animate-float [animation-duration:6s]" />
-        <div className="absolute bottom-0 left-0 size-24 bg-primary/8 rounded-full translate-y-1/2 -translate-x-1/2 animate-float [animation-duration:5s] [animation-delay:1s]" />
+        <div className="absolute top-0 right-0 size-32 bg-primary/8 rounded-full -translate-y-1/2 translate-x-1/2 animate-float [animation-duration:6s] blur-md" />
+        <div className="absolute bottom-0 left-0 size-24 bg-primary/8 rounded-full translate-y-1/2 -translate-x-1/2 animate-float [animation-duration:5s] [animation-delay:1s] blur-md" />
 
         <CardContent className="relative p-6 md:p-8">
           <div className="flex flex-col items-center gap-6 animate-in fade-in duration-300">
             {/* Word prompt */}
             <div className="text-center">
-              <Badge variant="secondary" className="mb-3">{promptLabel}</Badge>
-              <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+              <Badge variant="secondary" className="mb-3 bg-primary/15 text-primary border border-primary/20 backdrop-blur-md">{promptLabel}</Badge>
+              <h2 className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text">
                 {promptText}
               </h2>
               {promptPronunciation && (
-                <p className="text-lg text-muted-foreground flex items-center gap-2 justify-center mt-2">
-                  <Volume2 className="size-4" />/{promptPronunciation}/
+                <p className="text-lg text-muted-foreground flex items-center gap-2 justify-center mt-2 font-medium">
+                  <Volume2 className="size-4 text-primary" />/{promptPronunciation}/
                 </p>
               )}
               {card.part_of_speech && (
-                <Badge variant="outline" className="text-xs capitalize mt-2">
+                <Badge variant="outline" className="text-xs capitalize mt-2 border-white/20 dark:border-white/10 bg-white/5 backdrop-blur-md">
                   {card.part_of_speech}
                 </Badge>
               )}
@@ -106,7 +109,7 @@ export function StudyCard({
                   placeholder={`Type in ${answerLabel}...`}
                   value={userInput}
                   onChange={(e) => onInputChange(e.target.value)}
-                  className="h-14 text-lg text-center px-4 rounded-xl border-2 border-primary/20 focus:border-primary transition-colors"
+                  className="h-14 text-lg text-center px-4 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 dark:bg-black/20 dark:focus:bg-black/35 focus:border-primary/50 transition-all duration-300 placeholder:text-muted-foreground/60 shadow-inner"
                   disabled={submitting}
                   autoComplete="off"
                   autoCorrect="off"
@@ -117,7 +120,7 @@ export function StudyCard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 size-8"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 size-8 text-muted-foreground hover:text-foreground hover:bg-white/10 rounded-full"
                     onClick={() => onInputChange('')}
                   >
                     ×
@@ -133,13 +136,13 @@ export function StudyCard({
                       variant="ghost"
                       size="sm"
                       onClick={onShowHint}
-                      className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      className="gap-1.5 text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all duration-300"
                     >
                       <Lightbulb className="size-3.5" />
                       Show hint
                     </Button>
                   ) : (
-                    <Badge variant="outline" className="text-xs gap-1 py-1">
+                    <Badge variant="outline" className="text-xs gap-1 py-1 border-primary/20 bg-primary/5 text-primary">
                       <Lightbulb className="size-3" />
                       Starts with: <span className="font-semibold">{hintLetter}</span>
                     </Badge>
@@ -150,7 +153,7 @@ export function StudyCard({
                   size="sm"
                   onClick={onSkip}
                   disabled={submitting}
-                  className="gap-1.5 text-xs text-muted-foreground hover:text-red-500"
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all duration-300"
                 >
                   <SkipForward className="size-3.5" />
                   Skip
@@ -161,7 +164,7 @@ export function StudyCard({
               <Button
                 onClick={onSubmit}
                 disabled={!userInput.trim() || submitting}
-                className="w-full h-12 text-base font-semibold rounded-xl gap-2"
+                className="w-full h-12 text-base font-semibold rounded-xl gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/35 transition-all duration-300"
                 size="lg"
               >
                 {submitting ? (
