@@ -21,7 +21,7 @@ echo =========================================
 
 REM --- 1. Start Backend (Python FastAPI) ---
 echo.
-echo [1/2] Starting Python Backend (port 3001)...
+echo [1/3] Starting Python Backend (port 3001)...
 
 cd /d "%BACKEND_DIR%"
 
@@ -67,9 +67,45 @@ if %READY% equ 0 (
     echo   - Warning: Backend health check timed out (may still be starting)
 )
 
-REM --- 2. Start Frontend (Next.js) ---
+REM --- 2. Start WebSocket Server (Bun) ---
 echo.
-echo [2/2] Starting Next.js Frontend (port 3000)...
+echo [2/3] Starting WebSocket Server (port 3002)...
+
+cd /d "%PROJECT_DIR%"
+
+REM Check if bun is available
+where bun >nul 2>nul
+if %errorlevel% neq 0 (
+    echo   [ERROR] bun not found! WebSocket server requires Bun to run.
+    echo   Please install Bun: https://bun.sh
+    pause
+    exit /b 1
+)
+
+REM Start WebSocket Server in background
+start "LearnHub Socket" /min bun src/socket-server.ts
+echo   - WebSocket Server started (port: 3002)
+
+REM Wait for WebSocket server to be ready
+echo   - Waiting for WebSocket server to be ready...
+set READY=0
+for /L %%i in (1,1,10) do (
+    if !READY! equ 0 (
+        timeout /t 1 /nobreak >nul
+        curl -s http://localhost:3002/?token=learnhub_secret_token_2026 >nul 2>nul
+        if !errorlevel! equ 0 (
+            set READY=1
+            echo   - WebSocket Server is ready!
+        )
+    )
+)
+if %READY% equ 0 (
+    echo   - Warning: WebSocket server health check timed out (may still be starting)
+)
+
+REM --- 3. Start Frontend (Next.js) ---
+echo.
+echo [3/3] Starting Next.js Frontend (port 3000)...
 
 cd /d "%PROJECT_DIR%"
 
@@ -112,24 +148,44 @@ if %READY% equ 0 (
 )
 
 echo.
-echo =========================================
+echo ===================================================
 echo   All services are running!
-echo   Frontend:  http://localhost:3000
-echo   Backend:   http://localhost:3001
-echo   API Docs:  http://localhost:3001/docs
-echo =========================================
+echo   Frontend:    http://localhost:3000
+echo   Backend:     http://localhost:3001
+echo   WebSocket:   ws://localhost:3002 (Secure Token)
+echo   API Docs:    http://localhost:3001/docs
+echo ===================================================
 echo.
-echo   Close the backend/frontend windows or
-echo   press any key here to stop all services.
+echo   Close the terminal windows or press any key
+echo   here to stop all services.
 echo.
 
 pause
 
-REM Kill the backend and frontend processes
+REM Kill all processes using ports 3000, 3001, and 3002
 echo.
 echo Stopping all services...
+
+echo   - Stopping Frontend (port 3000)...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING"') do (
+    taskkill /f /pid %%a >nul 2>nul
+)
+
+echo   - Stopping Backend (port 3001)...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3001" ^| findstr "LISTENING"') do (
+    taskkill /f /pid %%a >nul 2>nul
+)
+
+echo   - Stopping WebSocket Server (port 3002)...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3002" ^| findstr "LISTENING"') do (
+    taskkill /f /pid %%a >nul 2>nul
+)
+
+REM Also clean up opened windows if they are still present
 taskkill /fi "WINDOWTITLE eq LearnHub Backend*" >nul 2>nul
+taskkill /fi "WINDOWTITLE eq LearnHub Socket*" >nul 2>nul
 taskkill /fi "WINDOWTITLE eq LearnHub Frontend*" >nul 2>nul
+
 echo All services stopped.
 
 endlocal

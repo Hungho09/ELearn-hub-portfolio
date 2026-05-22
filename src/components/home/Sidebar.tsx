@@ -12,6 +12,7 @@ import {
   LogOut,
   LogIn,
   Bell,
+  Users,
 } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +33,7 @@ const learningItems: NavItem[] = [
   { label: 'Trang chủ', icon: Home, href: '/' },
   { label: 'Thống kê', icon: BarChart3, href: '/stats' },
   { label: 'Lịch sử học', icon: Calendar, href: '/heatmap' },
+  { label: 'Không gian học', icon: Users, href: '/workspace' },
 ];
 
 /** Admin navigation items (only shown for admin users) */
