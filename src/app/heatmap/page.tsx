@@ -88,11 +88,16 @@ interface HeatmapDay {
 // ─── Constants & Helper Functions ─────────────────────────────────
 
 const MONTH_NAMES = [
-  'Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 
+  'Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6',
   'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12'
 ];
 
 const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+// Responsive heatmap cell sizing constants
+const CELL_GAP = 2;
+const MIN_CELL_SIZE = 8;
+const MAX_CELL_SIZE = 16;
 
 // Timezone-safe local date string format: YYYY-MM-DD
 function getLocalDateString(d: Date): string {
@@ -135,6 +140,8 @@ export default function HeatmapPage() {
   const [hoveredDay, setHoveredDay] = useState<HeatmapDay | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const tooltipTimeout = useRef<NodeJS.Timeout | null>(null);
+  const heatmapContainerRef = useRef<HTMLDivElement>(null);
+  const [cellSize, setCellSize] = useState(10);
 
   const userId = session?.user?.id || session?.user?.email || 'guest';
   const userName = session?.user?.name || 'Học viên';
@@ -148,7 +155,7 @@ export default function HeatmapPage() {
       try {
         const yr = new Date(log.reviewed_at).getFullYear();
         if (!isNaN(yr)) yearsSet.add(yr);
-      } catch {}
+      } catch { }
     });
     return Array.from(yearsSet).sort((a, b) => b - a); // descending order
   }, [dbLogs, currentYear]);
@@ -201,7 +208,7 @@ export default function HeatmapPage() {
     today.setHours(0, 0, 0, 0);
 
     const days: HeatmapDay[] = [];
-    
+
     // We generate from Jan 1st of selectedYear to Dec 31st of selectedYear
     // We use noon index (12:00:00) to prevent DST and standard local timezone jumps from skipping a day
     const startDate = new Date(selectedYear, 0, 1, 12, 0, 0);
@@ -229,7 +236,7 @@ export default function HeatmapPage() {
         const targetDate = new Date(current);
         targetDate.setHours(0, 0, 0, 0);
         const dateStr = getLocalDateString(targetDate);
-        
+
         const isFuture = targetDate > today;
         const dayLogs = isFuture ? [] : (logsMap[dateStr] || []);
         const count = dayLogs.length;
@@ -247,10 +254,10 @@ export default function HeatmapPage() {
 
           // Estimate duration: sum of response times or fallback to 10s per review
           const totalMs = dayLogs.reduce((sum, l) => sum + (l.response_time_ms || 0), 0);
-          studyDuration = totalMs > 0 
-            ? Math.round((totalMs / 60000) * 10) / 10 
+          studyDuration = totalMs > 0
+            ? Math.round((totalMs / 60000) * 10) / 10
             : Math.round((count * 10 / 60) * 10) / 10;
-          
+
           if (studyDuration < 0.1) studyDuration = 0.1;
 
           // Accuracy: rating >= 3 (Good/Easy)
@@ -286,11 +293,11 @@ export default function HeatmapPage() {
 
         current.setDate(current.getDate() + 1);
       }
-    } 
+    }
     // Chế độ dữ liệu Demo (Seeded year representation)
     else {
       const currentStreak = stats?.streak_days || 3;
-      
+
       const seededRandom = (seed: number) => {
         const x = Math.sin(seed++) * 10000;
         return x - Math.floor(x);
@@ -316,7 +323,7 @@ export default function HeatmapPage() {
         const dayOfWeek = targetDate.getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         let studyProbability = isWeekend ? 0.35 : 0.65;
-        
+
         if (isStreakDay) {
           studyProbability = 1.0;
         }
@@ -455,15 +462,15 @@ export default function HeatmapPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    let lastKnownRetention = stats?.average_ease_factor 
-      ? Math.min(98, Math.max(60, Math.round((stats.average_ease_factor / 3.0) * 100))) 
+    let lastKnownRetention = stats?.average_ease_factor
+      ? Math.min(98, Math.max(60, Math.round((stats.average_ease_factor / 3.0) * 100)))
       : 85;
 
     for (let i = 29; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
       const dateStr = getLocalDateString(date);
-      
+
       const dayLogs = dbLogs.filter(l => {
         try {
           return getLocalDateString(new Date(l.reviewed_at)) === dateStr;
@@ -503,7 +510,7 @@ export default function HeatmapPage() {
           const d = new Date(log.reviewed_at);
           const hour = d.getHours();
           hoursCount[hour].count += 1;
-        } catch (e) {}
+        } catch (e) { }
       });
     } else {
       // Demo hours distribution
@@ -571,6 +578,33 @@ export default function HeatmapPage() {
     return labels;
   }, [heatmapWeeks]);
 
+  // Responsive cell sizing via ResizeObserver
+  const numWeeks = heatmapWeeks.length;
+
+  useEffect(() => {
+    const container = heatmapContainerRef.current;
+    if (!container || numWeeks === 0) return;
+
+    const calculateCellSize = () => {
+      const containerWidth = container.clientWidth;
+      const weekdayLabelSpace = 32; // w-6 (24px) + flex gap-2 (8px)
+      const availableWidth = containerWidth - weekdayLabelSpace;
+      const idealSize = (availableWidth - (numWeeks - 1) * CELL_GAP) / numWeeks;
+      setCellSize(Math.max(MIN_CELL_SIZE, Math.min(MAX_CELL_SIZE, idealSize)));
+    };
+
+    calculateCellSize();
+    const observer = new ResizeObserver(calculateCellSize);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [numWeeks]);
+
+  const cellStep = cellSize + CELL_GAP;
+  const cellRadius = Math.max(1.5, Math.round(cellSize * 0.15 * 10) / 10);
+  const heatmapMinWidth = numWeeks > 0
+    ? numWeeks * MIN_CELL_SIZE + (numWeeks - 1) * CELL_GAP + 32
+    : 0;
+
   const getCellColorClass = (count: number) => {
     if (count === 0) return 'bg-muted/30 dark:bg-muted/15 border-border/40';
     if (count < 5) return 'bg-emerald-500/20 text-emerald-900 border-emerald-500/10';
@@ -582,26 +616,23 @@ export default function HeatmapPage() {
   const handleMouseEnter = (day: HeatmapDay, e: React.MouseEvent) => {
     if (!day) return;
     if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
-    
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
-    // Mathematically clamp targetX to keep the tooltip fully within the viewport.
-    // Tooltip has min-w-[210px] styled with border/padding, so 220px is a safe cushion.
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+
+    // Use viewport-relative coordinates (for position: fixed tooltip)
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const tooltipWidth = 220;
     const padding = 16;
 
-    let targetX = rect.left + scrollLeft + rect.width / 2;
-    const minX = scrollLeft + tooltipWidth / 2 + padding;
-    const maxX = scrollLeft + viewportWidth - tooltipWidth / 2 - padding;
+    let targetX = rect.left + rect.width / 2;
+    const minX = tooltipWidth / 2 + padding;
+    const maxX = viewportWidth - tooltipWidth / 2 - padding;
 
     targetX = Math.max(minX, Math.min(maxX, targetX));
 
     setTooltipPos({
       x: targetX,
-      y: rect.top + scrollTop - 10
+      y: rect.top - 10
     });
     setHoveredDay(day);
   };
@@ -615,7 +646,7 @@ export default function HeatmapPage() {
   return (
     <TooltipProvider>
       <div className="flex h-screen overflow-hidden bg-background">
-        
+
         {/* Sidebar Nav */}
         <div className="hidden md:block shrink-0">
           <Sidebar collapsed={false} />
@@ -632,7 +663,7 @@ export default function HeatmapPage() {
         {/* Main Content Area */}
         <main className="flex-1 min-w-0 overflow-y-auto custom-scrollbar">
           <div className="mx-auto max-w-5xl p-4 md:p-6 lg:p-8 space-y-6">
-            
+
             {/* Top Toolbar Area */}
             <div className="mt-4 md:mt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -686,8 +717,8 @@ export default function HeatmapPage() {
                       <div className="space-y-1">
                         <span className="font-bold block text-foreground">Không thể kết nối tới dịch vụ AI Backend (FastAPI)</span>
                         <p className="text-muted-foreground leading-relaxed">
-                          Yêu cầu lấy dữ liệu thực tế thất bại. Có vẻ như Python FastAPI backend (cổng 3001) đang offline hoặc bị chặn. 
-                          Hãy chạy <code className="bg-destructive/20 px-1 py-0.5 rounded text-foreground font-mono">start-all.bat</code> hoặc 
+                          Yêu cầu lấy dữ liệu thực tế thất bại. Có vẻ như Python FastAPI backend (cổng 3001) đang offline hoặc bị chặn.
+                          Hãy chạy <code className="bg-destructive/20 px-1 py-0.5 rounded text-foreground font-mono">start-all.bat</code> hoặc
                           <code className="bg-destructive/20 px-1 py-0.5 rounded text-foreground font-mono">bun dev:backend</code> để khởi chạy.
                         </p>
                       </div>
@@ -703,9 +734,9 @@ export default function HeatmapPage() {
                       >
                         <Eye className="size-3.5 mr-1" /> Dùng Demo
                       </Button>
-                      <Button 
-                        onClick={loadData} 
-                        variant="default" 
+                      <Button
+                        onClick={loadData}
+                        variant="default"
                         size="sm"
                         className="h-8 text-[11px] font-bold bg-destructive text-white hover:bg-destructive/90"
                       >
@@ -721,9 +752,9 @@ export default function HeatmapPage() {
                         Hệ thống đang hiển thị <strong>{dbLogs.length} lượt ôn tập thực tế</strong> trích xuất từ database.
                       </span>
                     </div>
-                    <Button 
-                      onClick={loadData} 
-                      variant="ghost" 
+                    <Button
+                      onClick={loadData}
+                      variant="ghost"
                       size="sm"
                       className="h-7 text-[10px] text-cyan-400 hover:bg-cyan-500/10 border border-cyan-500/25 rounded-lg"
                     >
@@ -742,7 +773,7 @@ export default function HeatmapPage() {
                     <Activity className="size-5 text-emerald-500" />
                     Heatmap Ôn Tập Từng Ngày
                   </CardTitle>
-                  
+
                   <div className="flex flex-wrap items-center gap-3.5">
                     {/* Glassmorphic Year Selector Segmented Control */}
                     <div className="flex items-center gap-1 bg-muted/40 p-1.5 rounded-xl border border-border/40 shrink-0">
@@ -775,15 +806,15 @@ export default function HeatmapPage() {
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="p-6">
-                <div className="w-full overflow-x-auto custom-scrollbar pb-2">
-                  <div className="min-w-[670px] w-fit mx-auto flex gap-2">
-                    
+                <div ref={heatmapContainerRef} className="w-full overflow-x-auto custom-scrollbar pb-2">
+                  <div className="flex gap-2" style={{ minWidth: heatmapMinWidth }}>
+
                     {/* Weekday indicators (perfectly aligned to 10px squares and 2px gaps) */}
                     <div className="grid grid-rows-7 gap-[2px] text-[10px] text-muted-foreground/80 pr-2 pt-5 select-none font-medium text-right w-6">
                       {WEEKDAYS.map((day, idx) => (
-                        <div key={day} className={cn("h-[10px] flex items-center justify-end", idx % 2 === 0 ? "opacity-0" : "")}>
+                        <div key={day} className={cn("flex items-center justify-end", idx % 2 === 0 ? "opacity-0" : "")} style={{ height: cellSize }}>
                           {day}
                         </div>
                       ))}
@@ -791,14 +822,14 @@ export default function HeatmapPage() {
 
                     {/* Main Grid Wrapper */}
                     <div className="flex-1 flex flex-col relative pt-5">
-                      
+
                       {/* Accurate Month Label position overlays (aligned to 12px columns: 10px square + 2px gap) */}
                       <div className="absolute top-0 left-0 w-full h-4 select-none">
                         {monthLabels.map((lbl, idx) => {
-                          const leftPos = lbl.colIndex * 12;
+                          const leftPos = lbl.colIndex * cellStep;
                           return (
-                            <span 
-                              key={`${lbl.text}-${idx}`} 
+                            <span
+                              key={`${lbl.text}-${idx}`}
                               className="absolute text-[10px] text-muted-foreground/80 font-bold transition-all duration-300"
                               style={{ left: `${leftPos}px` }}
                             >
@@ -815,9 +846,10 @@ export default function HeatmapPage() {
                             {week.map((day, dIdx) => {
                               if (!day) {
                                 return (
-                                  <div 
-                                    key={`empty-${wIdx}-${dIdx}`} 
-                                    className="size-[10px] rounded-[1.5px] bg-transparent pointer-events-none" 
+                                  <div
+                                    key={`empty-${wIdx}-${dIdx}`}
+                                    className="bg-transparent pointer-events-none"
+                                    style={{ width: cellSize, height: cellSize, borderRadius: cellRadius }}
                                   />
                                 );
                               }
@@ -833,9 +865,10 @@ export default function HeatmapPage() {
                                   onMouseEnter={(e) => handleMouseEnter(day, e)}
                                   onMouseLeave={handleMouseLeave}
                                   whileHover={!isFuture ? { scale: 1.3, zIndex: 10 } : {}}
+                                  style={{ width: cellSize, height: cellSize, borderRadius: cellRadius }}
                                   className={cn(
-                                    "size-[10px] rounded-[1.5px] border transition-colors relative",
-                                    isFuture 
+                                    "border transition-colors relative",
+                                    isFuture
                                       ? "bg-muted/5 dark:bg-muted/5 border-dashed border-border/20 cursor-not-allowed select-none opacity-40"
                                       : cn(getCellColorClass(day.count), "cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"),
                                     isSelected ? "ring-2 ring-cyan-400 scale-110 border-cyan-300 z-10" : "",
@@ -878,7 +911,7 @@ export default function HeatmapPage() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   style={{
-                    position: 'absolute',
+                    position: 'fixed',
                     left: tooltipPos.x,
                     top: tooltipPos.y,
                     transform: 'translate(-50%, -100%)',
@@ -935,7 +968,7 @@ export default function HeatmapPage() {
 
             {/* INTERACTIVE BREAKDOWN & LOGS LIST PANEL */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
+
               {/* Selected Day Log list breakdown */}
               <Card className="lg:col-span-2 border border-border/60 bg-card/65 backdrop-blur-md shadow-card">
                 <CardHeader className="pb-3 border-b border-border/40">
@@ -954,7 +987,7 @@ export default function HeatmapPage() {
                 <CardContent className="p-5">
                   {selectedDay ? (
                     <div className="space-y-4">
-                      
+
                       {selectedDay.count > 0 ? (
                         <>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -963,7 +996,7 @@ export default function HeatmapPage() {
                               <p className="text-xl font-black text-primary mt-0.5">{selectedDay.count}</p>
                               <span className="text-[9px] text-muted-foreground block">flashcards</span>
                             </div>
-                            
+
                             <div className="bg-muted/20 dark:bg-muted/5 border border-border/40 p-3 rounded-xl text-center">
                               <p className="text-[10px] text-muted-foreground uppercase font-bold">Số từ vựng</p>
                               <p className="text-xl font-black text-emerald-400 mt-0.5">{selectedDay.wordsLearned}</p>
@@ -1004,13 +1037,13 @@ export default function HeatmapPage() {
                                       <span className={cn(
                                         "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold select-none",
                                         log.rating === 4 ? "bg-emerald-500/10 text-emerald-400" :
-                                        log.rating === 3 ? "bg-cyan-500/10 text-cyan-400" :
-                                        log.rating === 2 ? "bg-amber-500/10 text-amber-400" :
-                                        "bg-destructive/10 text-destructive"
+                                          log.rating === 3 ? "bg-cyan-500/10 text-cyan-400" :
+                                            log.rating === 2 ? "bg-amber-500/10 text-amber-400" :
+                                              "bg-destructive/10 text-destructive"
                                       )}>
                                         {log.rating === 4 ? "Perfect" :
-                                         log.rating === 3 ? "Good" :
-                                         log.rating === 2 ? "Hard" : "Again"}
+                                          log.rating === 3 ? "Good" :
+                                            log.rating === 2 ? "Hard" : "Again"}
                                       </span>
                                     </div>
                                   </div>
@@ -1029,8 +1062,8 @@ export default function HeatmapPage() {
                         <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground space-y-2">
                           <BookOpen className="size-8 text-muted-foreground/30 animate-pulse" />
                           <p className="text-sm">Không có dữ liệu ôn tập trong ngày này.</p>
-                          <Button 
-                            onClick={() => router.push('/')} 
+                          <Button
+                            onClick={() => router.push('/')}
                             size="sm"
                             className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs mt-2 rounded-lg"
                           >
@@ -1048,7 +1081,7 @@ export default function HeatmapPage() {
 
               {/* Sidebar Streaks & Cognitive Gauge widgets */}
               <div className="space-y-6">
-                
+
                 {/* Active streak widget */}
                 <Card className="border border-border/60 bg-gradient-to-br from-orange-500/10 via-card to-card backdrop-blur-md shadow-card">
                   <CardContent className="p-5 flex items-center justify-between">
@@ -1077,7 +1110,7 @@ export default function HeatmapPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 space-y-4 text-xs">
-                    
+
                     <div className="flex justify-between items-center pb-2 border-b border-border/30">
                       <span className="text-muted-foreground">Khả năng quá tải (Burnout):</span>
                       <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Thấp (15%)</span>
@@ -1122,7 +1155,7 @@ export default function HeatmapPage() {
                         Bộ mô phỏng tính ưu việt của ôn tập ngắt quãng (Spaced Repetition) đối với trí nhớ.
                       </p>
                     </div>
-                    
+
                     {/* Controls */}
                     <div className="flex bg-muted/40 p-0.5 rounded-lg border border-border/40 shrink-0">
                       {[1, 3, 5].map((num) => (
@@ -1131,7 +1164,7 @@ export default function HeatmapPage() {
                           onClick={() => setSimReviews(num)}
                           className={cn(
                             "px-2 py-0.5 rounded text-[10px] font-bold transition-all focus:outline-none",
-                            simReviews === num 
+                            simReviews === num
                               ? "bg-cyan-500 text-cyan-950 font-extrabold shadow-sm"
                               : "text-muted-foreground hover:text-foreground"
                           )}
@@ -1142,36 +1175,36 @@ export default function HeatmapPage() {
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="p-5 h-[240px] flex items-center justify-center">
                   {mounted ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={forgettingCurveData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                         <XAxis dataKey="day" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
                         <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <ChartTooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'var(--color-card)', 
+                        <ChartTooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--color-card)',
                             borderColor: 'var(--color-border)',
                             borderRadius: '8px',
                             fontSize: '11px'
-                          }} 
+                          }}
                         />
                         <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
-                        
-                        <Line 
-                          type="monotone" 
-                          dataKey="Đường Quên Cơ Bản (Decay)" 
-                          stroke="var(--color-destructive)" 
+
+                        <Line
+                          type="monotone"
+                          dataKey="Đường Quên Cơ Bản (Decay)"
+                          stroke="var(--color-destructive)"
                           strokeWidth={2}
                           strokeDasharray="5 5"
-                          dot={false} 
+                          dot={false}
                         />
 
-                        <Line 
-                          type="monotone" 
-                          dataKey="Active Recall (Spaced Rep)" 
-                          stroke="var(--color-chart-4)" 
+                        <Line
+                          type="monotone"
+                          dataKey="Active Recall (Spaced Rep)"
+                          stroke="var(--color-chart-4)"
                           strokeWidth={2.5}
                           dot={{ strokeWidth: 1, r: 2.5 }}
                         />
@@ -1194,30 +1227,30 @@ export default function HeatmapPage() {
                     Biểu đồ đo khả năng lưu trữ từ vựng dựa trên điểm Ease Factor thực tế.
                   </p>
                 </CardHeader>
-                
+
                 <CardContent className="p-5 h-[240px] flex items-center justify-center">
                   {mounted ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={retentionTrendData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                         <defs>
                           <linearGradient id="colorRetention" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-chart-3)" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="var(--color-chart-3)" stopOpacity={0}/>
+                            <stop offset="5%" stopColor="var(--color-chart-3)" stopOpacity={0.4} />
+                            <stop offset="95%" stopColor="var(--color-chart-3)" stopOpacity={0} />
                           </linearGradient>
                         </defs>
                         <XAxis dataKey="name" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
                         <YAxis domain={[50, 100]} tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <ChartTooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'var(--color-card)', 
+                        <ChartTooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--color-card)',
                             borderColor: 'var(--color-border)',
                             borderRadius: '8px',
                             fontSize: '11px'
-                          }} 
+                          }}
                         />
                         <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
-                        
-                        <Line 
+
+                        <Line
                           type="monotone"
                           dataKey="Mục tiêu Tối ưu"
                           stroke="rgba(16, 185, 129, 0.4)"
@@ -1226,12 +1259,12 @@ export default function HeatmapPage() {
                           dot={false}
                         />
 
-                        <Area 
-                          type="monotone" 
-                          dataKey="Khả năng Ghi nhớ" 
-                          stroke="var(--color-chart-3)" 
-                          fillOpacity={1} 
-                          fill="url(#colorRetention)" 
+                        <Area
+                          type="monotone"
+                          dataKey="Khả năng Ghi nhớ"
+                          stroke="var(--color-chart-3)"
+                          fillOpacity={1}
+                          fill="url(#colorRetention)"
                           strokeWidth={2.5}
                         />
                       </AreaChart>
@@ -1246,7 +1279,7 @@ export default function HeatmapPage() {
 
             {/* BOTTOM SECTION: Study hours density & aggregate metrics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
+
               {/* Density hours chart (span 2) */}
               <Card className="md:col-span-2 border border-border/60 bg-card/65 backdrop-blur-md shadow-card">
                 <CardHeader className="pb-3 border-b border-border/40">
@@ -1258,27 +1291,27 @@ export default function HeatmapPage() {
                     Sự phân bố tần suất ôn tập theo từng múi giờ thực tế trong ngày.
                   </p>
                 </CardHeader>
-                
+
                 <CardContent className="p-5 h-[230px] flex items-center justify-center">
                   {mounted ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={hourlyPeakData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                         <XAxis dataKey="hour" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
                         <YAxis tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <ChartTooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'var(--color-card)', 
+                        <ChartTooltip
+                          contentStyle={{
+                            backgroundColor: 'var(--color-card)',
                             borderColor: 'var(--color-border)',
                             borderRadius: '8px',
                             fontSize: '11px'
-                          }} 
+                          }}
                         />
                         <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
-                        
-                        <Bar 
-                          dataKey="count" 
+
+                        <Bar
+                          dataKey="count"
                           name="Số lượt ôn tập"
-                          fill="var(--color-primary)" 
+                          fill="var(--color-primary)"
                           radius={[4, 4, 0, 0]}
                         />
                       </BarChart>
@@ -1298,7 +1331,7 @@ export default function HeatmapPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-5 space-y-4">
-                  
+
                   <div className="space-y-1">
                     <p className="text-[10px] text-muted-foreground font-extrabold uppercase">TỔNG LƯỢT ÔN TẬP</p>
                     <p className="text-2xl font-black text-primary">
