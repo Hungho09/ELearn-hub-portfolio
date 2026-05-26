@@ -422,10 +422,54 @@ export default function HeatmapPage() {
     };
   }, [heatmapData]);
 
+  // Dynamic Cognitive Metrics from real database logs and TGCL stability
+  const calculatedHalfLife = useMemo(() => {
+    if (dataMode === 'real' && dbLogs.length > 0) {
+      const activeLogs = dbLogs.filter(l => l.interval_days > 0);
+      if (activeLogs.length > 0) {
+        const avgInterval = activeLogs.reduce((sum, l) => sum + l.interval_days, 0) / activeLogs.length;
+        // half-life = avg_interval * ln(2)
+        const halfLife = avgInterval * 0.693;
+        return Math.max(0.5, Math.round(halfLife * 10) / 10);
+      }
+    }
+    return 5.2; // demo fallback
+  }, [dbLogs, dataMode]);
+
+  const calculatedEfficiency = useMemo(() => {
+    if (dataMode === 'real' && dbLogs.length > 0) {
+      const goodReviews = dbLogs.filter(l => l.rating >= 3).length;
+      const accuracy = Math.round((goodReviews / dbLogs.length) * 100);
+      return accuracy;
+    }
+    return 94; // demo fallback
+  }, [dbLogs, dataMode]);
+
+  const calculatedBurnout = useMemo(() => {
+    if (dataMode === 'real' && dbLogs.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const threeDaysAgo = new Date(today);
+      threeDaysAgo.setDate(today.getDate() - 3);
+      
+      const recentReviewsCount = dbLogs.filter(l => new Date(l.reviewed_at) >= threeDaysAgo).length;
+      // High recent review counts imply workload spikes
+      const risk = Math.min(95, Math.max(5, Math.round((recentReviewsCount / 40) * 100)));
+      return risk;
+    }
+    return 15; // demo fallback
+  }, [dbLogs, dataMode]);
+
   // Forgetting Curve simulator state
   const [simReviews, setSimReviews] = useState<number>(3);
   const forgettingCurveData = useMemo(() => {
-    const data = [];
+    const data: any[] = [];
+    
+    // Use user's real average Ease Factor or fall back to 2.1 for demo
+    const userAvgEase = dataMode === 'real' && dbLogs.length > 0
+      ? dbLogs.reduce((sum, l) => sum + (l.ease_factor || 2.5), 0) / dbLogs.length
+      : 2.1;
+      
     const halfLife = 4.5;
     const reviewDays = [0, 1, 4, 10, 22];
 
@@ -438,7 +482,8 @@ export default function HeatmapPage() {
       for (let r = 0; r < Math.min(simReviews, reviewDays.length); r++) {
         if (day >= reviewDays[r]) {
           lastAppliedReview = reviewDays[r];
-          runningStrength = 1.8 * Math.pow(2.1, r);
+          // Use userAvgEase dynamically to calculate stability strength!
+          runningStrength = 1.8 * Math.pow(userAvgEase, r);
         }
       }
 
@@ -454,11 +499,11 @@ export default function HeatmapPage() {
     }
 
     return data;
-  }, [simReviews]);
+  }, [simReviews, dbLogs, dataMode]);
 
   // AI Retention Trend (Last 30 Days)
   const retentionTrendData = useMemo(() => {
-    const data = [];
+    const data: any[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -1113,17 +1158,22 @@ export default function HeatmapPage() {
 
                     <div className="flex justify-between items-center pb-2 border-b border-border/30">
                       <span className="text-muted-foreground">Khả năng quá tải (Burnout):</span>
-                      <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Thấp (15%)</span>
+                      <span className={cn(
+                        "font-bold px-2 py-0.5 rounded",
+                        calculatedBurnout < 30 ? "text-emerald-400 bg-emerald-500/10" : calculatedBurnout < 70 ? "text-amber-400 bg-amber-500/10" : "text-destructive bg-destructive/10"
+                      )}>
+                        {calculatedBurnout < 30 ? "Thấp" : calculatedBurnout < 70 ? "Trung bình" : "Cao"} ({calculatedBurnout}%)
+                      </span>
                     </div>
 
                     <div className="flex justify-between items-center pb-2 border-b border-border/30">
                       <span className="text-muted-foreground">Bán kỳ phân rã trí nhớ:</span>
-                      <span className="font-bold text-cyan-400">5.2 ngày</span>
+                      <span className="font-bold text-cyan-400">{calculatedHalfLife} ngày</span>
                     </div>
 
                     <div className="flex justify-between items-center pb-2 border-b border-border/30">
                       <span className="text-muted-foreground">Hiệu quả Spaced Repetition:</span>
-                      <span className="font-bold text-amber-500">Tối ưu (94%)</span>
+                      <span className="font-bold text-amber-500">Tối ưu ({calculatedEfficiency}%)</span>
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -1152,7 +1202,13 @@ export default function HeatmapPage() {
                         Đường Quên Ebbinghaus & Spaced Repetition
                       </CardTitle>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Bộ mô phỏng tính ưu việt của ôn tập ngắt quãng (Spaced Repetition) đối với trí nhớ.
+                        {dataMode === 'real' && dbLogs.length > 0 ? (
+                          <span>
+                            Cá nhân hóa từ mô hình học máy dựa trên <strong>Hệ số Dễ (Ease Factor)</strong> trung bình thật: <strong className="text-cyan-400">{(dbLogs.reduce((sum, l) => sum + (l.ease_factor || 2.5), 0) / dbLogs.length).toFixed(2)}</strong>.
+                          </span>
+                        ) : (
+                          "Bộ mô phỏng tính ưu việt của ôn tập ngắt quãng (Spaced Repetition) đối với trí nhớ."
+                        )}
                       </p>
                     </div>
 
