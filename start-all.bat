@@ -48,7 +48,7 @@ uv pip install --python "%VENV_DIR%\Scripts\python.exe" -r requirements.txt
 
 REM Install TGCL & GPU dependencies
 echo   - Installing GPU-accelerated PyTorch and ML dependencies...
-uv pip install --python "%VENV_DIR%\Scripts\python.exe" -r requirements-tcgl.txt --extra-index-url https://download.pytorch.org/whl/cu121
+uv pip install --python "%VENV_DIR%\Scripts\python.exe" -r requirements-tgcl.txt --extra-index-url https://download.pytorch.org/whl/cu121
 
 REM Start uvicorn in background using venv python
 start "LearnHub Backend" /min "%VENV_DIR%\Scripts\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 3001 --reload

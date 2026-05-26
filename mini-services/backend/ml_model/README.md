@@ -21,9 +21,9 @@ The TGCL model is the primary flashcard scheduling algorithm.
 
 ## Cài đặt phụ thuộc TGCL
 
-- Cài các thư viện cần thiết cho mô hình TGCL bằng file `requirements-tcgl.txt`:
+- Cài các thư viện cần thiết cho mô hình TGCL bằng file `requirements-tgcl.txt`:
   ```bash
-  pip install -r mini-services/backend/requirements-tcgl.txt
+  pip install -r mini-services/backend/requirements-tgcl.txt
   ```
 - Nếu bạn đang dùng `venv` hoặc môi trường ảo, kích hoạt trước khi cài.
 
@@ -34,7 +34,7 @@ ml_model/
 ├── __init__.py             # Package init
 ├── model.py                # Full PyTorch TGCL model class definition
 ├── predict.py              # ACTIVE: Dynamic prediction + online learning + batch training
-├── tcgl_learned.pth        # Auto-generated: Saved model after online/batch training
+├── tgcl_learned.pth        # Auto-generated: Saved model after online/batch training
 └── README.md               # This file
 ```
 
@@ -51,11 +51,11 @@ After every review submission (`POST /api/flashcards/review`):
 Call `POST /api/flashcards/train` to fine-tune on all accumulated data:
 - Builds a full graph from all your review logs
 - Trains for 10 epochs (configurable)
-- Saves the updated model to `tcgl_learned.pth`
+- Saves the updated model to `tgcl_learned.pth`
 - Next startup loads the learned model automatically
 
 ### 3. Model Persistence
-- After batch training → model saved to `tcgl_learned.pth`
+- After batch training → model saved to `tgcl_learned.pth`
 - After online learning → model stays in memory (not auto-saved)
 - On restart → learned model loaded first, then pretrained, then fresh init
 
@@ -121,7 +121,7 @@ The flashcard system uses typed answers with auto-grading (`grader.py`):
 1. Export review logs: `GET /api/review-logs/{user_id}/export`
 2. Train your model externally using the review data
 3. Save as `model.pth` in the `upload/` directory
-4. Delete `tcgl_learned.pth` so the new model gets loaded
+4. Delete `tgcl_learned.pth` so the new model gets loaded
 5. Restart the backend
 
 ## To Use a Different Model

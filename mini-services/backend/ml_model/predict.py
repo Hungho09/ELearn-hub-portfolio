@@ -37,7 +37,7 @@ _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(_BACKEND_DIR))
 _DEFAULT_MODEL_PATH = os.path.join(_PROJECT_ROOT, "upload", "model.pth")
 _SAVE_MODEL_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "tcgl_learned.pth"
+    os.path.dirname(os.path.abspath(__file__)), "tgcl_learned.pth"
 )
 
 MODEL_PATH = os.environ.get("TGCL_MODEL_PATH", _DEFAULT_MODEL_PATH)
@@ -107,13 +107,13 @@ def _load_model_internal():
     if os.path.exists(_SAVE_MODEL_PATH):
         print(f"[TGCL] Loading LEARNED model from {_SAVE_MODEL_PATH} onto {device.upper()}...")
         _model = TGCLModel()
-        state_dict = torch.load(_SAVE_MODEL_PATH, map_location=device, weights_only=False)
+        state_dict = torch.load(_SAVE_MODEL_PATH, map_location=device, weights_only=True)
         _model.load_state_dict(state_dict, strict=True)
         _stats["model_source"] = "learned"
     elif os.path.exists(MODEL_PATH):
         print(f"[TGCL] Loading PRETRAINED model from {MODEL_PATH} onto {device.upper()}...")
         _model = TGCLModel()
-        state_dict = torch.load(MODEL_PATH, map_location=device, weights_only=False)
+        state_dict = torch.load(MODEL_PATH, map_location=device, weights_only=True)
         _model.load_state_dict(state_dict, strict=True)
         _stats["model_source"] = "pretrained"
     else:
@@ -594,7 +594,7 @@ def predict_next_review(
             "interval_days": new_interval,
             "repetitions": new_repetitions,
             "next_review_at": next_review_at,
-            "model_used": "tcgl",
+            "model_used": "tgcl",
             "raw_output": round(raw_output, 4),
         }
 
@@ -811,7 +811,7 @@ def save_model(path: Optional[str] = None) -> str:
     """Save the current model weights to disk.
 
     Args:
-        path: Custom save path. Defaults to tcgl_learned.pth in ml_model/
+        path: Custom save path. Defaults to tgcl_learned.pth in ml_model/
 
     Returns:
         Path where model was saved

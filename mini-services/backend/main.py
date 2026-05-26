@@ -130,6 +130,15 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     """Initialize database, migrate schema, seed data, and pre-load models on startup."""
+    # Set tensor core precision for GPU performance
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.set_float32_matmul_precision('high')
+            print("[startup] Set PyTorch float32 matmul precision to 'high' for Tensor Cores.")
+    except Exception:
+        pass
+
     Base.metadata.create_all(bind=engine)
 
     # Migrate: ensure new columns exist (SQLite doesn't support ALTER COLUMN)
@@ -177,12 +186,12 @@ app.include_router(review_logs_router)
 @app.get("/health")
 def health_check():
     # Check TGCL model status
-    tcgl_status = "not_loaded"
+    tgcl_status = "not_loaded"
     try:
         from ml_model.predict import is_model_loaded
-        tcgl_status = "loaded" if is_model_loaded() else "not_loaded"
+        tgcl_status = "loaded" if is_model_loaded() else "not_loaded"
     except Exception:
-        tcgl_status = "unavailable"
+        tgcl_status = "unavailable"
 
     # Check COMET + embedding grader status
     comet_status = "not_loaded"
@@ -201,7 +210,7 @@ def health_check():
         "service": "learnhub-backend",
         "version": "2.0.0",
         "database": "sqlite",
-        "tcgl_model": tcgl_status,
+        "tgcl_model": tgcl_status,
         "comet_grader": comet_status,
         "embed_model": embed_status,
         "routers": {
