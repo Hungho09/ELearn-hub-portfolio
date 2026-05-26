@@ -39,6 +39,7 @@ from models import Base
 from routers import (
     auth_router,
     user_router,
+    focus_router,
     flashcard_router,
     vocabulary_router,
     review_logs_router,
@@ -152,11 +153,20 @@ def startup():
     except Exception as e:
         print(f"[startup] Grader models not available: {e}. Levenshtein fallback will be used.")
 
+    # Pre-load the vision focus tracking model
+    try:
+        from ml_model.focus_tracker import get_focus_model
+        get_focus_model()
+        print("[startup] Vision Focus LSTM model pre-loaded successfully.")
+    except Exception as e:
+        print(f"[startup] Vision Focus tracking model not available: {e}. Camera integration will run in diagnostic error mode.")
+
 
 # ─── Include Routers ──────────────────────────────────────────────
 
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(focus_router)
 app.include_router(flashcard_router)
 app.include_router(vocabulary_router)
 app.include_router(review_logs_router)
