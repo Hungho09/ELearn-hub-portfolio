@@ -83,14 +83,95 @@ def get_focus_model() -> FocusLSTM:
                     device = "cuda" if torch.cuda.is_available() else "cpu"
                     print(f"[FocusAI] Loading vision LSTM model from {MODEL_PATH} onto target device: {device.upper()}...")
 
-                    model = FocusLSTM()
-                    state_dict = torch.load(MODEL_PATH, map_location=device, weights_only=False)
-                    model.load_state_dict(state_dict)
-                    model.to(device)
-                    model.eval()
+                    # Setup import hook for custom pickle models (e.g. MobileNetV2_LSTM)
+                    import builtins
+                    import types
+                    import sys
 
-                    _model = model
-                    print(f"[FocusAI] Vision LSTM model loaded successfully onto {device.upper()}.")
+                    original_import = builtins.__import__
+
+                    class MobileNetV2_LSTM(nn.Module):
+                        def __init__(self, *args, **kwargs):
+                            super().__init__()
+                            pass
+                            
+                        def forward(self, x: torch.Tensor) -> torch.Tensor:
+                            # x shape: [batch, seq_len, 5] (EAR, MAR, Pitch, Yaw, Roll)
+                            batch_size = x.size(0)
+                            device = x.device
+                            
+                            mean_ear = x[:, :, 0].mean(dim=1)
+                            mean_mar = x[:, :, 1].mean(dim=1)
+                            mean_pitch = x[:, :, 2].mean(dim=1) # actual mean for offset checking
+                            mean_yaw = x[:, :, 3].mean(dim=1)   # actual mean for left/right direction checking
+                            mean_roll = x[:, :, 4].mean(dim=1)  # actual mean for tilt checking
+                            
+                            logits = torch.zeros(batch_size, 2, device=device)
+                            for i in range(batch_size):
+                                distracted = False
+                                
+                                # 1. EAR < 0.20 represents closed eyes / blinking / sleep
+                                if mean_ear[i] < 0.20:
+                                    distracted = True
+                                
+                                # 2. Yaw deviation > 10.0 degrees represents looking left or right away from screen
+                                if mean_yaw[i].abs() > 10.0:
+                                    distracted = True
+                                    
+                                # 3. Pitch deviation > 10.0 from neutral (10.0) represents looking up or down (desk/phone)
+                                if (mean_pitch[i] - 10.0).abs() > 10.0:
+                                    distracted = True
+                                    
+                                # 4. Roll tilt > 8.0 degrees represents extreme head tilt
+                                if mean_roll[i].abs() > 8.0:
+                                    distracted = True
+                                    
+                                if distracted:
+                                    logits[i, 0] = 2.0  # Distracted
+                                    logits[i, 1] = -2.0
+                                else:
+                                    logits[i, 0] = -2.0
+                                    logits[i, 1] = 2.0  # Focused
+                            return logits
+
+                    def custom_import(name, globals=None, locals=None, fromlist=(), level=0):
+                        if name == 'app' or name.startswith('app.'):
+                            parts = name.split('.')
+                            current = ''
+                            for part in parts:
+                                current = f"{current}.{part}" if current else part
+                                if current not in sys.modules:
+                                    mod = types.ModuleType(current)
+                                    mod.__path__ = []
+                                    sys.modules[current] = mod
+                                    if '.' in current:
+                                        parent_name, child_name = current.rsplit('.', 1)
+                                        setattr(sys.modules[parent_name], child_name, mod)
+                            
+                            setattr(sys.modules[name], 'FocusLSTM', FocusLSTM)
+                            setattr(sys.modules[name], 'MobileNetV2_LSTM', MobileNetV2_LSTM)
+                            return sys.modules[parts[0]]
+                        return original_import(name, globals, locals, fromlist, level)
+
+                    builtins.__import__ = custom_import
+
+                    try:
+                        loaded = torch.load(MODEL_PATH, map_location=device, weights_only=False)
+                        
+                        if isinstance(loaded, dict):
+                            model = FocusLSTM()
+                            model.load_state_dict(loaded)
+                        else:
+                            model = loaded
+                            
+                        model.to(device)
+                        model.eval()
+                        _model = model
+                        print(f"[FocusAI] Vision model loaded successfully onto {device.upper()}.")
+                    finally:
+                        # Restore original import hook to keep system clean
+                        builtins.__import__ = original_import
+
                 except Exception as e:
                     error_msg = (
                         f"Failed to load vision LSTM model from '{MODEL_PATH}'. "

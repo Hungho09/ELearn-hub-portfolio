@@ -185,6 +185,18 @@ export default function ZenFocusPage() {
               landmarksBufferRef.current = newBuffer;
               return newBuffer;
             });
+          } else {
+            // Không tìm thấy khuôn mặt! Thêm các giá trị mất tập trung cực hạn để AI phát hiện ngay lập tức
+            setLandmarksBuffer((prev) => {
+              const currentFrame = [0.0, 0.0, 90.0, 90.0, 90.0];
+              const newBuffer = [...prev, currentFrame];
+              if (newBuffer.length > 10) {
+                newBuffer.shift();
+              }
+              landmarksBufferRef.current = newBuffer;
+              return newBuffer;
+            });
+            setCurrentMetrics({ ear: 0.0, mar: 0.0, pitch: 90.0, yaw: 90.0, roll: 90.0 });
           }
         });
 
