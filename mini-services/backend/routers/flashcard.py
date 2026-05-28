@@ -57,8 +57,8 @@ from gamification import (
 # Lazy imports for TGCL model (requires torch, may not be available)
 try:
     from ml_model.predict import (
-        predict_next_review as tcgl_predict,
-        get_model_info as tcgl_model_info,
+        predict_next_review as tgcl_predict,
+        get_model_info as tgcl_model_info,
         is_model_loaded,
         train_on_reviews,
         get_training_stats,
@@ -68,10 +68,10 @@ except ImportError:
     _TGCL_AVAILABLE = False
     print("[Flashcard] TGCL model not available (torch not installed). Using SM-2 fallback.")
 
-    def tcgl_predict(*args, **kwargs):
+    def tgcl_predict(*args, **kwargs):
         raise RuntimeError("TGCL model not available")
 
-    def tcgl_model_info():
+    def tgcl_model_info():
         return {"active_model": "SM-2 (SuperMemo)", "model_loaded": False, "can_learn": False, "error": "torch not installed"}
 
     def is_model_loaded():
@@ -362,7 +362,7 @@ def submit_review(
         }
 
         # Run TGCL model (with online learning enabled)
-        result = tcgl_predict(
+        result = tgcl_predict(
             rating=review.rating,
             current_ease_factor=current_ef,
             current_interval=current_interval,
@@ -377,7 +377,7 @@ def submit_review(
             session_id=review.session_id,
             enable_learning=True,  # Model learns from each review!
         )
-        model_used = result.get("model_used", "tcgl")
+        model_used = result.get("model_used", "tgcl")
 
     except Exception as e:
         print(f"[Flashcard] TGCL model failed: {e}. Using SM-2 fallback.")
@@ -600,7 +600,7 @@ def batch_train_model(
 @router.get("/model-info")
 def get_model_info():
     """Get information about the active scheduling model."""
-    return tcgl_model_info()
+    return tgcl_model_info()
 
 
 @router.get("/grader-info")

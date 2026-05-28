@@ -37,7 +37,7 @@ _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(_BACKEND_DIR))
 _DEFAULT_MODEL_PATH = os.path.join(_PROJECT_ROOT, "upload", "model.pth")
 _SAVE_MODEL_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "tcgl_learned.pth"
+    os.path.dirname(os.path.abspath(__file__)), "tgcl_learned.pth"
 )
 
 MODEL_PATH = os.environ.get("TGCL_MODEL_PATH", _DEFAULT_MODEL_PATH)
@@ -101,17 +101,19 @@ def _load_model_internal():
     """Internal: load model (must be called within _lock)."""
     global _model, _optimizer
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     # Try loading the learned model first (has our online updates)
     if os.path.exists(_SAVE_MODEL_PATH):
-        print(f"[TGCL] Loading LEARNED model from {_SAVE_MODEL_PATH}...")
+        print(f"[TGCL] Loading LEARNED model from {_SAVE_MODEL_PATH} onto {device.upper()}...")
         _model = TGCLModel()
-        state_dict = torch.load(_SAVE_MODEL_PATH, map_location="cpu", weights_only=False)
+        state_dict = torch.load(_SAVE_MODEL_PATH, map_location=device, weights_only=True)
         _model.load_state_dict(state_dict, strict=True)
         _stats["model_source"] = "learned"
     elif os.path.exists(MODEL_PATH):
-        print(f"[TGCL] Loading PRETRAINED model from {MODEL_PATH}...")
+        print(f"[TGCL] Loading PRETRAINED model from {MODEL_PATH} onto {device.upper()}...")
         _model = TGCLModel()
-        state_dict = torch.load(MODEL_PATH, map_location="cpu", weights_only=False)
+        state_dict = torch.load(MODEL_PATH, map_location=device, weights_only=True)
         _model.load_state_dict(state_dict, strict=True)
         _stats["model_source"] = "pretrained"
     else:
@@ -119,7 +121,7 @@ def _load_model_internal():
         _model = TGCLModel(num_nodes=200)  # Small for our 123 vocab items
         _stats["model_source"] = "fresh"
 
-    _model.to("cpu")
+    _model.to(device)
 
     # Freeze the huge embedding layer — we only update conv + classifier
     # The 78K embedding is from pre-training; our small vocab only uses
@@ -135,7 +137,7 @@ def _load_model_internal():
 
     n_trainable = sum(p.numel() for p in trainable_params)
     n_total = sum(p.numel() for p in _model.parameters())
-    print(f"[TGCL] Model ready on CPU — {n_trainable:,} trainable / {n_total:,} total params")
+    print(f"[TGCL] Model ready on {device.upper()} — {n_trainable:,} trainable / {n_total:,} total params")
 
 
 # ─── Feature Engineering ──────────────────────────────────────────
@@ -539,6 +541,10 @@ def predict_next_review(
 
         # ── Inference ─────────────────────────────────────────
         model.eval()
+        device = next(model.parameters()).device
+        x = x.to(device)
+        edge_index = edge_index.to(device)
+        edge_time = edge_time.to(device)
         with torch.no_grad():
             prediction = model(x, edge_index, edge_time)  # [N, 1]
             raw_output = prediction[target_idx, 0].item()
@@ -588,7 +594,7 @@ def predict_next_review(
             "interval_days": new_interval,
             "repetitions": new_repetitions,
             "next_review_at": next_review_at,
-            "model_used": "tcgl",
+            "model_used": "tgcl",
             "raw_output": round(raw_output, 4),
         }
 
@@ -661,8 +667,13 @@ def _online_learn(
         rating_to_target = {1: 0.1, 2: 0.3, 3: 0.7, 4: 0.95}
         target_val = rating_to_target.get(actual_rating, 0.5)
 
-        # For the target node, create a target tensor
-        targets = torch.full((N,), 0.5, dtype=torch.float32)
+        device = next(model.parameters()).device
+        x = x.to(device)
+        edge_index = edge_index.to(device)
+        edge_time = edge_time.to(device)
+
+        # For the target node, create a target tensor on device
+        targets = torch.full((N,), 0.5, dtype=torch.float32, device=device)
         targets[target_idx] = target_val
 
         for _ in range(ONLINE_MAX_STEPS):
@@ -745,7 +756,12 @@ def train_on_reviews(
 
     # Build target tensor: retention probability per node
     N = x.size(0)
-    targets = torch.full((N,), 0.5, dtype=torch.float32)
+    device = next(model.parameters()).device
+    x = x.to(device)
+    edge_index = edge_index.to(device)
+    edge_time = edge_time.to(device)
+
+    targets = torch.full((N,), 0.5, dtype=torch.float32, device=device)
 
     # Map vocab stats to node indices
     node_ids = sorted(vocab_stats.keys())
@@ -795,7 +811,7 @@ def save_model(path: Optional[str] = None) -> str:
     """Save the current model weights to disk.
 
     Args:
-        path: Custom save path. Defaults to tcgl_learned.pth in ml_model/
+        path: Custom save path. Defaults to tgcl_learned.pth in ml_model/
 
     Returns:
         Path where model was saved
