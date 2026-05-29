@@ -1,7 +1,8 @@
 # LearnHub Backend - Extra dependencies for TGCL ML model & CNN LSTM
 # These are OPTIONAL. The app works with SM-2 + COMET without them.
-# Install with: uv pip install -r requirements-tgcl.txt
+# Install with: uv pip install -r requirements-torch.txt
 
+--extra-index-url https://download.pytorch.org/whl/cu131
 torch>=2.0.0
-torch-geometric>=2.4.0
 torchvision
+torch-geometric>=2.4.0

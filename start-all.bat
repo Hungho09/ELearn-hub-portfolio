@@ -48,7 +48,7 @@ uv pip install --python "%VENV_DIR%\Scripts\python.exe" -r requirements.txt
 
 REM Install TGCL & GPU dependencies
 echo   - Installing GPU-accelerated PyTorch and ML dependencies...
-uv pip install --python "%VENV_DIR%\Scripts\python.exe" -r requirements-tgcl.txt --extra-index-url https://download.pytorch.org/whl/cu121
+uv pip install --python "%VENV_DIR%\Scripts\python.exe" -r requirements-torch.txt --extra-index-url https://download.pytorch.org/whl/cu121
 
 REM Start uvicorn in background using venv python
 start "LearnHub Backend" /min "%VENV_DIR%\Scripts\python.exe" -m uvicorn main:app --host 0.0.0.0 --port 3001 --reload
@@ -188,7 +188,7 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3002" ^| findstr "LISTENING
 REM Also clean up opened windows if they are still present
 taskkill /fi "WINDOWTITLE eq LearnHub Backend*" >nul 2>nul
 taskkill /fi "WINDOWTITLE eq LearnHub Socket*" >nul 2>nul
-taskkill /fi "WINDOWTITLE eq LearnHub Frontend*" >nul 2>nul
+taskkill /fi "WINDOWTITLE eq LearnHub Frontend" >nul 2>nul
 
 echo All services stopped.
 

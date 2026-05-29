@@ -309,6 +309,8 @@ export default function StudyEnglishPage() {
       try {
         const statsData = await getStats(uid);
         setStats(statsData);
+        setPrevLevel(statsData.currentLevel ?? 1);
+        setNewLevel(statsData.currentLevel ?? 1);
       } catch {
         // Stats are optional
       }
@@ -403,6 +405,12 @@ export default function StudyEnglishPage() {
           setPageView('complete');
           getStats(uid).then((freshStats) => {
             setStats(freshStats);
+            if (update) {
+              update({
+                xpPoints: freshStats.xpPoints ?? 0,
+                currentLevel: freshStats.currentLevel ?? 1,
+              });
+            }
             if (freshStats.currentLevel && freshStats.currentLevel > prevLevel) {
               setNewLevel(freshStats.currentLevel);
               setShowLevelUp(true);
@@ -458,6 +466,12 @@ export default function StudyEnglishPage() {
           setPageView('complete');
           getStats(uid).then((freshStats) => {
             setStats(freshStats);
+            if (update) {
+              update({
+                xpPoints: freshStats.xpPoints ?? 0,
+                currentLevel: freshStats.currentLevel ?? 1,
+              });
+            }
             if (freshStats.currentLevel && freshStats.currentLevel > prevLevel) {
               setNewLevel(freshStats.currentLevel);
               setShowLevelUp(true);

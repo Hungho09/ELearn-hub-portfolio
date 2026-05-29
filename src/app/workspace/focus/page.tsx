@@ -78,6 +78,7 @@ export default function ZenFocusPage() {
   const [focusConfidence, setFocusConfidence] = useState<number>(0);
   const [currentMetrics, setCurrentMetrics] = useState<FaceMetrics | null>(null);
   const [accumulatedXp, setAccumulatedXp] = useState(0);
+  const [wasCameraUsed, setWasCameraUsed] = useState(false);
   const [landmarksBuffer, setLandmarksBuffer] = useState<number[][]>([]);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
@@ -312,6 +313,21 @@ export default function ZenFocusPage() {
     setIsRunning(false);
     setIsTrackingEnabled(false);
 
+    // Nếu không sử dụng camera trong phiên học tập
+    if (!wasCameraUsed) {
+      setCompleteStats({
+        xp_gained: 0,
+        xp_lost: 0,
+        total_xp: (session?.user as any)?.xpPoints || 0,
+        current_level: (session?.user as any)?.currentLevel || 1,
+        levels_gained: 0,
+        next_level_xp: 100,
+        isNormalPomo: true,
+      });
+      setShowCompleteDialog(true);
+      return;
+    }
+
     const uid = session?.user?.id || 'guest';
     try {
       const res = await fetch('/api/python/api/workspace/focus/complete', {
@@ -325,7 +341,7 @@ export default function ZenFocusPage() {
 
       if (res.ok) {
         const data = await res.json();
-        setCompleteStats(data);
+        setCompleteStats({ ...data, isNormalPomo: false });
         setShowCompleteDialog(true);
 
         // Đồng bộ dữ liệu session NextAuth để cập nhật XP/Level lên Sidebar ngay lập tức
@@ -353,10 +369,18 @@ export default function ZenFocusPage() {
         current_level: 1,
         levels_gained: 0,
         next_level_xp: 100,
+        isNormalPomo: false,
       });
       setShowCompleteDialog(true);
     }
   };
+
+  // Tự động bật cờ đánh dấu đã dùng camera nếu bật camera trong phiên học tập
+  useEffect(() => {
+    if (isRunning && mode === 'work' && isTrackingEnabled) {
+      setWasCameraUsed(true);
+    }
+  }, [isRunning, mode, isTrackingEnabled]);
 
   // ─── Bộ đếm ngược Pomodoro ─────────────────────────────────────────
   useEffect(() => {
@@ -409,11 +433,13 @@ export default function ZenFocusPage() {
     setIsRunning(false);
     setTimeLeft(duration);
     setAccumulatedXp(0);
+    setWasCameraUsed(false);
     setLandmarksBuffer([]);
   };
 
   const handleSkip = () => {
     setIsRunning(false);
+    setWasCameraUsed(false);
     setLandmarksBuffer([]);
     if (mode === 'work') {
       setMode('shortBreak');
@@ -429,6 +455,7 @@ export default function ZenFocusPage() {
   const selectTimerPreset = (presetMode: 'work' | 'deepWork' | 'shortBreak' | 'longBreak') => {
     setIsRunning(false);
     setAccumulatedXp(0);
+    setWasCameraUsed(false);
     setLandmarksBuffer([]);
     if (presetMode === 'work') {
       setMode('work');
@@ -712,8 +739,11 @@ export default function ZenFocusPage() {
           {/* Central Workspace Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 my-auto py-6 items-center w-full max-w-7xl mx-auto">
             
-            {/* Left Box: Pomodoro Circular Timer */}
-            <div className={`flex flex-col items-center justify-center transition-all duration-500 ${isZenMode ? 'lg:col-span-12' : 'lg:col-span-5'}`}>
+            <div className={`flex flex-col items-center justify-center transition-all duration-500 ${
+              isZenMode
+                ? 'lg:col-span-12'
+                : 'lg:col-span-5 rounded-2xl border border-border/40 bg-card/45 p-6 md:p-8 backdrop-blur-md shadow-sm w-full max-w-md mx-auto'
+            }`}>
               
               {/* Presets Selector */}
               {!isZenMode && (
@@ -947,8 +977,8 @@ export default function ZenFocusPage() {
                           autoPlay
                           playsInline
                           muted
-                          className={`w-full h-full object-cover scale-x-[-1] transition-opacity duration-500 ${
-                            isCameraActive ? 'opacity-90' : 'opacity-0 absolute pointer-events-none'
+                          className={`!absolute !inset-0 !w-full !h-full !object-cover scale-x-[-1] transition-opacity duration-500 ${
+                            isCameraActive ? 'opacity-90 pointer-events-auto' : 'opacity-0 pointer-events-none'
                           }`}
                         />
 
@@ -1269,37 +1299,52 @@ export default function ZenFocusPage() {
                 Chúc mừng bạn đã kết thúc trọn vẹn thời lượng Pomodoro của mình.
               </p>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-black/10 dark:bg-black/20 p-4 rounded-2xl border border-border/30">
-                  <span className="text-[10px] text-muted-foreground block mb-1">XP TÍCH LŨY</span>
-                  <span className="text-xl font-black text-cyan-400">
-                    +{completeStats.xp_gained} XP
-                  </span>
+              {/* Stats & Progress conditional display */}
+              {completeStats.isNormalPomo ? (
+                <div className="bg-muted/15 border border-border/30 p-5 rounded-2xl text-center mb-6">
+                  <p className="text-sm font-semibold text-foreground mb-2">⏱️ Phiên học Pomodoro thường</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Bạn đã hoàn thành phiên học bình thường mà không bật camera. Hệ thống không tính điểm thưởng/phạt EXP cho phiên này.
+                  </p>
+                  <p className="text-xs text-cyan-400 font-bold mt-4 animate-pulse">
+                    💡 Hãy bật Camera AI ở phiên tiếp theo để đo mức độ tập trung và nhận thưởng EXP nhé!
+                  </p>
                 </div>
-                <div className="bg-black/10 dark:bg-black/20 p-4 rounded-2xl border border-border/30">
-                  <span className="text-[10px] text-muted-foreground block mb-1">HÌNH PHẠT XAO NHÃNG</span>
-                  <span className="text-xl font-black text-red-500">
-                    -{completeStats.xp_lost} XP
-                  </span>
-                </div>
-              </div>
+              ) : (
+                <>
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-black/10 dark:bg-black/20 p-4 rounded-2xl border border-border/30">
+                      <span className="text-[10px] text-muted-foreground block mb-1">XP TÍCH LŨY</span>
+                      <span className="text-xl font-black text-cyan-400">
+                        +{completeStats.xp_gained} XP
+                      </span>
+                    </div>
+                    <div className="bg-black/10 dark:bg-black/20 p-4 rounded-2xl border border-border/30">
+                      <span className="text-[10px] text-muted-foreground block mb-1">HÌNH PHẠT XAO NHÃNG</span>
+                      <span className="text-xl font-black text-red-500">
+                        -{completeStats.xp_lost} XP
+                      </span>
+                    </div>
+                  </div>
 
-              {/* Progress Bar update */}
-              <div className="mb-6 text-left">
-                <div className="flex justify-between items-center text-xs mb-2">
-                  <span className="text-muted-foreground">Cấp độ {completeStats.current_level}</span>
-                  <span className="font-bold text-foreground">
-                    {completeStats.total_xp} / {completeStats.next_level_xp} XP
-                  </span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full bg-cyan-400 transition-all duration-500"
-                    style={{ width: `${Math.min((completeStats.total_xp / completeStats.next_level_xp) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
+                  {/* Progress Bar update */}
+                  <div className="mb-6 text-left">
+                    <div className="flex justify-between items-center text-xs mb-2">
+                      <span className="text-muted-foreground">Cấp độ {completeStats.current_level}</span>
+                      <span className="font-bold text-foreground">
+                        {completeStats.total_xp} / {completeStats.next_level_xp} XP
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full bg-cyan-400 transition-all duration-500"
+                        style={{ width: `${Math.min((completeStats.total_xp / completeStats.next_level_xp) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <Button
                 onClick={() => {
