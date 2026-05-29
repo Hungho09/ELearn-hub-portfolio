@@ -1,0 +1,2 @@
+Fingerprints baseline: OK
+Generated 18 fingerprints for source files.

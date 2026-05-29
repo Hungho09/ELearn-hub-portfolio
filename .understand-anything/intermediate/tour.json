@@ -1,0 +1,26 @@
+[
+  {
+    "order": 1,
+    "title": "Project Overview",
+    "description": "Read the specification and understand the project's purpose.",
+    "nodeIds": ["file:SPEC.md"]
+  },
+  {
+    "order": 2,
+    "title": "Frontend Entry",
+    "description": "Explore the Next.js app entry and layout.",
+    "nodeIds": ["file:src/app/page.tsx","file:src/app/layout.tsx"]
+  },
+  {
+    "order": 3,
+    "title": "UI Components",
+    "description": "Inspect common UI components like HeroBanner and Sidebar.",
+    "nodeIds": ["file:src/components/home/HeroBanner.tsx","file:src/components/home/Sidebar.tsx","file:src/components/ui/button.tsx"]
+  },
+  {
+    "order": 4,
+    "title": "Backend Services",
+    "description": "Review mini-services backend entry and routers.",
+    "nodeIds": ["file:mini-services/backend/main.py","file:mini-services/backend/routers/auth.py"]
+  }
+]

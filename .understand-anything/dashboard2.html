@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Understand — Knowledge Graph Dashboard</title>
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Arial;margin:0;padding:16px;background:#f7fafc;color:#0f172a}
+    header{display:flex;align-items:center;gap:12px}
+    .row{display:flex;gap:16px}
+    .panel{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(2,6,23,.08);flex:1;min-width:0}
+    input[type=search]{width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px}
+    ul{list-style:none;padding:0;margin:8px 0;max-height:480px;overflow:auto}
+    li{padding:8px;border-bottom:1px solid #eef2f7}
+    .meta{font-size:12px;color:#475569}
+    .badge{display:inline-block;padding:2px 6px;background:#eef2ff;color:#0b57d0;border-radius:999px;font-size:12px}
+    pre{white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#f8fafc;padding:8px;border-radius:6px}
+    .node-title{font-weight:600}
+    .sidebar{width:360px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Knowledge Graph Dashboard</h1>
+    <div class="meta" id="projectMeta"></div>
+  </header>
+
+  <div style="margin-top:12px;" class="row">
+    <div class="panel sidebar">
+      <label><strong>Search</strong></label>
+      <input type="search" id="search" placeholder="Search nodes, tags, filenames..." />
+      <h4 style="margin-top:12px">Nodes</h4>
+      <ul id="nodeList"></ul>
+    </div>
+
+    <div class="panel" style="flex:2">
+      <div id="details">
+        <p>Select a node to view details.</p>
+      </div>
+      <hr />
+      <div>
+        <h3>Layers</h3>
+        <div id="layers"></div>
+      </div>
+      <hr />
+      <div>
+        <h3>Edges</h3>
+        <ul id="edgeList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const GRAPH = {"version":"1.0.0","project":{"name":"nextjs_tailwind_shadcn_ts","languages":["typescript","javascript","python","markdown","json","css","html"],"frameworks":["Next.js","Tailwind CSS","Prisma"],"description":"","analyzedAt":"2026-05-29T00:00:00Z","gitCommitHash":"UNCOMPUTED"},"nodes":[{"id":"file:package.json","type":"config","name":"package.json","summary":"Node.js project manifest with dependencies and scripts.","tags":["manifest","node"],"filePath":"package.json"},{"id":"file:next.config.ts","type":"config","name":"next.config.ts","summary":"Next.js configuration and runtime settings.","tags":["next","config"],"filePath":"next.config.ts"},{"id":"file:tsconfig.json","type":"config","name":"tsconfig.json","summary":"TypeScript compiler configuration.","tags":["typescript","config"],"filePath":"tsconfig.json"},{"id":"file:components.json","type":"config","name":"components.json","summary":"Project component registry configuration.","tags":["config","components"],"filePath":"components.json"},{"id":"file:Caddyfile","type":"service","name":"Caddyfile","summary":"Caddy web server configuration for TLS and routing.","tags":["infra","server"],"filePath":"Caddyfile"},{"id":"file:src/app/page.tsx","type":"file","name":"page.tsx","summary":"Top-level Next.js page for the app route.","tags":["frontend","page"],"filePath":"src/app/page.tsx"},{"id":"file:src/app/layout.tsx","type":"file","name":"layout.tsx","summary":"Application layout and global providers.","tags":["frontend","layout"],"filePath":"src/app/layout.tsx"},{"id":"file:src/socket-server.ts","type":"file","name":"socket-server.ts","summary":"WebSocket/socket server for realtime features.","tags":["realtime","server"],"filePath":"src/socket-server.ts"},{"id":"file:src/components/home/HeroBanner.tsx","type":"file","name":"HeroBanner.tsx","summary":"UI component showing hero banner on homepage.","tags":["ui","component"],"filePath":"src/components/home/HeroBanner.tsx"},{"id":"file:src/components/home/Sidebar.tsx","type":"file","name":"Sidebar.tsx","summary":"Right/left sidebar used across pages.","tags":["ui","component"],"filePath":"src/components/home/Sidebar.tsx"},{"id":"file:src/components/ui/button.tsx","type":"file","name":"button.tsx","summary":"Reusable button UI primitive.","tags":["ui","component"],"filePath":"src/components/ui/button.tsx"},{"id":"file:src/lib/api.ts","type":"file","name":"api.ts","summary":"Client API helpers and fetch wrappers.","tags":["lib","api"],"filePath":"src/lib/api.ts"},{"id":"file:src/lib/auth.ts","type":"file","name":"auth.ts","summary":"Authentication helpers and session utilities.","tags":["lib","auth"],"filePath":"src/lib/auth.ts"},{"id":"file:mini-services/backend/main.py","type":"file","name":"main.py","summary":"Backend service entrypoint for mini-services (Flask/FastAPI).","tags":["backend","service"],"filePath":"mini-services/backend/main.py"},{"id":"file:mini-services/backend/routers/auth.py","type":"file","name":"auth.py","summary":"Authentication router endpoints for backend.","tags":["backend","auth"],"filePath":"mini-services/backend/routers/auth.py"},{"id":"file:mini-services/backend/routers/flashcard.py","type":"file","name":"flashcard.py","summary":"Flashcard-related endpoints and handlers.","tags":["backend","flashcard"],"filePath":"mini-services/backend/routers/flashcard.py"},{"id":"file:public/robots.txt","type":"document","name":"robots.txt","summary":"Robots exclusion file.","tags":["infra","seo"],"filePath":"public/robots.txt"},{"id":"file:SPEC.md","type":"document","name":"SPEC.md","summary":"Project specification and design notes.","tags":["docs"],"filePath":"SPEC.md"}],"edges":[{"source":"file:package.json","target":"file:next.config.ts","type":"depends_on","weight":0.6},{"source":"file:next.config.ts","target":"file:tsconfig.json","type":"configures","weight":0.6},{"source":"file:Caddyfile","target":"file:package.json","type":"deploys","weight":0.7},{"source":"file:src/app/page.tsx","target":"file:src/components/home/HeroBanner.tsx","type":"imports","weight":0.7},{"source":"file:src/app/page.tsx","target":"file:src/components/home/Sidebar.tsx","type":"imports","weight":0.7},{"source":"file:src/app/layout.tsx","target":"file:src/components/ui/button.tsx","type":"imports","weight":0.7},{"source":"file:src/app/page.tsx","target":"file:src/lib/api.ts","type":"imports","weight":0.7},{"source":"file:src/lib/auth.ts","target":"file:src/lib/api.ts","type":"depends_on","weight":0.6},{"source":"file:src/socket-server.ts","target":"file:src/lib/api.ts","type":"calls","weight":0.8},{"source":"file:mini-services/backend/main.py","target":"file:mini-services/backend/routers/auth.py","type":"imports","weight":0.7},{"source":"file:mini-services/backend/main.py","target":"file:mini-services/backend/routers/flashcard.py","type":"imports","weight":0.7},{"source":"file:mini-services/backend/routers/flashcard.py","target":"file:mini-services/backend/routers/auth.py","type":"depends_on","weight":0.6}],"layers":[{"id":"layer:frontend","name":"Frontend","description":"UI, pages, and client-side utilities","nodeIds":["file:src/app/page.tsx","file:src/app/layout.tsx","file:src/components/home/HeroBanner.tsx","file:src/components/home/Sidebar.tsx","file:src/components/ui/button.tsx","file:src/lib/api.ts","file:src/lib/auth.ts"]},{"id":"layer:backend","name":"Backend Services","description":"Mini backend services, routers, and server-side code","nodeIds":["file:mini-services/backend/main.py","file:mini-services/backend/routers/auth.py","file:mini-services/backend/routers/flashcard.py","file:src/socket-server.ts"]},{"id":"layer:infrastructure-and-docs","name":"Infrastructure & Docs","description":"Deployment configs, infra, and project documentation","nodeIds":["file:package.json","file:next.config.ts","file:tsconfig.json","file:components.json","file:Caddyfile","file:public/robots.txt","file:SPEC.md"]}],"tour":[{"order":1,"title":"Project Overview","description":"Read the specification and understand the project's purpose.","nodeIds":["file:SPEC.md"]},{"order":2,"title":"Frontend Entry","description":"Explore the Next.js app entry and layout.","nodeIds":["file:src/app/page.tsx","file:src/app/layout.tsx"]},{"order":3,"title":"UI Components","description":"Inspect common UI components like HeroBanner and Sidebar.","nodeIds":["file:src/components/home/HeroBanner.tsx","file:src/components/home/Sidebar.tsx","file:src/components/ui/button.tsx"]},{"order":4,"title":"Backend Services","description":"Review mini-services backend entry and routers.","nodeIds":["file:mini-services/backend/main.py","file:mini-services/backend/routers/auth.py"]}]}
+
+    function $(s){return document.querySelector(s)}
+    const nodeListEl = document.getElementById('nodeList')
+    const edgeListEl = document.getElementById('edgeList')
+    const layersEl = document.getElementById('layers')
+    const projectMeta = document.getElementById('projectMeta')
+    projectMeta.textContent = GRAPH.project.name + ' — ' + GRAPH.project.frameworks.join(', ')
+
+    const nodes = GRAPH.nodes
+    const edges = GRAPH.edges
+
+    function renderNodeItem(n){
+      const li = document.createElement('li')
+      li.innerHTML = `<div class="node-title">${n.name}</div><div class="meta">${n.filePath} • <span class="badge">${n.type}</span></div>`
+      li.addEventListener('click', ()=> showDetails(n))
+      return li
+    }
+
+    function showDetails(n){
+      const html = `<h2 class=node-title>${n.name}</h2>
+        <div class=meta>${n.filePath} • ${n.type}</div>
+        <p>${n.summary}</p>
+        <div>Tags: ${ (n.tags||[]).map(t=>'<span class="badge">'+t+'</span>').join(' ') }</div>
+        <h4 style="margin-top:8px">Connected edges</h4>
+        <ul>${edges.filter(e=>e.source===n.id||e.target===n.id).map(e=>'<li>'+e.type+': '+e.source+' → '+e.target+'</li>').join('')}</ul>`
+      document.getElementById('details').innerHTML = html
+    }
+
+    function renderAll(){
+      nodeListEl.innerHTML = ''
+      nodes.forEach(n=> nodeListEl.appendChild(renderNodeItem(n)))
+      edgeListEl.innerHTML = edges.map(e=>`<li>${e.type}: <strong>${e.source}</strong> → <strong>${e.target}</strong></li>`).join('')
+      layersEl.innerHTML = GRAPH.layers.map(l=>`<div style="margin-bottom:8px"><strong>${l.name}</strong><div class=meta>${l.description}</div><div style="margin-top:6px">${l.nodeIds.map(id=>'<div>'+id+'</div>').join('')}</div></div>`).join('')
+    }
+
+    document.getElementById('search').addEventListener('input',(ev)=>{
+      const q = ev.target.value.toLowerCase().trim()
+      nodeListEl.innerHTML = ''
+      nodes.filter(n=>{ return !q || n.name.toLowerCase().includes(q) || n.filePath.toLowerCase().includes(q) || (n.tags||[]).join(' ').toLowerCase().includes(q) }).forEach(n=> nodeListEl.appendChild(renderNodeItem(n)))
+    })
+
+    renderAll()
+
+    // Select first node by default
+    if(nodes.length) showDetails(nodes[0])
+
+    // expose GRAPH for debugging
+    window.G = GRAPH
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "layer:frontend",
+    "name": "Frontend",
+    "description": "UI, pages, and client-side utilities",
+    "nodeIds": [
+      "file:src/app/page.tsx",
+      "file:src/app/layout.tsx",
+      "file:src/components/home/HeroBanner.tsx",
+      "file:src/components/home/Sidebar.tsx",
+      "file:src/components/ui/button.tsx",
+      "file:src/lib/api.ts",
+      "file:src/lib/auth.ts"
+    ]
+  },
+  {
+    "id": "layer:backend",
+    "name": "Backend Services",
+    "description": "Mini backend services, routers, and server-side code",
+    "nodeIds": [
+      "file:mini-services/backend/main.py",
+      "file:mini-services/backend/routers/auth.py",
+      "file:mini-services/backend/routers/flashcard.py",
+      "file:src/socket-server.ts"
+    ]
+  },
+  {
+    "id": "layer:infrastructure-and-docs",
+    "name": "Infrastructure & Docs",
+    "description": "Deployment configs, infra, and project documentation",
+    "nodeIds": [
+      "file:package.json",
+      "file:next.config.ts",
+      "file:tsconfig.json",
+      "file:components.json",
+      "file:Caddyfile",
+      "file:public/robots.txt",
+      "file:SPEC.md"
+    ]
+  }
+]

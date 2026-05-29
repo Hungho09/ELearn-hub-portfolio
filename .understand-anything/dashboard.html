@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Understand — Knowledge Graph Dashboard</title>
+  <style>
+    body{font-family:Inter,system-ui,Segoe UI,Arial;margin:0;padding:16px;background:#f7fafc;color:#0f172a}
+    header{display:flex;align-items:center;gap:12px}
+    .row{display:flex;gap:16px}
+    .panel{background:white;padding:12px;border-radius:8px;box-shadow:0 1px 3px rgba(2,6,23,.08);flex:1;min-width:0}
+    input[type=search]{width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px}
+    ul{list-style:none;padding:0;margin:8px 0;max-height:480px;overflow:auto}
+    li{padding:8px;border-bottom:1px solid #eef2f7}
+    .meta{font-size:12px;color:#475569}
+    .badge{display:inline-block;padding:2px 6px;background:#eef2ff;color:#0b57d0;border-radius:999px;font-size:12px}
+    pre{white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#f8fafc;padding:8px;border-radius:6px}
+    .node-title{font-weight:600}
+    .sidebar{width:360px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Knowledge Graph Dashboard</h1>
+    <div class="meta" id="projectMeta"></div>
+  </header>
+
+  <div style="margin-top:12px;" class="row">
+    <div class="panel sidebar">
+      <label><strong>Search</strong></label>
+      <input type="search" id="search" placeholder="Search nodes, tags, filenames..." />
+      <h4 style="margin-top:12px">Nodes</h4>
+      <ul id="nodeList"></ul>
+    </div>
+
+    <div class="panel" style="flex:2">
+      <div id="details">
+        <p>Select a node to view details.</p>
+      </div>
+      <hr />
+      <div>
+        <h3>Layers</h3>
+        <div id="layers"></div>
+      </div>
+      <hr />
+      <div>
+        <h3>Edges</h3>
+        <ul id="edgeList"></ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Embedded graph JSON (inlined for file:// compatibility)
+    const GRAPH = 
+

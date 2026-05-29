@@ -1,0 +1,29 @@
+{
+  "projectName": "nextjs_tailwind_shadcn_ts",
+  "projectDescription": "",
+  "languages": ["typescript", "javascript", "python", "markdown", "json", "css", "html"],
+  "frameworks": ["Next.js", "Tailwind CSS", "Prisma"],
+  "totalFiles": 18,
+  "filteredByIgnore": 0,
+  "fileList": [
+    { "path": "package.json", "sizeLines": 300, "fileCategory": "config" },
+    { "path": "next.config.ts", "sizeLines": 80, "fileCategory": "config" },
+    { "path": "tsconfig.json", "sizeLines": 120, "fileCategory": "config" },
+    { "path": "src/app/page.tsx", "sizeLines": 200, "fileCategory": "code" },
+    { "path": "src/app/layout.tsx", "sizeLines": 180, "fileCategory": "code" },
+    { "path": "src/socket-server.ts", "sizeLines": 220, "fileCategory": "code" },
+    { "path": "src/components/home/HeroBanner.tsx", "sizeLines": 220, "fileCategory": "code" },
+    { "path": "src/components/home/Sidebar.tsx", "sizeLines": 160, "fileCategory": "code" },
+    { "path": "src/components/ui/button.tsx", "sizeLines": 80, "fileCategory": "code" },
+    { "path": "src/lib/api.ts", "sizeLines": 140, "fileCategory": "code" },
+    { "path": "src/lib/auth.ts", "sizeLines": 160, "fileCategory": "code" },
+    { "path": "mini-services/backend/main.py", "sizeLines": 420, "fileCategory": "code" },
+    { "path": "mini-services/backend/routers/auth.py", "sizeLines": 240, "fileCategory": "code" },
+    { "path": "mini-services/backend/routers/flashcard.py", "sizeLines": 260, "fileCategory": "code" },
+    { "path": "public/robots.txt", "sizeLines": 3, "fileCategory": "markup" },
+    { "path": "components.json", "sizeLines": 40, "fileCategory": "config" },
+    { "path": "SPEC.md", "sizeLines": 800, "fileCategory": "docs" },
+    { "path": "Caddyfile", "sizeLines": 40, "fileCategory": "infra" }
+  ],
+  "importMap": {}
+}
