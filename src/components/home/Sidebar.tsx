@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import {
@@ -63,6 +64,30 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
+  const [dueCount, setDueCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    if (status === 'loading' || !session?.user) return;
+    const userId = session.user.id || session.user.email || 'guest';
+
+    const fetchDueCount = async () => {
+      try {
+        const res = await fetch(`/api/flashcards/session?user_id=${encodeURIComponent(userId)}&limit=1`);
+        if (res.ok) {
+          const data = await res.json();
+          setDueCount(data.total_due ?? 0);
+        }
+      } catch (err) {
+        console.error('Failed to fetch due review count for notification:', err);
+      }
+    };
+
+    fetchDueCount();
+    // Poll every 60 seconds to keep notification up-to-date
+    const interval = setInterval(fetchDueCount, 60000);
+    return () => clearInterval(interval);
+  }, [session, status]);
 
   const handleNavClick = (item: NavItem) => {
     if (item.href) {
@@ -211,32 +236,89 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
       <Separator className="bg-border/30" />
 
       {/* User section at bottom */}
-      <button
-        onClick={() => { router.push('/profile'); onNavigate?.(); }}
+      <div
         className={cn(
-          'flex items-center gap-3 px-4 py-4 w-full hover:bg-white/10 dark:hover:bg-white/5 transition-all text-left',
+          'flex items-center gap-3 px-4 py-4 w-full border-t border-border/10 transition-all text-left relative',
           collapsed && 'justify-center px-2'
         )}
       >
-        <Avatar className="size-9 ring-2 ring-primary/30 shadow-[0_0_10px_rgba(108,92,231,0.1)] transition-transform hover:scale-105">
-          <AvatarImage src={userAvatar} alt={userName} />
-          <AvatarFallback className="bg-gradient-to-br from-primary/10 to-[#A29BFE]/10 text-primary dark:text-[#A29BFE] text-sm font-bold">
-            {userInitial}
-          </AvatarFallback>
-        </Avatar>
-        {!collapsed && (
-          <div className="flex flex-1 items-center justify-between">
-            <div className="min-w-0">
+        <button
+          onClick={() => { router.push('/profile'); onNavigate?.(); }}
+          className="flex flex-1 items-center gap-3 min-w-0"
+        >
+          <Avatar className="size-9 ring-2 ring-primary/30 shadow-[0_0_10px_rgba(108,92,231,0.1)] transition-transform hover:scale-105">
+            <AvatarImage src={userAvatar} alt={userName} />
+            <AvatarFallback className="bg-gradient-to-br from-primary/10 to-[#A29BFE]/10 text-primary dark:text-[#A29BFE] text-sm font-bold">
+              {userInitial}
+            </AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-foreground transition-colors hover:text-primary">{userName}</p>
               <p className="truncate text-[10px] font-medium text-muted-foreground">{userRole}</p>
             </div>
-            <div className="relative rounded-md p-1.5 text-muted-foreground hover:bg-white/15 dark:hover:bg-white/5 hover:text-foreground transition-colors">
+          )}
+        </button>
+
+        {!collapsed && (
+          <div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowNotifications(!showNotifications);
+              }}
+              className={cn(
+                "relative rounded-md p-1.5 transition-colors",
+                showNotifications 
+                  ? "bg-primary/20 text-primary dark:text-[#A29BFE] dark:bg-[#A29BFE]/20" 
+                  : "text-muted-foreground hover:bg-white/15 dark:hover:bg-white/5 hover:text-foreground"
+              )}
+            >
               <Bell className="size-4" />
-              {session && <span className="absolute right-1 top-1 flex size-2 rounded-full bg-destructive animate-pulse" />}
-            </div>
+              {dueCount > 0 && <span className="absolute right-1 top-1 flex size-2 rounded-full bg-destructive animate-pulse" />}
+            </button>
           </div>
         )}
-      </button>
+
+        {/* Notification Popover Dropdown - Positioned relative to bottom User Section */}
+        {!collapsed && showNotifications && (
+          <div 
+            className="absolute bottom-16 left-4 w-[280px] glass-sheet border border-border/60 rounded-2xl p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-300 flex flex-col gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/30 pb-2">
+              <span className="text-xs font-black text-foreground uppercase tracking-widest">Thông báo ôn tập</span>
+              <button 
+                onClick={() => setShowNotifications(false)}
+                className="text-[10px] text-muted-foreground hover:text-foreground"
+              >
+                Đóng
+              </button>
+            </div>
+            {dueCount > 0 ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Bạn đang có <span className="font-bold text-cyan-400">{dueCount} từ vựng</span> cần được ôn tập lại hôm nay theo lịch ôn tập ngắt quãng (SRS).
+                </p>
+                <button
+                  onClick={() => {
+                    setShowNotifications(false);
+                    router.push('/study/english?mode=review');
+                    onNavigate?.();
+                  }}
+                  className="w-full text-center py-2 rounded-xl bg-primary dark:bg-[#A29BFE] text-white text-xs font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
+                >
+                  🎯 Ôn tập ngay
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground leading-relaxed text-center py-2 select-none">
+                🎉 Tuyệt vời! Bạn không có từ vựng nào cần ôn tập hôm nay. Hãy học từ mới nhé!
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

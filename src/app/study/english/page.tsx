@@ -10,8 +10,11 @@ import {
   Brain,
   BookOpen,
   Flame,
+  Star,
+  GraduationCap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
@@ -95,7 +98,7 @@ interface ReviewResult {
 }
 
 type CardPhase = 'prompt' | 'result';
-type PageView = 'session' | 'complete';
+type PageView = 'landing' | 'session' | 'complete';
 
 // ─── API Helpers ──────────────────────────────────────────────────
 
@@ -238,7 +241,9 @@ export default function StudyEnglishPage() {
   const [cards, setCards] = useState<VocabCard[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardPhase, setCardPhase] = useState<CardPhase>('prompt');
-  const [pageView, setPageView] = useState<PageView>('session');
+  const [pageView, setPageView] = useState<PageView>('landing');
+  const [rawSessionData, setRawSessionData] = useState<FlashcardSessionData | null>(null);
+  const [studyMode, setStudyMode] = useState<'learn' | 'review'>('learn');
 
   // Input state
   const [userInput, setUserInput] = useState('');
@@ -287,14 +292,16 @@ export default function StudyEnglishPage() {
       const uid = userId || 'guest';
       const data = await getSession(uid, 20);
 
-      const allCards = [...data.due_cards, ...data.new_cards];
-      setCards(allCards);
+      setRawSessionData(data);
       setCurrentIndex(0);
       setCardPhase('prompt');
       setUserInput('');
       setShowHint(false);
       setCheckResult(null);
-      setPageView(allCards.length > 0 ? 'session' : 'complete');
+      
+      const hasCards = data.due_cards.length > 0 || data.new_cards.length > 0;
+      setPageView(hasCards ? 'landing' : 'complete');
+      
       setSessionStats({ correct: 0, wrong: 0, close: 0, total: 0 });
       setCardStartTime(Date.now());
 
@@ -325,6 +332,20 @@ export default function StudyEnglishPage() {
   useEffect(() => {
     loadSession();
   }, [loadSession]);
+
+  // Tự động kích hoạt chế độ Ôn tập khi có tham số ?mode=review từ chuông thông báo
+  useEffect(() => {
+    if (!rawSessionData) return;
+    const params = new URLSearchParams(window.location.search);
+    const modeParam = params.get('mode');
+    if (modeParam === 'review' && rawSessionData.due_cards.length > 0) {
+      setCards(rawSessionData.due_cards);
+      setStudyMode('review');
+      setPageView('session');
+      // Xóa query param để tránh bị kích hoạt lại ngoài ý muốn
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [rawSessionData]);
 
   // Focus input when card changes
   useEffect(() => {
@@ -567,7 +588,18 @@ export default function StudyEnglishPage() {
             {/* Header */}
             <div className="mt-4 md:mt-0 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => {
+                    if (pageView === 'session') {
+                      sessionCompleteRef.current = false;
+                      loadSession();
+                    } else {
+                      router.push('/');
+                    }
+                  }}
+                >
                   <ArrowLeft className="size-5" />
                 </Button>
                 <div>
@@ -618,6 +650,130 @@ export default function StudyEnglishPage() {
               <div className="mt-12 flex flex-col items-center justify-center gap-4">
                 <div className="size-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
                 <p className="text-muted-foreground">Đang tải flashcard...</p>
+              </div>
+            )}
+
+            {/* ─── Landing Hub View ─────────────────────────── */}
+            {!loading && pageView === 'landing' && rawSessionData && (
+              <div className="mt-8 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                
+                {/* Stats overview banner */}
+                {stats && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card variant="interactive-glass" className="p-4 border-primary/20 flex flex-col justify-center items-center text-center">
+                      <Star className="size-5 text-cyan-400 mb-1" />
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Cấp độ học</span>
+                      <span className="text-lg font-black text-foreground mt-1">Lv.{stats.currentLevel ?? 1}</span>
+                    </Card>
+                    <Card variant="interactive-glass" className="p-4 border-emerald-500/20 flex flex-col justify-center items-center text-center">
+                      <Flame className="size-5 text-orange-500 mb-1" />
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Chuỗi streak</span>
+                      <span className="text-lg font-black text-foreground mt-1">{stats.streak_days} ngày</span>
+                    </Card>
+                    <Card variant="interactive-glass" className="p-4 border-indigo-500/20 flex flex-col justify-center items-center text-center">
+                      <BookOpen className="size-5 text-primary mb-1" />
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Đã học hôm nay</span>
+                      <span className="text-lg font-black text-foreground mt-1">{stats.reviews_today} từ</span>
+                    </Card>
+                    <Card variant="interactive-glass" className="p-4 border-amber-500/20 flex flex-col justify-center items-center text-center">
+                      <GraduationCap className="size-5 text-amber-500 mb-1" />
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Bậc thầy (Mastered)</span>
+                      <span className="text-lg font-black text-foreground mt-1">{stats.words_mastered} từ</span>
+                    </Card>
+                  </div>
+                )}
+
+                {/* Main Choice Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                  
+                  {/* Learn Card */}
+                  <div className="rounded-2xl border border-border/40 bg-card/45 p-6 backdrop-blur-md flex flex-col justify-between gap-6 shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden group">
+                    <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[50px] group-hover:scale-110 transition-transform duration-500" />
+                    <div className="flex flex-col gap-2">
+                      <div className="size-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center text-primary dark:text-[#A29BFE] mb-2 shadow-sm">
+                        <Brain className="size-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-foreground">Học Từ Vựng Mới</h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Khám phá và tiếp thu các từ vựng mới tinh được chọn lọc phù hợp với trình độ hiện tại của bạn.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-border/20 pt-4 mt-2">
+                      <span className="text-xs font-bold text-muted-foreground">
+                        Sẵn sàng học: <span className="text-primary font-black text-sm">{rawSessionData.total_new} từ</span>
+                      </span>
+                      <Button
+                        onClick={() => {
+                          if (rawSessionData.new_cards.length > 0) {
+                            setCards(rawSessionData.new_cards);
+                            setStudyMode('learn');
+                            setPageView('session');
+                          }
+                        }}
+                        disabled={rawSessionData.new_cards.length === 0}
+                        className="text-xs font-bold bg-primary hover:bg-primary/95 text-white shadow-md shadow-primary/20 py-2 rounded-xl"
+                      >
+                        Bắt đầu học
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Review Card */}
+                  <div className={cn(
+                    "rounded-2xl border bg-card/45 p-6 backdrop-blur-md flex flex-col justify-between gap-6 shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden group",
+                    rawSessionData.total_due > 0 ? "border-amber-500/30" : "border-border/40"
+                  )}>
+                    <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/10 blur-[50px] group-hover:scale-110 transition-transform duration-500" />
+                    <div className="flex flex-col gap-2">
+                      <div className={cn(
+                        "size-10 rounded-xl flex items-center justify-center mb-2 shadow-sm border",
+                        rawSessionData.total_due > 0 
+                          ? "bg-amber-500/15 border-amber-500/20 text-amber-500" 
+                          : "bg-muted/15 border-border/20 text-muted-foreground"
+                      )}>
+                        <RotateCcw className="size-5" />
+                      </div>
+                      <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                        <span>Ôn Tập Từ Vựng</span>
+                        {rawSessionData.total_due > 0 && (
+                          <span className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
+                            Cần ôn
+                          </span>
+                        )}
+                      </h3>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Ôn tập định kỳ các từ cũ theo thuật toán lặp lại ngắt quãng (SRS) để ghi nhớ vĩnh viễn.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-border/20 pt-4 mt-2">
+                      <span className="text-xs font-bold text-muted-foreground">
+                        Cần ôn hôm nay: <span className={cn("font-black text-sm", rawSessionData.total_due > 0 ? "text-amber-500" : "text-muted-foreground")}>{rawSessionData.total_due} từ</span>
+                      </span>
+                      <Button
+                        onClick={() => {
+                          if (rawSessionData.due_cards.length > 0) {
+                            setCards(rawSessionData.due_cards);
+                            setStudyMode('review');
+                            setPageView('session');
+                          }
+                        }}
+                        disabled={rawSessionData.due_cards.length === 0}
+                        className={cn(
+                          "text-xs font-bold py-2 rounded-xl border transition-all",
+                          rawSessionData.total_due > 0
+                            ? "bg-amber-500 hover:bg-amber-500/90 text-white shadow-md shadow-amber-500/20 border-transparent"
+                            : "bg-transparent border-border/40 text-muted-foreground"
+                        )}
+                      >
+                        {rawSessionData.total_due > 0 ? "Bắt đầu ôn tập" : "Đã hoàn thành!"}
+                      </Button>
+                    </div>
+                  </div>
+
+                </div>
+
               </div>
             )}
 
@@ -686,7 +842,10 @@ export default function StudyEnglishPage() {
                   userStats={stats}
                   earnedXp={earnedXp}
                   onRestart={handleRestart}
-                  onBack={() => router.push('/')}
+                  onBack={() => {
+                    sessionCompleteRef.current = false;
+                    loadSession();
+                  }}
                 />
               </div>
             )}
