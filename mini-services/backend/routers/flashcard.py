@@ -142,6 +142,13 @@ def get_flashcard_session(
     )
     due_ids = [r[0] for r in due_card_ids]
 
+    total_due_count = (
+        db.query(func.count(ReviewLog.vocabulary_id))
+        .join(due_subquery, ReviewLog.id == due_subquery.c.latest_log_id)
+        .filter(ReviewLog.next_review_at <= now)
+        .scalar() or 0
+    )
+
     due_vocab = db.query(Vocabulary).filter(Vocabulary.id.in_(due_ids)).all() if due_ids else []
 
     # ── Get new cards ────────────────────────────────────
@@ -152,12 +159,11 @@ def get_flashcard_session(
         .all()
     ]
 
-    remaining = limit - len(due_vocab)
     new_vocab = (
         db.query(Vocabulary)
         .filter(~Vocabulary.id.in_(reviewed_ids) if reviewed_ids else True)
         .order_by(Vocabulary.difficulty_level, Vocabulary.id)
-        .limit(remaining)
+        .limit(limit)
         .all()
     )
 
@@ -194,7 +200,7 @@ def get_flashcard_session(
     return FlashcardSession(
         due_cards=[_with_direction(v) for v in due_vocab],
         new_cards=[_with_direction(v) for v in new_vocab],
-        total_due=len(due_ids),
+        total_due=total_due_count,
         total_new=total_vocab - total_reviewed,
         total_learned=total_reviewed,
     )
