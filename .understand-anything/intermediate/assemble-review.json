@@ -1,9 +1,0 @@
-{
-  "issues": [],
-  "warnings": [],
-  "summary": "Assembled graph review completed. No blocking issues found. A few nodes flagged as 'orphan' in inline validation may be acceptable for this mixed frontend/backend repository.",
-  "details": {
-    "nodesReviewed": 18,
-    "edgesReviewed": 13
-  }
-}

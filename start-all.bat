@@ -185,6 +185,7 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3002" ^| findstr "LISTENING
     taskkill /f /pid %%a >nul 2>nul
 )
 
+timeout /t 2 /nobreak >nul 
 REM Also clean up opened windows if they are still present
 taskkill /fi "WINDOWTITLE eq LearnHub Backend*" >nul 2>nul
 taskkill /fi "WINDOWTITLE eq LearnHub Socket*" >nul 2>nul

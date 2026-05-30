@@ -593,7 +593,8 @@ export default function StudyEnglishPage() {
                   size="icon" 
                   onClick={() => {
                     if (pageView === 'session') {
-                      setPageView('landing');
+                      sessionCompleteRef.current = false;
+                      loadSession();
                     } else {
                       router.push('/');
                     }
@@ -841,7 +842,10 @@ export default function StudyEnglishPage() {
                   userStats={stats}
                   earnedXp={earnedXp}
                   onRestart={handleRestart}
-                  onBack={() => setPageView('landing')}
+                  onBack={() => {
+                    sessionCompleteRef.current = false;
+                    loadSession();
+                  }}
                 />
               </div>
             )}

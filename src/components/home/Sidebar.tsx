@@ -261,7 +261,7 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
         </button>
 
         {!collapsed && (
-          <div className="relative">
+          <div>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -277,44 +277,44 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
               <Bell className="size-4" />
               {dueCount > 0 && <span className="absolute right-1 top-1 flex size-2 rounded-full bg-destructive animate-pulse" />}
             </button>
+          </div>
+        )}
 
-            {/* Notification Popover Dropdown */}
-            {showNotifications && (
-              <div 
-                className="absolute bottom-12 right-0 w-64 glass-sheet border border-border/60 rounded-2xl p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-300 flex flex-col gap-3"
-                onClick={(e) => e.stopPropagation()}
+        {/* Notification Popover Dropdown - Positioned relative to bottom User Section */}
+        {!collapsed && showNotifications && (
+          <div 
+            className="absolute bottom-16 left-4 w-[280px] glass-sheet border border-border/60 rounded-2xl p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-300 flex flex-col gap-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border/30 pb-2">
+              <span className="text-xs font-black text-foreground uppercase tracking-widest">Thông báo ôn tập</span>
+              <button 
+                onClick={() => setShowNotifications(false)}
+                className="text-[10px] text-muted-foreground hover:text-foreground"
               >
-                <div className="flex items-center justify-between border-b border-border/30 pb-2">
-                  <span className="text-xs font-black text-foreground uppercase tracking-widest">Thông báo ôn tập</span>
-                  <button 
-                    onClick={() => setShowNotifications(false)}
-                    className="text-[10px] text-muted-foreground hover:text-foreground"
-                  >
-                    Đóng
-                  </button>
-                </div>
-                {dueCount > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Bạn đang có <span className="font-bold text-cyan-400">{dueCount} từ vựng</span> cần được ôn tập lại hôm nay theo lịch ôn tập ngắt quãng (SRS).
-                    </p>
-                    <button
-                      onClick={() => {
-                        setShowNotifications(false);
-                        router.push('/study/english?mode=review');
-                        onNavigate?.();
-                      }}
-                      className="w-full text-center py-2 rounded-xl bg-primary dark:bg-[#A29BFE] text-white text-xs font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
-                    >
-                      🎯 Ôn tập ngay
-                    </button>
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground leading-relaxed text-center py-2 select-none">
-                    🎉 Tuyệt vời! Bạn không có từ vựng nào cần ôn tập hôm nay. Hãy học từ mới nhé!
-                  </p>
-                )}
+                Đóng
+              </button>
+            </div>
+            {dueCount > 0 ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Bạn đang có <span className="font-bold text-cyan-400">{dueCount} từ vựng</span> cần được ôn tập lại hôm nay theo lịch ôn tập ngắt quãng (SRS).
+                </p>
+                <button
+                  onClick={() => {
+                    setShowNotifications(false);
+                    router.push('/study/english?mode=review');
+                    onNavigate?.();
+                  }}
+                  className="w-full text-center py-2 rounded-xl bg-primary dark:bg-[#A29BFE] text-white text-xs font-bold hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
+                >
+                  🎯 Ôn tập ngay
+                </button>
               </div>
+            ) : (
+              <p className="text-xs text-muted-foreground leading-relaxed text-center py-2 select-none">
+                🎉 Tuyệt vời! Bạn không có từ vựng nào cần ôn tập hôm nay. Hãy học từ mới nhé!
+              </p>
             )}
           </div>
         )}
