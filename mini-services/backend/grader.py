@@ -55,11 +55,10 @@ _embed_available = None
 _embed_lock = threading.Lock()
 _embed_load_time = None
 
-# Model: paraphrase-multilingual-MiniLM-L12-v2
-# - Multilingual (supports EN, VI, and 50+ languages)
-# - Only ~90MB download (vs ~1.2GB for LaBSE)
-# - Good semantic similarity for short texts
-_EMBED_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+# Model: BAAI/bge-m3
+# - Multilingual (supports EN, VI, and 100+ languages)
+# - Run on CPU to save GPU VRAM for COMET
+_EMBED_MODEL_NAME = "BAAI/bge-m3"
 
 
 def is_comet_available() -> bool:
@@ -140,8 +139,8 @@ def _load_embed_model():
 
         try:
             from sentence_transformers import SentenceTransformer
-            print(f"[Grader] Loading embedding model ({_EMBED_MODEL_NAME})...")
-            _embed_model = SentenceTransformer(_EMBED_MODEL_NAME)
+            print(f"[Grader] Loading embedding model ({_EMBED_MODEL_NAME}) on CPU...")
+            _embed_model = SentenceTransformer(_EMBED_MODEL_NAME, device="cpu")
             _embed_load_time = time.time() - start
             _embed_available = True
             print(f"[Grader] ✅ Embedding model loaded in {_embed_load_time:.1f}s")
