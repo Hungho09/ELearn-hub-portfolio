@@ -1,7 +1,7 @@
 """Auto-grading module for comparing user-typed answers with correct translations.
 
 Uses a two-layer approach:
-  1. COMET (Unbabel/wmt22-comet-da) for translation quality estimation
+  1. COMET (Unbabel/wmt22-cometkiwi-da) for reference-free translation quality estimation
   2. Multilingual sentence embedding similarity as a semantic gate to detect
      unrelated answers that COMET alone might score too generously
 
@@ -111,8 +111,8 @@ def _load_comet_model():
 
         try:
             from comet import download_model, load_from_checkpoint
-            print("[Grader] Loading COMET model (Unbabel/wmt22-comet-da)...")
-            model_path = download_model("Unbabel/wmt22-comet-da")
+            print("[Grader] Loading COMET model (Unbabel/wmt22-cometkiwi-da)...")
+            model_path = download_model("Unbabel/wmt22-cometkiwi-da")
             _comet_model = load_from_checkpoint(model_path)
             _comet_load_time = time.time() - start
             _comet_available = True
@@ -161,7 +161,7 @@ def _compute_comet_score(source: str, hypothesis: str, reference: str) -> float:
     Args:
         source: The original text.
         hypothesis: The user's translation.
-        reference: The correct translation.
+        reference: The correct translation (unused in reference-free wmt22-cometkiwi-da model).
 
     Returns:
         A score between 0.0 and 1.0, or -1.0 if COMET is unavailable.
@@ -175,7 +175,7 @@ def _compute_comet_score(source: str, hypothesis: str, reference: str) -> float:
         return -1.0
 
     try:
-        data = [{"src": source, "mt": hypothesis, "ref": reference}]
+        data = [{"src": source, "mt": hypothesis}]
         predictions = _comet_model.predict(data, batch_size=1)
         score = predictions.scores[0]
         return max(0.0, min(1.0, score))

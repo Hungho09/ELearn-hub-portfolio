@@ -15,6 +15,20 @@ set "PROJECT_DIR=%~dp0"
 set "BACKEND_DIR=%PROJECT_DIR%\mini-services\backend"
 set "VENV_DIR=%BACKEND_DIR%\.venv"
 
+REM Load environment variables from .env if it exists
+if exist "%PROJECT_DIR%\.env" (
+    echo   - Loading environment variables from .env...
+    for /f "usebackq delims== tokens=1,*" %%A in ("%PROJECT_DIR%\.env") do (
+        set "VAR_NAME=%%A"
+        set "VAR_VAL=%%B"
+        if not "!VAR_NAME:~0,1!"=="#" (
+            if not "!VAR_NAME!"=="" (
+                set "!VAR_NAME!=!VAR_VAL!"
+            )
+        )
+    )
+)
+
 echo =========================================
 echo   LearnHub - Starting All Services
 echo =========================================
