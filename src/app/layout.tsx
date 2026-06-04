@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProvider } from "@/components/auth/SessionProvider";
 
-const inter = Inter({
-  variable: "--font-inter",
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
 });
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} antialiased bg-background text-foreground font-sans min-h-screen relative`}
+        className={`${plusJakartaSans.variable} antialiased bg-background text-foreground font-sans min-h-screen relative`}
       >
         {/* Organic Animated Aurora Blobs */}
         <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none select-none opacity-40 dark:opacity-60 bg-[#fafafc] dark:bg-[#080811]">

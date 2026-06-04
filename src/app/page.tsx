@@ -183,40 +183,75 @@ export default function HomePage() {
               <div className="size-8" /> {/* Spacer */}
             </div>
 
-            {/* Welcome Section */}
-            <div className="mt-4 md:mt-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                Xin chào, {userName}! 👋
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Chọn ngôn ngữ để bắt đầu học tập ngay hôm nay
-              </p>
-
-              {/* Mini XP Bar */}
-              {(stats?.currentLevel ?? session?.user?.currentLevel) !== undefined && (
-                <div className="mt-3 flex items-center gap-3 max-w-md">
-                  <div className="flex items-center gap-1.5 text-sm">
-                    <Star className="size-4 text-cyan-500" />
-                    <span className="font-semibold text-cyan-600">
-                      Lv.{stats?.currentLevel ?? session?.user?.currentLevel ?? 1}
+            {/* Welcome & XP Bento Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6 md:mt-0">
+              {/* Welcome Card (Double Bezel) */}
+              <div className="lg:col-span-8 p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[2rem] shadow-sm">
+                <div className="h-full p-6 md:p-8 rounded-[calc(2rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-between">
+                  <div>
+                    <span className="inline-flex rounded-full bg-primary/10 border border-primary/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] font-bold text-primary dark:text-[#A29BFE] mb-4">
+                      Học viên LearnHub
                     </span>
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
+                      Xin chào, {userName}! 👋
+                    </h1>
+                    <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+                      Chọn ngôn ngữ phía dưới để bắt đầu hoặc tiếp tục hành trình rèn luyện vốn từ vựng của bạn ngày hôm nay.
+                    </p>
                   </div>
-                  <div className="flex-1">
-                    <Progress
-                      value={((stats?.xpPoints ?? session?.user?.xpPoints ?? 0) / (stats?.nextLevelXp ?? ((stats?.currentLevel ?? session?.user?.currentLevel ?? 1) ** 2) * 50 + 50)) * 100}
-                      className="h-2"
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {stats?.xpPoints ?? session?.user?.xpPoints ?? 0} / {stats?.nextLevelXp ?? ((stats?.currentLevel ?? session?.user?.currentLevel ?? 1) ** 2) * 50 + 50} XP
-                  </span>
+                  
+                  {/* XP progress bar */}
+                  {(stats?.currentLevel ?? session?.user?.currentLevel) !== undefined && (
+                    <div className="mt-8 pt-6 border-t border-border/10">
+                      <div className="flex items-center justify-between text-sm mb-2">
+                        <div className="flex items-center gap-1.5 font-bold text-cyan-600 dark:text-cyan-400">
+                          <Star strokeWidth={1.5} className="size-4 text-cyan-500 animate-pulse" />
+                          <span>Cấp độ {stats?.currentLevel ?? session?.user?.currentLevel ?? 1}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {stats?.xpPoints ?? session?.user?.xpPoints ?? 0} / {stats?.nextLevelXp ?? ((stats?.currentLevel ?? session?.user?.currentLevel ?? 1) ** 2) * 50 + 50} XP
+                        </span>
+                      </div>
+                      <div className="relative">
+                        <Progress
+                          value={((stats?.xpPoints ?? session?.user?.xpPoints ?? 0) / (stats?.nextLevelXp ?? ((stats?.currentLevel ?? session?.user?.currentLevel ?? 1) ** 2) * 50 + 50)) * 100}
+                          className="h-2 rounded-full bg-muted overflow-hidden"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
+              {/* Streak Card (Double Bezel) */}
+              <div className="lg:col-span-4 p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[2rem] shadow-sm">
+                <div className="h-full p-6 md:p-8 rounded-[calc(2rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-between items-center text-center relative overflow-hidden group">
+                  <div className="absolute -top-10 -right-10 size-32 rounded-full bg-orange-500/10 blur-2xl group-hover:scale-125 transition-transform duration-700 ease-out pointer-events-none" />
+                  
+                  <div className="flex flex-col items-center mt-2">
+                    <div className="size-16 rounded-2xl bg-orange-500/10 border border-orange-500/15 flex items-center justify-center text-orange-500 shadow-sm transition-all duration-700 group-hover:scale-110 group-hover:rotate-6">
+                      <Flame strokeWidth={1.2} className="size-8 text-orange-500 animate-pulse" />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground mt-4">
+                      Chuỗi ngày học
+                    </span>
+                    <h2 className="text-4xl font-black text-foreground mt-2 tracking-tight">
+                      {stats ? stats.streak_days : 0} ngày
+                    </h2>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed mt-4 max-w-[180px]">
+                    {stats && stats.streak_days > 0 
+                      ? "Tuyệt vời! Hãy tiếp tục duy trì thói quen học tập hàng ngày nhé."
+                      : "Bắt đầu học ngay hôm nay để kích hoạt chuỗi ngày streak!"}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Stats */}
             {stats && (
-              <div className="mt-6">
+              <div className="mt-8">
                 <LearningStats
                   totalReviews={stats.total_reviews}
                   wordsMastered={stats.words_mastered}
@@ -229,11 +264,14 @@ export default function HomePage() {
             )}
 
             {/* Language Selection */}
-            <div className="mt-8">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Chọn ngôn ngữ học
+            <div className="mt-10">
+              <span className="inline-flex rounded-full bg-primary/10 border border-primary/10 px-3 py-1 text-[9px] uppercase tracking-[0.2em] font-bold text-primary dark:text-[#A29BFE] mb-2">
+                Học ngôn ngữ
+              </span>
+              <h2 className="text-xl font-extrabold text-foreground mb-6 tracking-tight">
+                Chọn ngôn ngữ học tập
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {LANGUAGES.map((lang) => (
                   <LanguageCard
                     key={lang.id}
@@ -251,45 +289,54 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Quick Tips Section */}
-            <div className="mt-10 mb-8">
-              <h2 className="text-lg font-semibold text-foreground mb-4">
-                Mẹo học tập
+            {/* Quick Tips Section (Asymmetric Bento Grid) */}
+            <div className="mt-12 mb-8">
+              <span className="inline-flex rounded-full bg-emerald-500/10 border border-emerald-500/10 px-3 py-1 text-[9px] uppercase tracking-[0.2em] font-bold text-emerald-600 dark:text-emerald-400 mb-2">
+                Kinh nghiệm học
+              </span>
+              <h2 className="text-xl font-extrabold text-foreground mb-6 tracking-tight">
+                Mẹo học tập hiệu quả
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4.5">
-                <Card variant="interactive-glass" className="border-primary/20 bg-gradient-to-br from-[#6C5CE7]/5 via-transparent to-[#6C5CE7]/10 hover:shadow-[0_8px_30px_rgba(108,92,231,0.08)] hover:scale-[1.03]">
-                  <CardContent className="p-5">
-                    <div className="size-8 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-3">
-                      <Target className="size-4 text-primary" />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+                {/* Tip 1 (Active Recall) - Bento Column Span 2 */}
+                <div className="sm:col-span-2 p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[2rem] shadow-sm hover:scale-[1.01] hover:shadow-[0_8px_30px_rgba(108,92,231,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group">
+                  <div className="h-full p-6 rounded-[calc(2rem-4px)] bg-[#ffffff]/55 dark:bg-[#0c0c1b]/55 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                    <div className="size-9 rounded-xl bg-primary/10 border border-primary/15 flex items-center justify-center mb-4 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110">
+                      <Target strokeWidth={1.2} className="size-4 text-primary" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm">Active Recall</h3>
-                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                      Nhập đáp án thay vì tự đánh giá. Hệ thống tự chấm điểm giúp bạn học trung thực hơn.
+                    <h3 className="font-bold text-foreground text-sm tracking-tight">Active Recall (Nhớ chủ động)</h3>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                      Nhập đáp án tự đánh giá thay vì chỉ nhìn lướt qua. Hệ thống chấm điểm tự động thông minh giúp bạn học sâu và trung thực hơn với bản thân.
                     </p>
-                  </CardContent>
-                </Card>
-                <Card variant="interactive-glass" className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/10 hover:shadow-[0_8px_30px_rgba(16,185,129,0.08)] hover:scale-[1.03]">
-                  <CardContent className="p-5">
-                    <div className="size-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
-                      <BrainCircuit className="size-4 text-emerald-500" />
+                  </div>
+                </div>
+
+                {/* Tip 2 (Spaced Repetition) - Bento Column Span 1 */}
+                <div className="sm:col-span-1 p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[2rem] shadow-sm hover:scale-[1.01] hover:shadow-[0_8px_30px_rgba(16,185,129,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group">
+                  <div className="h-full p-6 rounded-[calc(2rem-4px)] bg-[#ffffff]/55 dark:bg-[#0c0c1b]/55 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                    <div className="size-9 rounded-xl bg-emerald-500/10 border border-emerald-500/15 flex items-center justify-center mb-4 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110">
+                      <BrainCircuit strokeWidth={1.2} className="size-4 text-emerald-500" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm">Spaced Repetition</h3>
-                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                      Thuật toán TGCL thông minh lên lịch ôn tập tối ưu dựa trên đường quên của bạn.
+                    <h3 className="font-bold text-foreground text-sm tracking-tight">Spaced Repetition</h3>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                      Thuật toán TGCL thông minh tự động tính toán thời gian phản hồi để tối ưu lịch ôn tập của bạn.
                     </p>
-                  </CardContent>
-                </Card>
-                <Card variant="interactive-glass" className="border-orange-500/20 bg-gradient-to-br from-orange-500/5 via-transparent to-orange-500/10 hover:shadow-[0_8px_30px_rgba(249,115,22,0.08)] hover:scale-[1.03]">
-                  <CardContent className="p-5">
-                    <div className="size-8 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-3">
-                      <Flame className="size-4 text-orange-500" />
+                  </div>
+                </div>
+
+                {/* Tip 3 (Streak) - Bento Column Span 1 */}
+                <div className="sm:col-span-1 p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[2rem] shadow-sm hover:scale-[1.01] hover:shadow-[0_8px_30px_rgba(249,115,22,0.06)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group">
+                  <div className="h-full p-6 rounded-[calc(2rem-4px)] bg-[#ffffff]/55 dark:bg-[#0c0c1b]/55 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                    <div className="size-9 rounded-xl bg-orange-500/10 border border-orange-500/15 flex items-center justify-center mb-4 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:scale-110">
+                      <Flame strokeWidth={1.2} className="size-4 text-orange-500" />
                     </div>
-                    <h3 className="font-semibold text-foreground text-sm">Streak</h3>
-                    <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                      Duy trì chuỗi ngày học để xây dựng thói quen. Mỗi ngày ôn tập đều đặn là bước tiến lớn!
+                    <h3 className="font-bold text-foreground text-sm tracking-tight">Thói quen hàng ngày</h3>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                      Duy trì ôn tập đều đặn giúp bạn nhớ lâu hơn và củng cố kiến thức mỗi ngày.
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
