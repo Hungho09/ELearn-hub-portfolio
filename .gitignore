@@ -31,8 +31,8 @@ __pycache__/
 
 # Python test artifacts
 *.db
-test_integration.db
 *.sqlite3
+!learnhub.db
 
 # debug
 npm-debug.log*
