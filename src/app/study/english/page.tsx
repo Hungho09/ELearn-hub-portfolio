@@ -12,6 +12,7 @@ import {
   Flame,
   Star,
   GraduationCap,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -604,7 +605,7 @@ export default function StudyEnglishPage() {
                 </Button>
                 <div>
                   <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                    <Brain className="size-6 text-primary" />
+                    <Brain strokeWidth={1.2} className="size-6 text-primary" />
                     Tiếng Anh
                   </h1>
                   <p className="text-sm text-muted-foreground">Nhập đáp án để học từ vựng</p>
@@ -612,12 +613,12 @@ export default function StudyEnglishPage() {
               </div>
               {stats && (
                 <div className="hidden sm:flex items-center gap-3">
-                  <Badge variant="secondary" className="gap-1">
-                    <Flame className="size-3 text-orange-500" />
+                  <Badge variant="secondary" className="gap-1 bg-orange-500/10 text-orange-500 border-orange-500/10">
+                    <Flame strokeWidth={1.2} className="size-3 text-orange-500" />
                     {stats.streak_days} ngày
                   </Badge>
-                  <Badge variant="secondary" className="gap-1">
-                    <BookOpen className="size-3 text-primary" />
+                  <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary border-primary/10">
+                    <BookOpen strokeWidth={1.2} className="size-3 text-primary" />
                     {stats.reviews_today} hôm nay
                   </Badge>
                 </div>
@@ -660,26 +661,41 @@ export default function StudyEnglishPage() {
                 {/* Stats overview banner */}
                 {stats && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Card variant="interactive-glass" className="p-4 border-primary/20 flex flex-col justify-center items-center text-center">
-                      <Star className="size-5 text-cyan-400 mb-1" />
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Cấp độ học</span>
-                      <span className="text-lg font-black text-foreground mt-1">Lv.{stats.currentLevel ?? 1}</span>
-                    </Card>
-                    <Card variant="interactive-glass" className="p-4 border-emerald-500/20 flex flex-col justify-center items-center text-center">
-                      <Flame className="size-5 text-orange-500 mb-1" />
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Chuỗi streak</span>
-                      <span className="text-lg font-black text-foreground mt-1">{stats.streak_days} ngày</span>
-                    </Card>
-                    <Card variant="interactive-glass" className="p-4 border-indigo-500/20 flex flex-col justify-center items-center text-center">
-                      <BookOpen className="size-5 text-primary mb-1" />
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Đã học hôm nay</span>
-                      <span className="text-lg font-black text-foreground mt-1">{stats.reviews_today} từ</span>
-                    </Card>
-                    <Card variant="interactive-glass" className="p-4 border-amber-500/20 flex flex-col justify-center items-center text-center">
-                      <GraduationCap className="size-5 text-amber-500 mb-1" />
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Bậc thầy (Mastered)</span>
-                      <span className="text-lg font-black text-foreground mt-1">{stats.words_mastered} từ</span>
-                    </Card>
+                    {/* Stat Card 1 */}
+                    <div className="p-0.5 rounded-[1.5rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm w-full">
+                      <div className="p-4 rounded-[calc(1.5rem-2px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-center items-center text-center">
+                        <Star strokeWidth={1.2} className="size-5 text-cyan-400 mb-1" />
+                        <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Cấp độ học</span>
+                        <span className="text-lg font-black text-foreground mt-1">Lv.{stats.currentLevel ?? 1}</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 2 */}
+                    <div className="p-0.5 rounded-[1.5rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm w-full">
+                      <div className="p-4 rounded-[calc(1.5rem-2px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-center items-center text-center">
+                        <Flame strokeWidth={1.2} className="size-5 text-orange-500 mb-1 animate-pulse" />
+                        <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Chuỗi streak</span>
+                        <span className="text-lg font-black text-foreground mt-1">{stats.streak_days} ngày</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 3 */}
+                    <div className="p-0.5 rounded-[1.5rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm w-full">
+                      <div className="p-4 rounded-[calc(1.5rem-2px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-center items-center text-center">
+                        <BookOpen strokeWidth={1.2} className="size-5 text-primary mb-1" />
+                        <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Đã học hôm nay</span>
+                        <span className="text-lg font-black text-foreground mt-1">{stats.reviews_today} từ</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Card 4 */}
+                    <div className="p-0.5 rounded-[1.5rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm w-full">
+                      <div className="p-4 rounded-[calc(1.5rem-2px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-center items-center text-center">
+                        <GraduationCap strokeWidth={1.2} className="size-5 text-amber-500 mb-1" />
+                        <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-wider">Bậc thầy (Mastered)</span>
+                        <span className="text-lg font-black text-foreground mt-1">{stats.words_mastered} từ</span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -687,88 +703,105 @@ export default function StudyEnglishPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
                   
                   {/* Learn Card */}
-                  <div className="rounded-2xl border border-border/40 bg-card/45 p-6 backdrop-blur-md flex flex-col justify-between gap-6 shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden group">
-                    <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[50px] group-hover:scale-110 transition-transform duration-500" />
-                    <div className="flex flex-col gap-2">
-                      <div className="size-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center text-primary dark:text-[#A29BFE] mb-2 shadow-sm">
-                        <Brain className="size-5" />
+                  <div className="group relative overflow-hidden rounded-[2.25rem] p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-sm hover:scale-[1.01]">
+                    <div className="rounded-[calc(2.25rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 p-6 flex flex-col justify-between h-full min-h-[240px] relative">
+                      <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[50px] group-hover:scale-110 transition-transform duration-500" />
+                      
+                      <div className="flex flex-col gap-2">
+                        <div className="size-10 rounded-xl bg-primary/15 border border-primary/20 flex items-center justify-center text-primary dark:text-[#A29BFE] mb-2 shadow-sm">
+                          <Brain strokeWidth={1.2} className="size-5" />
+                        </div>
+                        <h3 className="text-lg font-bold text-foreground">Học Từ Vựng Mới</h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Khám phá và tiếp thu các từ vựng mới tinh được chọn lọc phù hợp với trình độ hiện tại của bạn.
+                        </p>
                       </div>
-                      <h3 className="text-lg font-bold text-foreground">Học Từ Vựng Mới</h3>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Khám phá và tiếp thu các từ vựng mới tinh được chọn lọc phù hợp với trình độ hiện tại của bạn.
-                      </p>
-                    </div>
 
-                    <div className="flex items-center justify-between border-t border-border/20 pt-4 mt-2">
-                      <span className="text-xs font-bold text-muted-foreground">
-                        Sẵn sàng học: <span className="text-primary font-black text-sm">{rawSessionData.total_new} từ</span>
-                      </span>
-                      <Button
-                        onClick={() => {
-                          if (rawSessionData.new_cards.length > 0) {
-                            setCards(rawSessionData.new_cards);
-                            setStudyMode('learn');
-                            setPageView('session');
-                          }
-                        }}
-                        disabled={rawSessionData.new_cards.length === 0}
-                        className="text-xs font-bold bg-primary hover:bg-primary/95 text-white shadow-md shadow-primary/20 py-2 rounded-xl"
-                      >
-                        Bắt đầu học
-                      </Button>
+                      <div className="flex items-center justify-between border-t border-border/25 pt-4 mt-4 group/btn">
+                        <span className="text-xs font-bold text-muted-foreground">
+                          Sẵn sàng học: <span className="text-primary font-black text-sm">{rawSessionData.total_new} từ</span>
+                        </span>
+                        <Button
+                          onClick={() => {
+                            if (rawSessionData.new_cards.length > 0) {
+                              setCards(rawSessionData.new_cards);
+                              setStudyMode('learn');
+                              setPageView('session');
+                            }
+                          }}
+                          disabled={rawSessionData.new_cards.length === 0}
+                          className="group/btnAction relative inline-flex items-center gap-6 rounded-full px-5 py-2 bg-primary hover:bg-primary/95 text-white font-extrabold shadow-sm transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+                        >
+                          <span className="text-xs">Bắt đầu học</span>
+                          <div className="flex size-7 items-center justify-center rounded-full bg-white/15 dark:bg-white/10 group-hover/btnAction:bg-white/25 transition-all duration-500">
+                            <ChevronRight strokeWidth={1.2} className="size-3.5 text-white group-hover/btnAction:translate-x-0.5 transition-transform" />
+                          </div>
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
                   {/* Review Card */}
                   <div className={cn(
-                    "rounded-2xl border bg-card/45 p-6 backdrop-blur-md flex flex-col justify-between gap-6 shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden group",
-                    rawSessionData.total_due > 0 ? "border-amber-500/30" : "border-border/40"
+                    "group relative overflow-hidden rounded-[2.25rem] p-1 bg-black/5 dark:bg-white/5 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-sm hover:scale-[1.01]",
+                    rawSessionData.total_due > 0 ? "border border-amber-500/20" : "border border-black/5 dark:border-white/10"
                   )}>
-                    <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/10 blur-[50px] group-hover:scale-110 transition-transform duration-500" />
-                    <div className="flex flex-col gap-2">
-                      <div className={cn(
-                        "size-10 rounded-xl flex items-center justify-center mb-2 shadow-sm border",
-                        rawSessionData.total_due > 0 
-                          ? "bg-amber-500/15 border-amber-500/20 text-amber-500" 
-                          : "bg-muted/15 border-border/20 text-muted-foreground"
-                      )}>
-                        <RotateCcw className="size-5" />
+                    <div className="rounded-[calc(2.25rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 p-6 flex flex-col justify-between h-full min-h-[240px] relative">
+                      <div className="absolute top-[-20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/10 blur-[50px] group-hover:scale-110 transition-transform duration-500" />
+                      
+                      <div className="flex flex-col gap-2">
+                        <div className={cn(
+                          "size-10 rounded-xl flex items-center justify-center mb-2 shadow-sm border",
+                          rawSessionData.total_due > 0 
+                            ? "bg-amber-500/15 border-amber-500/20 text-amber-500" 
+                            : "bg-muted/15 border-border/20 text-muted-foreground"
+                        )}>
+                          <RotateCcw strokeWidth={1.2} className="size-5" />
+                        </div>
+                        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                          <span>Ôn Tập Từ Vựng</span>
+                          {rawSessionData.total_due > 0 && (
+                            <span className="text-[9px] bg-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
+                              Cần ôn
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Ôn tập định kỳ các từ cũ theo thuật toán lặp lại ngắt quãng (SRS) để ghi nhớ vĩnh viễn.
+                        </p>
                       </div>
-                      <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                        <span>Ôn Tập Từ Vựng</span>
-                        {rawSessionData.total_due > 0 && (
-                          <span className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold px-2 py-0.5 rounded-full border border-amber-500/30 animate-pulse">
-                            Cần ôn
-                          </span>
-                        )}
-                      </h3>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Ôn tập định kỳ các từ cũ theo thuật toán lặp lại ngắt quãng (SRS) để ghi nhớ vĩnh viễn.
-                      </p>
-                    </div>
 
-                    <div className="flex items-center justify-between border-t border-border/20 pt-4 mt-2">
-                      <span className="text-xs font-bold text-muted-foreground">
-                        Cần ôn hôm nay: <span className={cn("font-black text-sm", rawSessionData.total_due > 0 ? "text-amber-500" : "text-muted-foreground")}>{rawSessionData.total_due} từ</span>
-                      </span>
-                      <Button
-                        onClick={() => {
-                          if (rawSessionData.due_cards.length > 0) {
-                            setCards(rawSessionData.due_cards);
-                            setStudyMode('review');
-                            setPageView('session');
-                          }
-                        }}
-                        disabled={rawSessionData.due_cards.length === 0}
-                        className={cn(
-                          "text-xs font-bold py-2 rounded-xl border transition-all",
-                          rawSessionData.total_due > 0
-                            ? "bg-amber-500 hover:bg-amber-500/90 text-white shadow-md shadow-amber-500/20 border-transparent"
-                            : "bg-transparent border-border/40 text-muted-foreground"
-                        )}
-                      >
-                        {rawSessionData.total_due > 0 ? "Bắt đầu ôn tập" : "Đã hoàn thành!"}
-                      </Button>
+                      <div className="flex items-center justify-between border-t border-border/25 pt-4 mt-4">
+                        <span className="text-xs font-bold text-muted-foreground">
+                          Cần ôn hôm nay: <span className={cn("font-black text-sm", rawSessionData.total_due > 0 ? "text-amber-500" : "text-muted-foreground")}>{rawSessionData.total_due} từ</span>
+                        </span>
+                        <Button
+                          onClick={() => {
+                            if (rawSessionData.due_cards.length > 0) {
+                              setCards(rawSessionData.due_cards);
+                              setStudyMode('review');
+                              setPageView('session');
+                            }
+                          }}
+                          disabled={rawSessionData.due_cards.length === 0}
+                          className={cn(
+                            "group/btnAction relative inline-flex items-center gap-6 rounded-full px-5 py-2 font-extrabold shadow-sm transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-95 disabled:opacity-50 disabled:pointer-events-none",
+                            rawSessionData.total_due > 0
+                              ? "bg-amber-500 hover:bg-amber-500/90 text-white"
+                              : "bg-transparent border border-border/40 text-muted-foreground"
+                          )}
+                        >
+                          <span className="text-xs">{rawSessionData.total_due > 0 ? "Bắt đầu ôn tập" : "Đã hoàn thành!"}</span>
+                          <div className={cn(
+                            "flex size-7 items-center justify-center rounded-full transition-all duration-500",
+                            rawSessionData.total_due > 0
+                              ? "bg-white/15 dark:bg-white/10 group-hover/btnAction:bg-white/25"
+                              : "bg-muted/15"
+                          )}>
+                            <ChevronRight strokeWidth={1.2} className="size-3.5 group-hover/btnAction:translate-x-0.5 transition-transform" />
+                          </div>
+                        </Button>
+                      </div>
                     </div>
                   </div>
 

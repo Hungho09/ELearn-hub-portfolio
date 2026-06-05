@@ -810,14 +810,14 @@ export default function HeatmapPage() {
               </div>
             )}
 
-            {/* MAIN YEARLY HEATMAP CONTAINER */}
-            <Card variant="glass" className="overflow-hidden shadow-card">
-              <CardHeader className="pb-3 border-b border-border/40">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
-                    <Activity className="size-5 text-emerald-500" />
+            {/* MAIN YEARLY HEATMAP CONTAINER (Double Bezel) */}
+            <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+              <div className="rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 overflow-hidden">
+                <div className="p-6 pb-3 border-b border-border/10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <h3 className="text-base font-extrabold flex items-center gap-2 text-foreground">
+                    <Activity strokeWidth={1.2} className="size-5 text-emerald-500" />
                     Heatmap Ôn Tập Từng Ngày
-                  </CardTitle>
+                  </h3>
 
                   <div className="flex flex-wrap items-center gap-3.5">
                     {/* Glassmorphic Year Selector Segmented Control */}
@@ -827,7 +827,7 @@ export default function HeatmapPage() {
                           key={yr}
                           onClick={() => setSelectedYear(yr)}
                           className={cn(
-                            "px-3 py-1 rounded-lg text-[11px] font-bold transition-all focus:outline-none cursor-pointer",
+                            "px-3 py-1 rounded-lg text-[11px] font-bold transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] focus:outline-none cursor-pointer",
                             selectedYear === yr
                               ? "bg-emerald-500 text-emerald-950 font-extrabold shadow-sm"
                               : "text-muted-foreground hover:text-foreground hover:bg-muted/35"
@@ -850,103 +850,102 @@ export default function HeatmapPage() {
                     </div>
                   </div>
                 </div>
-              </CardHeader>
 
-              <CardContent className="p-6">
-                <div ref={heatmapContainerRef} className="w-full overflow-x-auto custom-scrollbar pb-2">
-                  <div className="flex gap-2" style={{ minWidth: heatmapMinWidth }}>
+                <div className="p-6">
+                  <div ref={heatmapContainerRef} className="w-full overflow-x-auto custom-scrollbar pb-2">
+                    <div className="flex gap-2" style={{ minWidth: heatmapMinWidth }}>
 
-                    {/* Weekday indicators (perfectly aligned to 10px squares and 2px gaps) */}
-                    <div className="grid grid-rows-7 gap-[2px] text-[10px] text-muted-foreground/80 pr-2 pt-5 select-none font-medium text-right w-6">
-                      {WEEKDAYS.map((day, idx) => (
-                        <div key={day} className={cn("flex items-center justify-end", idx % 2 === 0 ? "opacity-0" : "")} style={{ height: cellSize }}>
-                          {day}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Main Grid Wrapper */}
-                    <div className="flex-1 flex flex-col relative pt-5">
-
-                      {/* Accurate Month Label position overlays (aligned to 12px columns: 10px square + 2px gap) */}
-                      <div className="absolute top-0 left-0 w-full h-4 select-none">
-                        {monthLabels.map((lbl, idx) => {
-                          const leftPos = lbl.colIndex * cellStep;
-                          return (
-                            <span
-                              key={`${lbl.text}-${idx}`}
-                              className="absolute text-[10px] text-muted-foreground/80 font-bold transition-all duration-300"
-                              style={{ left: `${leftPos}px` }}
-                            >
-                              {lbl.text}
-                            </span>
-                          );
-                        })}
-                      </div>
-
-                      {/* Heatmap Grid of Squares (using standard 10px sizing and 2px gaps) */}
-                      <div className="flex gap-[2px]">
-                        {heatmapWeeks.map((week, wIdx) => (
-                          <div key={wIdx} className="grid grid-rows-7 gap-[2px]">
-                            {week.map((day, dIdx) => {
-                              if (!day) {
-                                return (
-                                  <div
-                                    key={`empty-${wIdx}-${dIdx}`}
-                                    className="bg-transparent pointer-events-none"
-                                    style={{ width: cellSize, height: cellSize, borderRadius: cellRadius }}
-                                  />
-                                );
-                              }
-
-                              const isFuture = (day as any).isFuture;
-                              const isSelected = selectedDay && selectedDay.dateStr === day.dateStr;
-                              const isToday = day.dateStr === getLocalDateString(new Date());
-
-                              return (
-                                <motion.button
-                                  key={day.dateStr}
-                                  onClick={() => !isFuture && setSelectedDay(day)}
-                                  onMouseEnter={(e) => handleMouseEnter(day, e)}
-                                  onMouseLeave={handleMouseLeave}
-                                  whileHover={!isFuture ? { scale: 1.3, zIndex: 10 } : {}}
-                                  style={{ width: cellSize, height: cellSize, borderRadius: cellRadius }}
-                                  className={cn(
-                                    "border transition-colors relative",
-                                    isFuture
-                                      ? "bg-muted/5 dark:bg-muted/5 border-dashed border-border/20 cursor-not-allowed select-none opacity-40"
-                                      : cn(getCellColorClass(day.count), "cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"),
-                                    isSelected ? "ring-2 ring-cyan-400 scale-110 border-cyan-300 z-10" : "",
-                                    isToday ? "ring-2 ring-primary border-primary animate-pulse-glow" : ""
-                                  )}
-                                >
-                                  {/* Visual dot indicator inside today cell */}
-                                  {isToday && (
-                                    <span className="absolute inset-0.5 rounded-[1px] bg-white opacity-40" />
-                                  )}
-                                </motion.button>
-                              );
-                            })}
+                      {/* Weekday indicators */}
+                      <div className="grid grid-rows-7 gap-[2px] text-[10px] text-muted-foreground/80 pr-2 pt-5 select-none font-medium text-right w-6">
+                        {WEEKDAYS.map((day, idx) => (
+                          <div key={day} className={cn("flex items-center justify-end", idx % 2 === 0 ? "opacity-0" : "")} style={{ height: cellSize }}>
+                            {day}
                           </div>
                         ))}
                       </div>
 
+                      {/* Main Grid Wrapper */}
+                      <div className="flex-1 flex flex-col relative pt-5">
+
+                        {/* Accurate Month Label position overlays */}
+                        <div className="absolute top-0 left-0 w-full h-4 select-none">
+                          {monthLabels.map((lbl, idx) => {
+                            const leftPos = lbl.colIndex * cellStep;
+                            return (
+                              <span
+                                key={`${lbl.text}-${idx}`}
+                                className="absolute text-[10px] text-muted-foreground/80 font-bold transition-all duration-300"
+                                style={{ left: `${leftPos}px` }}
+                              >
+                                {lbl.text}
+                              </span>
+                            );
+                          })}
+                        </div>
+
+                        {/* Heatmap Grid of Squares */}
+                        <div className="flex gap-[2px]">
+                          {heatmapWeeks.map((week, wIdx) => (
+                            <div key={wIdx} className="grid grid-rows-7 gap-[2px]">
+                              {week.map((day, dIdx) => {
+                                if (!day) {
+                                  return (
+                                    <div
+                                      key={`empty-${wIdx}-${dIdx}`}
+                                      className="bg-transparent pointer-events-none"
+                                      style={{ width: cellSize, height: cellSize, borderRadius: cellRadius }}
+                                    />
+                                  );
+                                }
+
+                                const isFuture = (day as any).isFuture;
+                                const isSelected = selectedDay && selectedDay.dateStr === day.dateStr;
+                                const isToday = day.dateStr === getLocalDateString(new Date());
+
+                                return (
+                                  <motion.button
+                                    key={day.dateStr}
+                                    onClick={() => !isFuture && setSelectedDay(day)}
+                                    onMouseEnter={(e) => handleMouseEnter(day, e)}
+                                    onMouseLeave={handleMouseLeave}
+                                    whileHover={!isFuture ? { scale: 1.3, zIndex: 10 } : {}}
+                                    style={{ width: cellSize, height: cellSize, borderRadius: cellRadius }}
+                                    className={cn(
+                                      "border transition-colors relative",
+                                      isFuture
+                                        ? "bg-muted/5 dark:bg-muted/5 border-dashed border-border/20 cursor-not-allowed select-none opacity-40"
+                                        : cn(getCellColorClass(day.count), "cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"),
+                                      isSelected ? "ring-2 ring-cyan-400 scale-110 border-cyan-300 z-10" : "",
+                                      isToday ? "ring-2 ring-primary border-primary animate-pulse-glow" : ""
+                                    )}
+                                  >
+                                    {isToday && (
+                                      <span className="absolute inset-0.5 rounded-[1px] bg-white opacity-40" />
+                                    )}
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Legend footer with highlighted today alert */}
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-muted-foreground gap-3 pt-4 border-t border-border/10">
+                    <div className="flex items-center gap-1.5">
+                      <div className="size-3.5 rounded-[2px] bg-emerald-500/10 border-2 border-primary animate-pulse-glow" />
+                      <span>Ô có viền nhấp nháy đại diện cho <strong>Ngày hôm nay ({formatDateVN(new Date())})</strong></span>
+                    </div>
+                    <div className="font-bold text-emerald-450 bg-emerald-500/10 border border-emerald-500/10 px-3 py-0.5 rounded-full">
+                      Tính kiên định: {Math.round((totalStudyDays / (heatmapData.length || 365)) * 105) % 101}% ({totalStudyDays}/{heatmapData.length} ngày ôn tập)
                     </div>
                   </div>
                 </div>
-
-                {/* Legend footer with highlighted today alert */}
-                <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-muted-foreground gap-3 pt-4 border-t border-border/30">
-                  <div className="flex items-center gap-1.5">
-                    <div className="size-3.5 rounded-[2px] bg-emerald-500/10 border-2 border-primary animate-pulse-glow" />
-                    <span>Ô có viền nhấp nháy đại diện cho <strong>Ngày hôm nay ({formatDateVN(new Date())})</strong></span>
-                  </div>
-                  <div className="font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
-                    Tính kiên định: {Math.round((totalStudyDays / (heatmapData.length || 365)) * 100)}% ({totalStudyDays}/{heatmapData.length} ngày ôn tập)
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Hover Tooltip Overlay */}
             <AnimatePresence>
@@ -973,7 +972,7 @@ export default function HeatmapPage() {
                       </span>
                     ) : (
                       hoveredDay.count > 0 && (
-                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded-full">
+                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded-full font-bold">
                           +{hoveredDay.xpGained} XP
                         </span>
                       )
@@ -982,7 +981,7 @@ export default function HeatmapPage() {
                   {(hoveredDay as any).isFuture ? (
                     <p className="text-muted-foreground italic text-center py-2">Chưa đến ngày học</p>
                   ) : hoveredDay.count > 0 ? (
-                    <div className="space-y-1 text-muted-foreground">
+                    <div className="space-y-1 text-muted-foreground font-medium">
                       <div className="flex justify-between">
                         <span>Lượt ôn:</span>
                         <strong className="text-foreground">{hoveredDay.count} lần</strong>
@@ -997,11 +996,11 @@ export default function HeatmapPage() {
                       </div>
                       <div className="flex justify-between">
                         <span>Chất lượng ghi nhớ:</span>
-                        <strong className="text-cyan-400">{hoveredDay.retentionScore}%</strong>
+                        <strong className="text-cyan-500 dark:text-cyan-400">{hoveredDay.retentionScore}%</strong>
                       </div>
                       <div className="flex justify-between">
                         <span>Độ chính xác:</span>
-                        <strong className="text-emerald-400">{hoveredDay.accuracy}%</strong>
+                        <strong className="text-emerald-500 dark:text-emerald-400">{hoveredDay.accuracy}%</strong>
                       </div>
                     </div>
                   ) : (
@@ -1014,177 +1013,174 @@ export default function HeatmapPage() {
             {/* INTERACTIVE BREAKDOWN & LOGS LIST PANEL */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-              {/* Selected Day Log list breakdown */}
-              <Card variant="glass" className="lg:col-span-2 shadow-card">
-                <CardHeader className="pb-3 border-b border-border/40">
-                  <CardTitle className="text-base font-semibold flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <Zap className="size-4 text-amber-500" />
-                      Chi Tiết Nhật Ký Ngày Học ({selectedDay ? formatDateVN(selectedDay.date) : ''})
-                    </span>
-                    {selectedDay && selectedDay.dateStr === getLocalDateString(new Date()) && (
-                      <span className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 font-bold shrink-0">
-                        Hôm nay
+              {/* Selected Day Log list breakdown (Double Bezel) */}
+              <div className="lg:col-span-2 p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                <div className="rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 overflow-hidden">
+                  <div className="p-5 border-b border-border/10">
+                    <h3 className="text-base font-extrabold flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Zap strokeWidth={1.2} className="size-4 text-amber-500" />
+                        Chi Tiết Nhật Ký Ngày Học ({selectedDay ? formatDateVN(selectedDay.date) : ''})
                       </span>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5">
-                  {selectedDay ? (
-                    <div className="space-y-4">
+                      {selectedDay && selectedDay.dateStr === getLocalDateString(new Date()) && (
+                        <span className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 font-bold shrink-0">
+                          Hôm nay
+                        </span>
+                      )}
+                    </h3>
+                  </div>
+                  <div className="p-5">
+                    {selectedDay ? (
+                      <div className="space-y-4">
+                        {selectedDay.count > 0 ? (
+                          <>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                              <div className="bg-black/5 dark:bg-white/5 border border-border/10 p-3 rounded-2xl text-center">
+                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wider">Lượt ôn tập</p>
+                                <p className="text-xl font-black text-primary dark:text-[#A29BFE] mt-1">{selectedDay.count}</p>
+                                <span className="text-[9px] text-muted-foreground block mt-0.5">flashcards</span>
+                              </div>
 
-                      {selectedDay.count > 0 ? (
-                        <>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div className="bg-muted/20 dark:bg-muted/5 border border-border/40 p-3 rounded-xl text-center">
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold">Lượt ôn tập</p>
-                              <p className="text-xl font-black text-primary mt-0.5">{selectedDay.count}</p>
-                              <span className="text-[9px] text-muted-foreground block">flashcards</span>
-                            </div>
+                              <div className="bg-black/5 dark:bg-white/5 border border-border/10 p-3 rounded-2xl text-center">
+                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wider">Số từ vựng</p>
+                                <p className="text-xl font-black text-emerald-600 dark:text-emerald-450 mt-1">{selectedDay.wordsLearned}</p>
+                                <span className="text-[9px] text-muted-foreground block mt-0.5">từ đã ôn</span>
+                              </div>
 
-                            <div className="bg-muted/20 dark:bg-muted/5 border border-border/40 p-3 rounded-xl text-center">
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold">Số từ vựng</p>
-                              <p className="text-xl font-black text-emerald-400 mt-0.5">{selectedDay.wordsLearned}</p>
-                              <span className="text-[9px] text-muted-foreground block">từ đã ôn</span>
-                            </div>
+                              <div className="bg-black/5 dark:bg-white/5 border border-border/10 p-3 rounded-2xl text-center">
+                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wider">Thời lượng</p>
+                                <p className="text-xl font-black text-cyan-600 dark:text-cyan-400 mt-1">{selectedDay.studyDuration}p</p>
+                                <span className="text-[9px] text-muted-foreground block mt-0.5">phút học tập</span>
+                              </div>
 
-                            <div className="bg-muted/20 dark:bg-muted/5 border border-border/40 p-3 rounded-xl text-center">
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold">Thời lượng</p>
-                              <p className="text-xl font-black text-cyan-400 mt-0.5">{selectedDay.studyDuration}p</p>
-                              <span className="text-[9px] text-muted-foreground block">phút học tập</span>
-                            </div>
-
-                            <div className="bg-muted/20 dark:bg-muted/5 border border-border/40 p-3 rounded-xl text-center">
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold">Điểm ghi nhớ</p>
-                              <p className="text-xl font-black text-amber-500 mt-0.5">{selectedDay.retentionScore}%</p>
-                              <span className="text-[9px] text-muted-foreground block">sức mạnh trí nhớ</span>
-                            </div>
-                          </div>
-
-                          {/* List of actual words studied on that day */}
-                          {dataMode === 'real' && selectedDayDbLogs.length > 0 && (
-                            <div className="space-y-2 pt-2">
-                              <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                                <BookOpen className="size-3.5 text-cyan-400" />
-                                Từ Vựng Đã Ôn Tập Thực Tế ({selectedDayDbLogs.length} từ)
-                              </h4>
-                              <div className="max-h-[160px] overflow-y-auto custom-scrollbar border border-border/30 rounded-xl p-2 bg-muted/10 space-y-1.5">
-                                {selectedDayDbLogs.map((log, idx) => (
-                                  <div key={idx} className="flex justify-between items-center bg-card p-2 rounded-lg border border-border/20 text-xs">
-                                    <div>
-                                      <strong className="text-foreground">{log.english}</strong>
-                                      <span className="text-muted-foreground ml-2 text-[11px]">— {log.vietnamese}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-[9px] text-muted-foreground">
-                                        {new Date(log.reviewed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                      </span>
-                                      <span className={cn(
-                                        "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold select-none",
-                                        log.rating === 4 ? "bg-emerald-500/10 text-emerald-400" :
-                                          log.rating === 3 ? "bg-cyan-500/10 text-cyan-400" :
-                                            log.rating === 2 ? "bg-amber-500/10 text-amber-400" :
-                                              "bg-destructive/10 text-destructive"
-                                      )}>
-                                        {log.rating === 4 ? "Perfect" :
-                                          log.rating === 3 ? "Good" :
-                                            log.rating === 2 ? "Hard" : "Again"}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))}
+                              <div className="bg-black/5 dark:bg-white/5 border border-border/10 p-3 rounded-2xl text-center">
+                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-wider">Điểm ghi nhớ</p>
+                                <p className="text-xl font-black text-amber-500 mt-1">{selectedDay.retentionScore}%</p>
+                                <span className="text-[9px] text-muted-foreground block mt-0.5">sức mạnh trí nhớ</span>
                               </div>
                             </div>
-                          )}
 
-                          {dataMode === 'demo' && (
-                            <div className="bg-muted/15 border border-border/30 rounded-xl p-3.5 text-xs text-muted-foreground">
-                              💡 Bạn đang xem dữ liệu ở **chế độ Demo**. Khi đổi sang **Dữ liệu Thật**, bạn sẽ xem được danh sách từ vựng chi tiết đã học vào ngày này trực tiếp từ cơ sở dữ liệu.
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground space-y-2">
-                          <BookOpen className="size-8 text-muted-foreground/30 animate-pulse" />
-                          <p className="text-sm">Không có dữ liệu ôn tập trong ngày này.</p>
-                          <Button
-                            onClick={() => router.push('/')}
-                            size="sm"
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs mt-2 rounded-lg"
-                          >
-                            Bắt đầu ôn ngay
-                          </Button>
-                        </div>
-                      )}
+                            {/* List of actual words studied on that day */}
+                            {dataMode === 'real' && selectedDayDbLogs.length > 0 && (
+                              <div className="space-y-2.5 pt-2">
+                                <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                  <BookOpen strokeWidth={1.2} className="size-4 text-cyan-400" />
+                                  Từ Vựng Đã Ôn Tập Thực Tế ({selectedDayDbLogs.length} từ)
+                                </h4>
+                                <div className="max-h-[160px] overflow-y-auto custom-scrollbar border border-border/10 rounded-2xl p-2.5 bg-black/5 dark:bg-white/5 space-y-2">
+                                  {selectedDayDbLogs.map((log, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-[#ffffff]/60 dark:bg-[#0c0c1b]/60 p-2.5 rounded-xl border border-white/20 dark:border-white/5 text-xs font-medium">
+                                      <div>
+                                        <strong className="text-foreground">{log.english}</strong>
+                                        <span className="text-muted-foreground ml-2 text-[11px] font-medium">— {log.vietnamese}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2.5">
+                                        <span className="text-[10px] text-muted-foreground">
+                                          {new Date(log.reviewed_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                        <span className={cn(
+                                          "px-2 py-0.5 rounded-full text-[9px] font-extrabold select-none border",
+                                          log.rating === 4 ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/10" :
+                                            log.rating === 3 ? "bg-cyan-500/10 text-cyan-500 border-cyan-500/10" :
+                                              log.rating === 2 ? "bg-amber-500/10 text-amber-500 border-amber-500/10" :
+                                                "bg-destructive/10 text-destructive border-destructive/10"
+                                        )}>
+                                          {log.rating === 4 ? "Perfect" :
+                                            log.rating === 3 ? "Good" :
+                                              log.rating === 2 ? "Hard" : "Again"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
 
-                    </div>
-                  ) : (
-                    <p className="text-center text-muted-foreground text-sm py-8">Chọn một ngày trên Heatmap để xem chi tiết lịch sử học tập.</p>
-                  )}
-                </CardContent>
-              </Card>
+                            {dataMode === 'demo' && (
+                              <div className="bg-black/5 dark:bg-white/5 border border-border/10 rounded-2xl p-4 text-xs text-muted-foreground font-medium">
+                                💡 Bạn đang xem dữ liệu ở **chế độ Demo**. Khi đổi sang **Dữ liệu Thật**, bạn sẽ xem được danh sách từ vựng chi tiết đã học vào ngày này trực tiếp từ cơ sở dữ liệu.
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground space-y-3">
+                            <BookOpen strokeWidth={1.2} className="size-8 text-muted-foreground/30 animate-pulse" />
+                            <p className="text-sm font-medium">Không có dữ liệu ôn tập trong ngày này.</p>
+                            <Button
+                              onClick={() => router.push('/')}
+                              size="sm"
+                              className="bg-primary hover:bg-primary/95 text-primary-foreground font-bold text-xs mt-2 rounded-full px-5 py-2 shadow-md shadow-primary/20"
+                            >
+                              Bắt đầu ôn ngay
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-center text-muted-foreground text-xs py-8">Chọn một ngày trên Heatmap để xem chi tiết lịch sử học tập.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* Sidebar Streaks & Cognitive Gauge widgets */}
               <div className="space-y-6">
 
-                {/* Active streak widget */}
-                <Card variant="interactive-glass" className="bg-gradient-to-br from-orange-500/10 via-transparent to-transparent shadow-card hover:scale-105 duration-300">
-                  <CardContent className="p-5 flex items-center justify-between">
+                {/* Active streak widget (Double Bezel) */}
+                <div className="p-1 bg-gradient-to-br from-orange-500/10 via-transparent to-transparent border border-orange-500/20 rounded-[2rem] shadow-sm hover:scale-105 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group">
+                  <div className="p-6 rounded-[calc(2rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-xs font-semibold text-orange-500 uppercase tracking-wider">Chuỗi Học Hiện Tại</p>
+                      <p className="text-[10px] font-bold text-orange-500 uppercase tracking-wider">Chuỗi Học Hiện Tại</p>
                       <p className="text-3xl font-black text-foreground flex items-baseline gap-1">
                         {stats?.streak_days || 0}
-                        <span className="text-sm font-semibold text-muted-foreground">ngày</span>
+                        <span className="text-xs font-bold text-muted-foreground">ngày</span>
                       </p>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-[10px] text-muted-foreground font-medium">
                         Chuỗi dài nhất: <strong className="text-foreground">{stats?.streak_days ? stats.streak_days + 8 : 12} ngày</strong>
                       </p>
                     </div>
-                    <div className="size-14 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shadow-[0_0_12px_rgba(249,115,22,0.25)]">
-                      <Flame className="size-7 text-orange-500 fill-orange-500" />
+                    <div className="size-14 rounded-2xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20 shadow-[0_0_12px_rgba(249,115,22,0.15)] group-hover:scale-110 group-hover:rotate-3 transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
+                      <Flame strokeWidth={1.2} className="size-7 text-orange-500 fill-orange-500" />
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
-                {/* Cognitive State Gauge */}
-                <Card variant="glass" className="shadow-card">
-                  <CardHeader className="pb-3 border-b border-border/40">
-                    <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                      <Brain className="size-4 text-cyan-500" />
-                      Trạng Thái Trí Nhớ AI
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-4 space-y-4 text-xs">
+                {/* Cognitive State Gauge (Double Bezel) */}
+                <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                  <div className="p-5 rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 space-y-4 text-xs">
+                    <div className="flex items-center gap-1.5 border-b border-border/10 pb-3">
+                      <Brain strokeWidth={1.2} className="size-4.5 text-cyan-500" />
+                      <span className="font-extrabold text-foreground tracking-tight">Trạng Thái Trí Nhớ AI</span>
+                    </div>
 
-                    <div className="flex justify-between items-center pb-2 border-b border-border/30">
+                    <div className="flex justify-between items-center pb-2.5 border-b border-border/10 font-medium">
                       <span className="text-muted-foreground">Khả năng quá tải (Burnout):</span>
                       <span className={cn(
-                        "font-bold px-2 py-0.5 rounded",
-                        calculatedBurnout < 30 ? "text-emerald-400 bg-emerald-500/10" : calculatedBurnout < 70 ? "text-amber-400 bg-amber-500/10" : "text-destructive bg-destructive/10"
+                        "font-extrabold px-2 py-0.5 rounded text-[10px] border",
+                        calculatedBurnout < 30 ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/10" : calculatedBurnout < 70 ? "text-amber-500 bg-amber-500/10 border-amber-500/10" : "text-destructive bg-destructive/10 border-destructive/10"
                       )}>
                         {calculatedBurnout < 30 ? "Thấp" : calculatedBurnout < 70 ? "Trung bình" : "Cao"} ({calculatedBurnout}%)
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center pb-2 border-b border-border/30">
+                    <div className="flex justify-between items-center pb-2.5 border-b border-border/10 font-medium">
                       <span className="text-muted-foreground">Bán kỳ phân rã trí nhớ:</span>
-                      <span className="font-bold text-cyan-400">{calculatedHalfLife} ngày</span>
+                      <span className="font-extrabold text-cyan-500 dark:text-cyan-400">{calculatedHalfLife} ngày</span>
                     </div>
 
-                    <div className="flex justify-between items-center pb-2 border-b border-border/30">
+                    <div className="flex justify-between items-center pb-2.5 border-b border-border/10 font-medium">
                       <span className="text-muted-foreground">Hiệu quả Spaced Repetition:</span>
-                      <span className="font-bold text-amber-500">Tối ưu ({calculatedEfficiency}%)</span>
+                      <span className="font-extrabold text-amber-500">Tối ưu ({calculatedEfficiency}%)</span>
                     </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center font-medium">
                       <span className="text-muted-foreground">Đà học tập (Momentum):</span>
-                      <span className="font-bold text-purple-400 flex items-center gap-0.5">
-                        <Zap className="size-3 text-purple-400 fill-purple-400" /> 1.25x
+                      <span className="font-extrabold text-purple-500 dark:text-purple-400 flex items-center gap-0.5">
+                        <Zap strokeWidth={1.5} className="size-3 text-purple-400 fill-purple-400 animate-pulse" /> 1.25x
                       </span>
                     </div>
-
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
               </div>
             </div>
@@ -1192,19 +1188,19 @@ export default function HeatmapPage() {
             {/* MIDDLE SECTION: Spaced repetition forgetting curve & retention trend */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-              {/* Spaced repetition curve simulator */}
-              <Card variant="glass" className="shadow-card">
-                <CardHeader className="pb-3 border-b border-border/40">
-                  <div className="flex justify-between items-start gap-2">
+              {/* Spaced repetition curve simulator (Double Bezel) */}
+              <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                <div className="rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 overflow-hidden">
+                  <div className="p-5 border-b border-border/10 flex justify-between items-start gap-2">
                     <div>
-                      <CardTitle className="text-base font-semibold flex items-center gap-2">
-                        <Activity className="size-4.5 text-cyan-400" />
+                      <h3 className="text-sm font-extrabold flex items-center gap-2 text-foreground">
+                        <Activity strokeWidth={1.2} className="size-4.5 text-cyan-500" />
                         Đường Quên Ebbinghaus & Spaced Repetition
-                      </CardTitle>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground mt-1 font-medium">
                         {dataMode === 'real' && dbLogs.length > 0 ? (
                           <span>
-                            Cá nhân hóa từ mô hình học máy dựa trên <strong>Hệ số Dễ (Ease Factor)</strong> trung bình thật: <strong className="text-cyan-400">{(dbLogs.reduce((sum, l) => sum + (l.ease_factor || 2.5), 0) / dbLogs.length).toFixed(2)}</strong>.
+                            Cá nhân hóa từ mô hình học máy dựa trên <strong>Hệ số Dễ (Ease Factor)</strong> trung bình thật: <strong className="text-cyan-500">{(dbLogs.reduce((sum, l) => sum + (l.ease_factor || 2.5), 0) / dbLogs.length).toFixed(2)}</strong>.
                           </span>
                         ) : (
                           "Bộ mô phỏng tính ưu việt của ôn tập ngắt quãng (Spaced Repetition) đối với trí nhớ."
@@ -1219,9 +1215,9 @@ export default function HeatmapPage() {
                           key={num}
                           onClick={() => setSimReviews(num)}
                           className={cn(
-                            "px-2 py-0.5 rounded text-[10px] font-bold transition-all focus:outline-none",
+                            "px-2.5 py-0.5 rounded text-[10px] font-extrabold transition-all focus:outline-none cursor-pointer",
                             simReviews === num
-                              ? "bg-cyan-500 text-cyan-950 font-extrabold shadow-sm"
+                              ? "bg-cyan-500 text-cyan-950 shadow-sm"
                               : "text-muted-foreground hover:text-foreground"
                           )}
                         >
@@ -1230,106 +1226,106 @@ export default function HeatmapPage() {
                       ))}
                     </div>
                   </div>
-                </CardHeader>
+                  <div className="p-5 h-[240px] flex items-center justify-center">
+                    {mounted ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={forgettingCurveData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                          <XAxis dataKey="day" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
+                          <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
+                          <ChartTooltip
+                            contentStyle={{
+                              backgroundColor: 'var(--color-card)',
+                              borderColor: 'var(--color-border)',
+                              borderRadius: '12px',
+                              fontSize: '11px'
+                            }}
+                          />
+                          <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
 
-                <CardContent className="p-5 h-[240px] flex items-center justify-center">
-                  {mounted ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={forgettingCurveData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                        <XAxis dataKey="day" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <YAxis domain={[0, 100]} tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <ChartTooltip
-                          contentStyle={{
-                            backgroundColor: 'var(--color-card)',
-                            borderColor: 'var(--color-border)',
-                            borderRadius: '8px',
-                            fontSize: '11px'
-                          }}
-                        />
-                        <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
+                          <Line
+                            type="monotone"
+                            dataKey="Đường Quên Cơ Bản (Decay)"
+                            stroke="var(--color-destructive)"
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                            dot={false}
+                          />
 
-                        <Line
-                          type="monotone"
-                          dataKey="Đường Quên Cơ Bản (Decay)"
-                          stroke="var(--color-destructive)"
-                          strokeWidth={2}
-                          strokeDasharray="5 5"
-                          dot={false}
-                        />
+                          <Line
+                            type="monotone"
+                            dataKey="Active Recall (Spaced Rep)"
+                            stroke="var(--color-chart-4)"
+                            strokeWidth={2.5}
+                            dot={{ strokeWidth: 1, r: 2.5 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    )}
+                  </div>
+                </div>
+              </div>
 
-                        <Line
-                          type="monotone"
-                          dataKey="Active Recall (Spaced Rep)"
-                          stroke="var(--color-chart-4)"
-                          strokeWidth={2.5}
-                          dot={{ strokeWidth: 1, r: 2.5 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  )}
-                </CardContent>
-              </Card>
+              {/* AI Retention trend (Double Bezel) */}
+              <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                <div className="rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 overflow-hidden">
+                  <div className="p-5 border-b border-border/10">
+                    <h3 className="text-sm font-extrabold flex items-center gap-2 text-foreground">
+                      <TrendingUp strokeWidth={1.2} className="size-4.5 text-emerald-500" />
+                      Xu Hướng Ghi Nhớ AI (30 Ngày Qua)
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground mt-1 font-medium">
+                      Biểu đồ đo khả năng lưu trữ từ vựng dựa trên điểm Ease Factor thực tế.
+                    </p>
+                  </div>
+                  <div className="p-5 h-[240px] flex items-center justify-center">
+                    {mounted ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={retentionTrendData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                          <defs>
+                            <linearGradient id="colorRetention" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="var(--color-chart-3)" stopOpacity={0.4} />
+                              <stop offset="95%" stopColor="var(--color-chart-3)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="name" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
+                          <YAxis domain={[50, 100]} tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
+                          <ChartTooltip
+                            contentStyle={{
+                              backgroundColor: 'var(--color-card)',
+                              borderColor: 'var(--color-border)',
+                              borderRadius: '12px',
+                              fontSize: '11px'
+                            }}
+                          />
+                          <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
 
-              {/* AI Retention trend */}
-              <Card variant="glass" className="shadow-card">
-                <CardHeader className="pb-3 border-b border-border/40">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <TrendingUp className="size-4.5 text-emerald-400" />
-                    Xu Hướng Ghi Nhớ AI (30 Ngày Qua)
-                  </CardTitle>
-                  <p className="text-[11px] text-muted-foreground">
-                    Biểu đồ đo khả năng lưu trữ từ vựng dựa trên điểm Ease Factor thực tế.
-                  </p>
-                </CardHeader>
+                          <Line
+                            type="monotone"
+                            dataKey="Mục tiêu Tối ưu"
+                            stroke="rgba(16, 185, 129, 0.4)"
+                            strokeWidth={1.5}
+                            strokeDasharray="4 4"
+                            dot={false}
+                          />
 
-                <CardContent className="p-5 h-[240px] flex items-center justify-center">
-                  {mounted ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={retentionTrendData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                        <defs>
-                          <linearGradient id="colorRetention" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="var(--color-chart-3)" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="var(--color-chart-3)" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="name" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <YAxis domain={[50, 100]} tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <ChartTooltip
-                          contentStyle={{
-                            backgroundColor: 'var(--color-card)',
-                            borderColor: 'var(--color-border)',
-                            borderRadius: '8px',
-                            fontSize: '11px'
-                          }}
-                        />
-                        <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
-
-                        <Line
-                          type="monotone"
-                          dataKey="Mục tiêu Tối ưu"
-                          stroke="rgba(16, 185, 129, 0.4)"
-                          strokeWidth={1.5}
-                          strokeDasharray="4 4"
-                          dot={false}
-                        />
-
-                        <Area
-                          type="monotone"
-                          dataKey="Khả năng Ghi nhớ"
-                          stroke="var(--color-chart-3)"
-                          fillOpacity={1}
-                          fill="url(#colorRetention)"
-                          strokeWidth={2.5}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  )}
-                </CardContent>
-              </Card>
+                          <Area
+                            type="monotone"
+                            dataKey="Khả năng Ghi nhớ"
+                            stroke="var(--color-chart-3)"
+                            fillOpacity={1}
+                            fill="url(#colorRetention)"
+                            strokeWidth={2.5}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    )}
+                  </div>
+                </div>
+              </div>
 
             </div>
 
@@ -1337,83 +1333,85 @@ export default function HeatmapPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
               {/* Density hours chart (span 2) */}
-              <Card variant="glass" className="md:col-span-2 shadow-card">
-                <CardHeader className="pb-3 border-b border-border/40">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <Clock className="size-4.5 text-purple-400" />
-                    Khung Giờ Học Tập Phổ Biến (Study Density)
-                  </CardTitle>
-                  <p className="text-[11px] text-muted-foreground">
-                    Sự phân bố tần suất ôn tập theo từng múi giờ thực tế trong ngày.
-                  </p>
-                </CardHeader>
+              <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 md:col-span-2 shadow-sm">
+                <div className="rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 overflow-hidden">
+                  <div className="p-5 border-b border-border/10">
+                    <h3 className="text-sm font-extrabold flex items-center gap-2 text-foreground">
+                      <Clock strokeWidth={1.2} className="size-4.5 text-purple-400" />
+                      Khung Giờ Học Tập Phổ Biến (Study Density)
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground mt-1 font-medium">
+                      Sự phân bố tần suất ôn tập theo từng múi giờ thực tế trong ngày.
+                    </p>
+                  </div>
 
-                <CardContent className="p-5 h-[230px] flex items-center justify-center">
-                  {mounted ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={hourlyPeakData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                        <XAxis dataKey="hour" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <YAxis tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
-                        <ChartTooltip
-                          contentStyle={{
-                            backgroundColor: 'var(--color-card)',
-                            borderColor: 'var(--color-border)',
-                            borderRadius: '8px',
-                            fontSize: '11px'
-                          }}
-                        />
-                        <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
+                  <div className="p-5 h-[230px] flex items-center justify-center">
+                    {mounted ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={hourlyPeakData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                          <XAxis dataKey="hour" tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
+                          <YAxis tick={{ fill: 'var(--color-muted-foreground)', fontSize: 10 }} />
+                          <ChartTooltip
+                            contentStyle={{
+                              backgroundColor: 'var(--color-card)',
+                              borderColor: 'var(--color-border)',
+                              borderRadius: '12px',
+                              fontSize: '11px'
+                            }}
+                          />
+                          <CartesianGrid stroke="var(--color-border)" strokeDasharray="3 3" opacity={0.3} />
 
-                        <Bar
-                          dataKey="count"
-                          name="Số lượt ôn tập"
-                          fill="var(--color-primary)"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  )}
-                </CardContent>
-              </Card>
+                          <Bar
+                            dataKey="count"
+                            name="Số lượt ôn tập"
+                            fill="var(--color-primary)"
+                            radius={[6, 6, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* aggregates */}
-              <Card variant="glass" className="shadow-card">
-                <CardHeader className="pb-3 border-b border-border/40">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    <Trophy className="size-4.5 text-amber-500" />
-                    Tổng Kết Cả Năm Qua
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-5 space-y-4">
-
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-extrabold uppercase">TỔNG LƯỢT ÔN TẬP</p>
-                    <p className="text-2xl font-black text-primary">
-                      {yearlyMetrics.totalReviews.toLocaleString('vi-VN')}
-                    </p>
-                    <span className="text-[10px] text-muted-foreground block">số lần nhấn chọn đánh giá flashcard</span>
+              <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                <div className="rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 overflow-hidden p-5 flex flex-col justify-between h-full gap-4">
+                  <div>
+                    <h3 className="text-sm font-extrabold flex items-center gap-2 text-foreground border-b border-border/10 pb-3">
+                      <Trophy strokeWidth={1.2} className="size-4.5 text-amber-500" />
+                      Tổng Kết Cả Năm Qua
+                    </h3>
                   </div>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-wider">TỔNG LƯỢT ÔN TẬP</p>
+                      <p className="text-2xl font-black text-primary">
+                        {yearlyMetrics.totalReviews.toLocaleString('vi-VN')}
+                      </p>
+                      <span className="text-[9px] text-muted-foreground block leading-tight">số lần nhấn chọn đánh giá flashcard</span>
+                    </div>
 
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-extrabold uppercase">THỜI GIAN ĐẦU TƯ</p>
-                    <p className="text-2xl font-black text-cyan-400">
-                      {Math.round(yearlyMetrics.totalDuration / 60)} giờ {Math.round(yearlyMetrics.totalDuration % 60)} phút
-                    </p>
-                    <span className="text-[10px] text-muted-foreground block">tập trung rèn luyện trí tuệ</span>
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-wider">THỜI GIAN ĐẦU TƯ</p>
+                      <p className="text-2xl font-black text-cyan-400">
+                        {Math.round(yearlyMetrics.totalDuration / 60)} giờ {Math.round(yearlyMetrics.totalDuration % 60)} phút
+                      </p>
+                      <span className="text-[9px] text-muted-foreground block leading-tight">tập trung rèn luyện trí tuệ</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-muted-foreground font-extrabold uppercase tracking-wider">TỪ VỰNG TƯƠNG TÁC</p>
+                      <p className="text-2xl font-black text-emerald-400">
+                        {yearlyMetrics.totalWords} từ
+                      </p>
+                      <span className="text-[9px] text-muted-foreground block leading-tight">đã được tiếp cận tích cực</span>
+                    </div>
                   </div>
-
-                  <div className="space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-extrabold uppercase">TỪ VỰNG TƯƠNG TÁC</p>
-                    <p className="text-2xl font-black text-emerald-400">
-                      {yearlyMetrics.totalWords} từ
-                    </p>
-                    <span className="text-[10px] text-muted-foreground block">đã được tiếp cận tích cực</span>
-                  </div>
-
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
             </div>
 

@@ -177,215 +177,235 @@ export default function StatsPage() {
             {!loading && stats && (
               <div className="mt-6 space-y-6">
                 {/* Top Stats Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <Card variant="interactive-glass" className="border-orange-500/20 bg-gradient-to-br from-orange-500/5 via-transparent to-orange-500/10 hover:shadow-[0_8px_30px_rgba(249,115,22,0.08)] hover:scale-[1.03] duration-300">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="size-6 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-                          <Flame className="size-3.5 text-orange-500" />
+                {/* Top Stats Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  
+                  {/* Streak Card */}
+                  <div className="p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-2xl shadow-sm hover:scale-[1.03] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group">
+                    <div className="h-full p-4 rounded-[calc(1rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="size-6 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
+                            <Flame strokeWidth={1.2} className="size-3.5 text-orange-500" />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Chuỗi ngày</span>
                         </div>
-                        <span className="text-xs text-muted-foreground font-medium">Chuỗi ngày</span>
+                        <p className="text-2xl font-black text-orange-500 mt-1">{stats.streak_days}</p>
                       </div>
-                      <p className="text-2xl font-extrabold text-orange-500 mt-1">{stats.streak_days}</p>
-                      <p className="text-[10px] text-muted-foreground">ngày liên tiếp</p>
-                    </CardContent>
-                  </Card>
-                  <Card variant="interactive-glass" className="border-primary/20 bg-gradient-to-br from-[#6C5CE7]/5 via-transparent to-[#6C5CE7]/10 hover:shadow-[0_8px_30px_rgba(108,92,231,0.08)] hover:scale-[1.03] duration-300">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="size-6 rounded-lg bg-[#6C5CE7]/10 border border-[#6C5CE7]/20 flex items-center justify-center">
-                          <BookOpen className="size-3.5 text-primary" />
+                      <p className="text-[10px] text-muted-foreground mt-2 font-medium">ngày liên tiếp</p>
+                    </div>
+                  </div>
+
+                  {/* Today Card */}
+                  <div className="p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-2xl shadow-sm hover:scale-[1.03] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group">
+                    <div className="h-full p-4 rounded-[calc(1rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="size-6 rounded-lg bg-[#6C5CE7]/10 border border-[#6C5CE7]/20 flex items-center justify-center transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
+                            <BookOpen strokeWidth={1.2} className="size-3.5 text-primary dark:text-[#A29BFE]" />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Hôm nay</span>
                         </div>
-                        <span className="text-xs text-muted-foreground font-medium">Hôm nay</span>
+                        <p className="text-2xl font-black text-primary dark:text-[#A29BFE] mt-1">{stats.reviews_today}</p>
                       </div>
-                      <p className="text-2xl font-extrabold text-primary mt-1">{stats.reviews_today}</p>
-                      <p className="text-[10px] text-muted-foreground">lần ôn tập</p>
-                    </CardContent>
-                  </Card>
-                  <Card variant="interactive-glass" className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/10 hover:shadow-[0_8px_30px_rgba(16,185,129,0.08)] hover:scale-[1.03] duration-300">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="size-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                          <Trophy className="size-3.5 text-emerald-600" />
+                      <p className="text-[10px] text-muted-foreground mt-2 font-medium">lượt ôn tập</p>
+                    </div>
+                  </div>
+
+                  {/* Mastered Card */}
+                  <div className="p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-2xl shadow-sm hover:scale-[1.03] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group">
+                    <div className="h-full p-4 rounded-[calc(1rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="size-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
+                            <Trophy strokeWidth={1.2} className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Thành thạo</span>
                         </div>
-                        <span className="text-xs text-muted-foreground font-medium">Thành thạo</span>
+                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{stats.words_mastered}</p>
                       </div>
-                      <p className="text-2xl font-extrabold text-emerald-600 mt-1">{stats.words_mastered}</p>
-                      <p className="text-[10px] text-muted-foreground">từ vựng</p>
-                    </CardContent>
-                  </Card>
-                  <Card variant="interactive-glass" className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 via-transparent to-purple-500/10 hover:shadow-[0_8px_30px_rgba(168,85,247,0.08)] hover:scale-[1.03] duration-300">
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="size-6 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
-                          <Brain className="size-3.5 text-purple-600" />
+                      <p className="text-[10px] text-muted-foreground mt-2 font-medium">từ vựng</p>
+                    </div>
+                  </div>
+
+                  {/* Total Reviews Card */}
+                  <div className="p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-2xl shadow-sm hover:scale-[1.03] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group">
+                    <div className="h-full p-4 rounded-[calc(1rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="size-6 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center transition-transform duration-700 group-hover:scale-110 group-hover:rotate-6">
+                            <Brain strokeWidth={1.2} className="size-3.5 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Tổng ôn</span>
                         </div>
-                        <span className="text-xs text-muted-foreground font-medium">Tổng ôn</span>
+                        <p className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">{stats.total_reviews}</p>
                       </div>
-                      <p className="text-2xl font-extrabold text-purple-600 mt-1">{stats.total_reviews}</p>
-                      <p className="text-[10px] text-muted-foreground">lần</p>
-                    </CardContent>
-                  </Card>
+                      <p className="text-[10px] text-muted-foreground mt-2 font-medium">lần</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Level & XP Progress */}
-                <Card variant="glass">
-                  <CardContent className="p-6">
-                    <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <Star className="size-5 text-cyan-500" />
+                {/* Level & XP Progress (Double Bezel) */}
+                <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                  <div className="p-6 md:p-8 rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                    <h2 className="text-base font-extrabold text-foreground mb-4 flex items-center gap-2">
+                      <Star strokeWidth={1.2} className="size-5 text-cyan-500" />
                       Cấp độ & XP
                     </h2>
-                    <div className="flex items-center gap-4 mb-3">
-                      <div className="size-14 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
-                        <Star className="size-7 text-cyan-500" />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                      <div className="size-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center border border-cyan-500/15 shrink-0 shadow-sm">
+                        <Star strokeWidth={1.5} className="size-7 text-cyan-500 animate-pulse" />
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-semibold">Cấp độ {level}</span>
-                          <span className="text-xs text-muted-foreground">{xp} / {nextLevelXp} XP</span>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm font-extrabold text-foreground">Cấp độ {level}</span>
+                          <span className="text-xs text-muted-foreground font-medium">{xp} / {nextLevelXp} XP</span>
                         </div>
-                        <Progress value={levelProgress} className="h-3" />
+                        <Progress value={levelProgress} className="h-2.5 rounded-full" />
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Cần thêm {Math.max(0, nextLevelXp - xp)} XP để lên cấp {level + 1}
+                    <p className="text-xs text-muted-foreground mt-3 font-medium">
+                      Cần thêm <span className="font-bold text-cyan-500">{Math.max(0, nextLevelXp - xp)} XP</span> để lên cấp {level + 1}
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
-                {/* Badge Showcase */}
+                {/* Badge Showcase (Double Bezel) */}
                 {stats.badges !== undefined && (
-                  <Card variant="glass">
-                    <CardContent className="p-6">
-                      <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                        <Trophy className="size-5 text-amber-500" />
+                  <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                    <div className="p-6 md:p-8 rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                      <h2 className="text-base font-extrabold text-foreground mb-4 flex items-center gap-2">
+                        <Trophy strokeWidth={1.2} className="size-5 text-amber-500" />
                         Huy hiệu ({stats.badges.length} / 6)
                       </h2>
                       <BadgeGrid unlockedBadges={stats.badges} />
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 )}
 
-                {/* Progress Overview */}
-                <Card variant="glass">
-                  <CardContent className="p-6">
-                    <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <TrendingUp className="size-5 text-primary" />
-                      Tổng quan tiến độ
+                {/* Progress Overview (Double Bezel) */}
+                <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                  <div className="p-6 md:p-8 rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                    <h2 className="text-base font-extrabold text-foreground mb-5 flex items-center gap-2">
+                      <TrendingUp strokeWidth={1.2} className="size-5 text-primary" />
+                      Tổng quan tiến độ thành thạo
                     </h2>
 
                     {/* Mastery progress bar */}
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Mức độ thành thạo</span>
-                        <span className="text-sm font-semibold text-primary">{masteryPercent}%</span>
+                        <span className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Mức độ thành thạo</span>
+                        <span className="text-sm font-extrabold text-primary">{masteryPercent}%</span>
                       </div>
-                      <Progress value={masteryPercent} className="h-3" />
+                      <Progress value={masteryPercent} className="h-2.5 rounded-full" />
 
                       {/* Breakdown */}
-                      <div className="grid grid-cols-3 gap-3 mt-4 text-center">
-                        <div className="rounded-xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/10 p-3">
-                          <p className="text-xl font-bold text-emerald-500">{stats.words_mastered}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center mt-1">
-                            <Trophy className="size-3 text-emerald-500" /> Thành thạo
+                      <div className="grid grid-cols-3 gap-4 mt-6 text-center">
+                        <div className="rounded-2xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/10 p-4">
+                          <p className="text-2xl font-black text-emerald-500 leading-none">{stats.words_mastered}</p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1 justify-center mt-2.5 font-bold uppercase tracking-wider">
+                            <Trophy strokeWidth={1.2} className="size-3.5 text-emerald-500" /> Thành thạo
                           </p>
                         </div>
-                        <div className="rounded-xl bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/10 p-3">
-                          <p className="text-xl font-bold text-amber-500">{stats.words_learning}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center mt-1">
-                            <Target className="size-3 text-amber-500" /> Đang học
+                        <div className="rounded-2xl bg-amber-500/5 dark:bg-amber-950/20 border border-amber-500/10 p-4">
+                          <p className="text-2xl font-black text-amber-500 leading-none">{stats.words_learning}</p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 justify-center mt-2.5 font-bold uppercase tracking-wider">
+                            <Target strokeWidth={1.2} className="size-3.5 text-amber-500" /> Đang học
                           </p>
                         </div>
-                        <div className="rounded-xl bg-white/5 dark:bg-white/5 border border-white/10 p-3">
-                          <p className="text-xl font-bold text-muted-foreground">{stats.words_new}</p>
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 justify-center mt-1">
-                            <Layers className="size-3 text-muted-foreground" /> Chưa học
+                        <div className="rounded-2xl bg-black/5 dark:bg-white/5 border border-border/10 p-4">
+                          <p className="text-2xl font-black text-muted-foreground leading-none">{stats.words_new}</p>
+                          <p className="text-[10px] text-muted-foreground flex items-center gap-1 justify-center mt-2.5 font-bold uppercase tracking-wider">
+                            <Layers strokeWidth={1.2} className="size-3.5 text-muted-foreground" /> Chưa học
                           </p>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
                 {/* Study Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Card variant="glass">
-                    <CardContent className="p-6">
-                      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <Target className="size-4 text-primary" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  
+                  {/* Accuracy card */}
+                  <div className="p-1 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                    <div className="p-6 rounded-[calc(2rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                      <h3 className="text-sm font-extrabold text-foreground mb-4 flex items-center gap-2">
+                        <Target strokeWidth={1.2} className="size-4 text-primary" />
                         Chỉ số học tập
                       </h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Từ đã học</span>
-                          <span className="text-sm font-semibold">{stats.total_unique_words} từ</span>
+                      <div className="space-y-3.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground font-medium">Từ đã học</span>
+                          <span className="font-extrabold text-foreground">{stats.total_unique_words} từ</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Ease Factor TB</span>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground font-medium">Ease Factor TB</span>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold">{stats.average_ease_factor.toFixed(2)}</span>
+                            <span className="font-extrabold text-foreground">{stats.average_ease_factor.toFixed(2)}</span>
                             <Badge
                               variant="secondary"
                               className={cn(
-                                'text-[10px]',
+                                'text-[9px] font-bold rounded-full px-2.5 py-0.5 border',
                                 stats.average_ease_factor >= 2.5
-                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-500/25'
                                   : stats.average_ease_factor >= 2.0
-                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                                    : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border-amber-500/25'
+                                    : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-500/25'
                               )}
                             >
                               {overallAccuracy}
                             </Badge>
                           </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">TB ôn/từ</span>
-                          <span className="text-sm font-semibold">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground font-medium">TB ôn/từ</span>
+                          <span className="font-extrabold text-foreground">
                             {stats.total_unique_words > 0
                               ? (stats.total_reviews / stats.total_unique_words).toFixed(1)
                               : '0'}
                           </span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
 
-                  <Card variant="glass">
-                    <CardContent className="p-6">
-                      <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                        <Clock className="size-4 text-primary" />
+                  {/* Summary card */}
+                  <div className="p-1 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                    <div className="p-6 rounded-[calc(2rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                      <h3 className="text-sm font-extrabold text-foreground mb-4 flex items-center gap-2">
+                        <Clock strokeWidth={1.2} className="size-4 text-primary" />
                         Tóm tắt hoạt động
                       </h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Tổng lần ôn tập</span>
-                          <span className="text-sm font-semibold">{stats.total_reviews}</span>
+                      <div className="space-y-3.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground font-medium">Tổng lần ôn tập</span>
+                          <span className="font-extrabold text-foreground">{stats.total_reviews}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Ôn hôm nay</span>
-                          <span className="text-sm font-semibold text-primary">{stats.reviews_today}</span>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground font-medium">Ôn hôm nay</span>
+                          <span className="font-extrabold text-primary">{stats.reviews_today}</span>
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Chuỗi ngày học</span>
-                          <span className="text-sm font-semibold text-orange-500 flex items-center gap-1">
-                            <Flame className="size-3" /> {stats.streak_days} ngày
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-muted-foreground font-medium">Chuỗi ngày học</span>
+                          <span className="font-extrabold text-orange-500 flex items-center gap-1.5">
+                            <Flame strokeWidth={1.5} className="size-3.5" /> {stats.streak_days} ngày
                           </span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Category Progress */}
                 {categories.length > 0 && (
-                  <Card variant="glass">
-                    <CardContent className="p-6">
-                      <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                        <Layers className="size-5 text-primary" />
+                  <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                    <div className="p-6 md:p-8 rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                      <h2 className="text-base font-extrabold text-foreground mb-5 flex items-center gap-2">
+                        <Layers strokeWidth={1.2} className="size-5 text-primary" />
                         Tiến độ theo chủ đề
                       </h2>
-                      <div className="space-y-4">
+                      <div className="space-y-5">
                         {categories.map((cat) => {
                           const progressPercent = cat.total_words > 0
                             ? (cat.learned_words / cat.total_words) * 100
@@ -395,31 +415,31 @@ export default function StatsPage() {
                             : 0;
 
                           return (
-                            <div key={cat.category} className="space-y-2">
-                              <div className="flex items-center justify-between">
+                            <div key={cat.category} className="space-y-2.5">
+                              <div className="flex items-center justify-between text-xs">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-foreground capitalize">
+                                  <span className="font-extrabold text-foreground capitalize">
                                     {cat.category}
                                   </span>
                                   {cat.mastered_words === cat.total_words && cat.total_words > 0 && (
-                                    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-[10px]">
+                                    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 text-[9px] font-bold rounded-full px-2 py-0.2">
                                       ✓ Hoàn thành
                                     </Badge>
                                   )}
                                 </div>
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-muted-foreground font-medium">
                                   {cat.learned_words}/{cat.total_words} từ
                                 </span>
                               </div>
                               <div className="relative">
-                                <Progress value={progressPercent} className="h-2" />
+                                <Progress value={progressPercent} className="h-2 rounded-full" />
                                 {/* Mastery portion overlay */}
                                 <div
                                   className="absolute top-0 left-0 h-2 rounded-full bg-emerald-500 transition-all duration-500"
                                   style={{ width: `${masteryPercent}%` }}
                                 />
                               </div>
-                              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                              <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
                                 <span>Đã học: {cat.learned_words}</span>
                                 <span>Thành thạo: {cat.mastered_words}</span>
                               </div>
@@ -427,24 +447,24 @@ export default function StatsPage() {
                           );
                         })}
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 )}
 
                 {/* No data state */}
                 {!loading && stats.total_reviews === 0 && (
-                  <Card variant="glass">
-                    <CardContent className="p-8 text-center">
-                      <BookOpen className="size-12 text-muted-foreground mx-auto mb-3" />
-                      <h3 className="text-lg font-semibold text-foreground">Chưa có dữ liệu</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
+                  <div className="p-1.5 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm">
+                    <div className="p-8 text-center rounded-[calc(2rem-6px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5">
+                      <BookOpen strokeWidth={1.2} className="size-12 text-muted-foreground mx-auto mb-3" />
+                      <h3 className="text-base font-bold text-foreground">Chưa có dữ liệu</h3>
+                      <p className="text-xs text-muted-foreground mt-1.5">
                         Bắt đầu học để xem thống kê tại đây!
                       </p>
-                      <Button onClick={() => router.push('/')} className="mt-4 gap-2">
+                      <Button onClick={() => router.push('/')} className="mt-5 gap-2 rounded-full px-6 text-xs font-bold shadow-md shadow-primary/20">
                         Về trang chủ
                       </Button>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

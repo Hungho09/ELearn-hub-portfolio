@@ -94,30 +94,34 @@ export default function WorkspaceLobbyPage() {
               transition={{ type: 'spring', stiffness: 100, delay: 0.3 }}
               whileHover={{ y: -8, scale: 1.01 }}
               onClick={() => router.push('/workspace/focus')}
-              className="group relative cursor-pointer overflow-hidden rounded-3xl glass-sheet glass-sheet-interactive p-8 flex flex-col justify-between min-h-[320px]"
+              className="group relative cursor-pointer overflow-hidden rounded-[2.25rem] p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-sm"
             >
-              {/* Decorative Corner Light */}
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="rounded-[calc(2.25rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 p-8 flex flex-col justify-between h-full min-h-[320px] relative">
+                {/* Decorative Corner Light */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
 
-              <div>
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary dark:text-[#A29BFE] dark:border-[#A29BFE]/20 shadow-[0_0_20px_rgba(108,92,231,0.05)] group-hover:scale-110 transition-transform duration-300">
-                  <Clock className="size-7" />
+                <div>
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 text-primary dark:text-[#A29BFE] dark:border-[#A29BFE]/20 shadow-[0_0_20px_rgba(108,92,231,0.05)] group-hover:scale-110 transition-transform duration-300">
+                    <Clock strokeWidth={1.2} className="size-7" />
+                  </div>
+                  <h2 className="text-2xl font-bold mt-6 text-foreground group-hover:text-primary dark:group-hover:text-[#A29BFE] transition-colors">
+                    Zen Focus Space
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
+                    Không gian tĩnh lặng riêng tư dành riêng cho bạn. Sử dụng đồng hồ Pomodoro LED Neon tròn, trình phát nhạc YouTube Lofi Girl Live, bộ trộn âm thanh thiên nhiên và Todo-list tối giản để học sâu tuyệt đối.
+                  </p>
                 </div>
-                <h2 className="text-2xl font-bold mt-6 text-foreground group-hover:text-primary dark:group-hover:text-[#A29BFE] transition-colors">
-                  Zen Focus Space
-                </h2>
-                <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
-                  Không gian tĩnh lặng riêng tư dành riêng cho bạn. Sử dụng đồng hồ Pomodoro LED Neon tròn, trình phát nhạc YouTube Lofi Girl Live, bộ trộn âm thanh thiên nhiên và Todo-list tối giản để học sâu tuyệt đối.
-                </p>
-              </div>
 
-              <div className="flex items-center justify-between mt-8 border-t border-border/40 pt-4 text-sm font-semibold text-primary dark:text-[#A29BFE]">
-                <span className="opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex items-center gap-1.5">
-                  <Flame className="size-4 animate-bounce text-amber-500" />
-                  Bắt đầu Focus cá nhân
-                </span>
-                <div className="flex size-8 items-center justify-center rounded-full bg-accent/10 border border-border group-hover:bg-primary/20 transition-all">
-                  <ChevronRight className="size-4 text-foreground group-hover:translate-x-0.5 transition-transform" />
+                <div className="flex items-center justify-between mt-8 border-t border-border/40 pt-4 text-sm font-semibold text-primary dark:text-[#A29BFE] group/btn">
+                  <span className="opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex items-center gap-1.5">
+                    <Flame strokeWidth={1.2} className="size-4 animate-bounce text-amber-500" />
+                    Bắt đầu Focus cá nhân
+                  </span>
+                  <div className="relative flex items-center justify-center rounded-full p-1.5 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover/btn:scale-105 active:scale-95">
+                    <div className="flex size-8 items-center justify-center rounded-full bg-[#ffffff] dark:bg-[#0c0c1b] border border-white/20 dark:border-white/5 shadow-sm group-hover/btn:bg-primary/15 dark:group-hover/btn:bg-[#A29BFE]/15 transition-colors">
+                      <ChevronRight strokeWidth={1.2} className="size-4 text-foreground group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -129,30 +133,34 @@ export default function WorkspaceLobbyPage() {
               transition={{ type: 'spring', stiffness: 100, delay: 0.4 }}
               whileHover={{ y: -8, scale: 1.01 }}
               onClick={() => router.push('/workspace/hub')}
-              className="group relative cursor-pointer overflow-hidden rounded-3xl glass-sheet glass-sheet-interactive p-8 flex flex-col justify-between min-h-[320px]"
+              className="group relative cursor-pointer overflow-hidden rounded-[2.25rem] p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-sm"
             >
-              {/* Decorative Corner Light */}
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="rounded-[calc(2.25rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 p-8 flex flex-col justify-between h-full min-h-[320px] relative">
+                {/* Decorative Corner Light */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/10 to-transparent blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
 
-              <div>
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.05)] group-hover:scale-110 transition-transform duration-300">
-                  <Users2 className="size-7" />
+                <div>
+                  <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.05)] group-hover:scale-110 transition-transform duration-300">
+                    <Users2 strokeWidth={1.2} className="size-7" />
+                  </div>
+                  <h2 className="text-2xl font-bold mt-6 text-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">
+                    Public Study Hub
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
+                    Học cùng bạn bè và những người học khác trên khắp thế giới. Cùng nhau duy trì ngọn lửa kỷ luật, chia sẻ trạng thái học thực tế, thả các hạt emoji truyền động lực lơ lửng và trò chuyện tại khung chat pha lê.
+                  </p>
                 </div>
-                <h2 className="text-2xl font-bold mt-6 text-foreground group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors">
-                  Public Study Hub
-                </h2>
-                <p className="text-muted-foreground text-sm mt-3 leading-relaxed">
-                  Học cùng bạn bè và những người học khác trên khắp thế giới. Cùng nhau duy trì ngọn lửa kỷ luật, chia sẻ trạng thái học thực tế, thả các hạt emoji truyền động lực lơ lửng và trò chuyện tại khung chat pha lê.
-                </p>
-              </div>
 
-              <div className="flex items-center justify-between mt-8 border-t border-border/40 pt-4 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                <span className="opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex items-center gap-1.5">
-                  <Volume2 className="size-4 animate-pulse text-emerald-500" />
-                  Tham gia phòng học chung
-                </span>
-                <div className="flex size-8 items-center justify-center rounded-full bg-accent/10 border border-border group-hover:bg-emerald-500/20 transition-all">
-                  <ChevronRight className="size-4 text-foreground group-hover:translate-x-0.5 transition-transform" />
+                <div className="flex items-center justify-between mt-8 border-t border-border/40 pt-4 text-sm font-semibold text-emerald-600 dark:text-emerald-400 group/btn">
+                  <span className="opacity-80 group-hover:opacity-100 group-hover:translate-x-1 transition-all flex items-center gap-1.5">
+                    <Volume2 strokeWidth={1.2} className="size-4 animate-pulse text-emerald-500" />
+                    Tham gia phòng học chung
+                  </span>
+                  <div className="relative flex items-center justify-center rounded-full p-1.5 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover/btn:scale-105 active:scale-95">
+                    <div className="flex size-8 items-center justify-center rounded-full bg-[#ffffff] dark:bg-[#0c0c1b] border border-white/20 dark:border-white/5 shadow-sm group-hover/btn:bg-emerald-500/15 dark:group-hover/btn:bg-emerald-400/15 transition-colors">
+                      <ChevronRight strokeWidth={1.2} className="size-4 text-foreground group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -165,29 +173,31 @@ export default function WorkspaceLobbyPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="relative overflow-hidden rounded-2xl glass-sheet p-5 flex items-center gap-4 text-center justify-center min-h-[90px]"
+              className="p-1 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm"
             >
-              <div className="absolute top-2 left-3 opacity-10">
-                <Quote className="size-10 text-foreground" />
-              </div>
+              <div className="relative overflow-hidden rounded-[calc(2rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5 p-5 flex items-center gap-4 text-center justify-center min-h-[90px]">
+                <div className="absolute top-2 left-3 opacity-10">
+                  <Quote strokeWidth={1.2} className="size-10 text-foreground" />
+                </div>
 
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentQuoteIndex}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -15 }}
-                  transition={{ duration: 0.5 }}
-                  className="flex flex-col items-center justify-center gap-1 z-10 px-6"
-                >
-                  <p className="text-foreground text-sm md:text-base font-medium italic select-none">
-                    "{ZEN_QUOTES[currentQuoteIndex].text}"
-                  </p>
-                  <p className="text-primary text-xs font-semibold tracking-wider uppercase mt-1 dark:text-[#A29BFE]/80">
-                    — {ZEN_QUOTES[currentQuoteIndex].author}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentQuoteIndex}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.5 }}
+                    className="flex flex-col items-center justify-center gap-1 z-10 px-6"
+                  >
+                    <p className="text-foreground text-sm md:text-base font-medium italic select-none">
+                      "{ZEN_QUOTES[currentQuoteIndex].text}"
+                    </p>
+                    <p className="text-primary text-xs font-semibold tracking-wider uppercase mt-1 dark:text-[#A29BFE]/80">
+                      — {ZEN_QUOTES[currentQuoteIndex].author}
+                    </p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </motion.div>
           </div>
 
