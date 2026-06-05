@@ -1,6 +1,6 @@
 #!/bin/bash
 # Start the LearnHub Python Backend (FastAPI on port 3001)
-# Usage: cd mini-services/backend && bash start.sh
+# Usage: cd backend && bash start.sh
 
 cd "$(dirname "$0")"
 

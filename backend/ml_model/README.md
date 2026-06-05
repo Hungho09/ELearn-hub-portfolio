@@ -23,7 +23,7 @@ The TGCL model is the primary flashcard scheduling algorithm.
 
 - Cài các thư viện cần thiết cho mô hình TGCL bằng file `requirements-torch.txt`:
   ```bash
-  pip install -r mini-services/backend/requirements-torch.txt
+  pip install -r backend/requirements-torch.txt
   ```
 - Nếu bạn đang dùng `venv` hoặc môi trường ảo, kích hoạt trước khi cài.
 

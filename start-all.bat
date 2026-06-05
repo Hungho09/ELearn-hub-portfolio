@@ -12,7 +12,7 @@ REM ============================================================
 setlocal enabledelayedexpansion
 
 set "PROJECT_DIR=%~dp0"
-set "BACKEND_DIR=%PROJECT_DIR%\mini-services\backend"
+set "BACKEND_DIR=%PROJECT_DIR%\backend"
 set "VENV_DIR=%BACKEND_DIR%\.venv"
 
 REM Load environment variables from .env if it exists
