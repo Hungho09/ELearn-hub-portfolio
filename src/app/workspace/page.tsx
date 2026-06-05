@@ -58,14 +58,14 @@ export default function WorkspaceLobbyPage() {
 
           {/* Header */}
           <div className="flex flex-col gap-2">
-            <motion.div
+            {/* <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold w-fit dark:text-[#A29BFE] dark:border-[#A29BFE]/20 dark:bg-[#A29BFE]/5"
             >
               <Sparkles className="size-3.5 animate-pulse" />
               <span>Không gian học tập tương lai - Glassmorphism 2026</span>
-            </motion.div>
+            </motion.div> */}
             <motion.h1
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
