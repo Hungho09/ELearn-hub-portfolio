@@ -11,9 +11,16 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "LearnHub - Self-Learning Platform",
-  description: "Sharpen your skills with professional online courses. Learn at your own pace with expert mentors.",
-  keywords: ["learning", "online courses", "self-study", "education", "e-learning"],
+  title: "ELearnHub - Self-Learning Platform",
+  description:
+    "Sharpen your skills with professional online courses. Learn at your own pace with expert mentors.",
+  keywords: [
+    "learning",
+    "online courses",
+    "self-study",
+    "education",
+    "e-learning",
+  ],
   icons: {
     icon: "/logo.svg",
   },
@@ -38,10 +45,8 @@ export default function RootLayout({
           {/* Blob 3: Indigo Neon */}
           <div className="absolute top-[35%] right-[20%] w-[35vw] h-[35vw] rounded-full bg-gradient-to-br from-[#6C5CE7]/15 to-[#74B9FF]/5 blur-[100px] animate-aurora-3" />
         </div>
-        
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+
+        <SessionProvider>{children}</SessionProvider>
         <Toaster />
       </body>
     </html>

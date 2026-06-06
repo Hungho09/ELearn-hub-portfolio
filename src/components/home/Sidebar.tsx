@@ -190,7 +190,7 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
               <GraduationCap strokeWidth={1.5} className="size-5 text-white" />
             </div>
             {!collapsed && (
-              <span className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#A29BFE]">LearnHub</span>
+              <span className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#A29BFE]">ELearnHub</span>
             )}
           </button>
 

@@ -30,9 +30,9 @@ Grading logic (Levenshtein fallback):
 """
 
 import re
-import unicodedata
 import threading
 import time
+import unicodedata
 
 # ─── COMET Model (Lazy Loading) ───────────────────────────────────
 
@@ -77,11 +77,15 @@ def get_comet_status() -> dict:
         "comet_available": _comet_available,
         "comet_loading": _comet_loading,
         "comet_model_loaded": _comet_model is not None,
-        "comet_load_time_seconds": round(_comet_load_time, 2) if _comet_load_time else None,
+        "comet_load_time_seconds": round(_comet_load_time, 2)
+        if _comet_load_time
+        else None,
         "embed_available": _embed_available,
         "embed_loading": _embed_loading,
         "embed_model_loaded": _embed_model is not None,
-        "embed_load_time_seconds": round(_embed_load_time, 2) if _embed_load_time else None,
+        "embed_load_time_seconds": round(_embed_load_time, 2)
+        if _embed_load_time
+        else None,
         "embed_model_name": _EMBED_MODEL_NAME,
         "grader_mode": _get_grader_mode(),
     }
@@ -110,6 +114,7 @@ def _load_comet_model():
 
         try:
             from comet import download_model, load_from_checkpoint
+
             print("[Grader] Loading COMET model (Unbabel/wmt22-cometkiwi-da)...")
             model_path = download_model("Unbabel/wmt22-cometkiwi-da")
             _comet_model = load_from_checkpoint(model_path)
@@ -139,17 +144,22 @@ def _load_embed_model():
 
         try:
             from sentence_transformers import SentenceTransformer
-            print(f"[Grader] Loading embedding model ({_EMBED_MODEL_NAME}) on CPU...")
-            _embed_model = SentenceTransformer(_EMBED_MODEL_NAME, device="cpu")
+
+            print(f"[Grader] Loading embedding model ({_EMBED_MODEL_NAME}) on GPU...")
+            _embed_model = SentenceTransformer(_EMBED_MODEL_NAME, device="cuda")
             _embed_load_time = time.time() - start
             _embed_available = True
             print(f"[Grader] ✅ Embedding model loaded in {_embed_load_time:.1f}s")
         except ImportError:
             _embed_available = False
-            print("[Grader] ⚠️ sentence-transformers not installed. Semantic gate disabled.")
+            print(
+                "[Grader] ⚠️ sentence-transformers not installed. Semantic gate disabled."
+            )
         except Exception as e:
             _embed_available = False
-            print(f"[Grader] ⚠️ Embedding model failed to load: {e}. Semantic gate disabled.")
+            print(
+                f"[Grader] ⚠️ Embedding model failed to load: {e}. Semantic gate disabled."
+            )
         finally:
             _embed_loading = False
 
@@ -206,6 +216,7 @@ def _compute_embed_similarity(text1: str, text2: str) -> float:
 
     try:
         from sentence_transformers.util import cos_sim
+
         embeddings = _embed_model.encode([text1, text2], normalize_embeddings=True)
         similarity = cos_sim(embeddings[0], embeddings[1])
         return max(0.0, min(1.0, similarity.item()))
@@ -259,10 +270,9 @@ def remove_vietnamese_diacritics(text: str) -> str:
     Uses Unicode NFD normalization and filters out combining characters (category 'Mn').
     This allows "xin chao" to match "xin chào", "ca phe" to match "cà phê", etc.
     """
-    normalized = unicodedata.normalize('NFD', text)
-    without_diacritics = ''.join(
-        char for char in normalized
-        if unicodedata.category(char) != 'Mn'
+    normalized = unicodedata.normalize("NFD", text)
+    without_diacritics = "".join(
+        char for char in normalized if unicodedata.category(char) != "Mn"
     )
     return without_diacritics
 
@@ -272,7 +282,7 @@ def normalize_string(text: str) -> str:
     if not text:
         return ""
     result = text.lower()
-    result = re.sub(r'\s+', ' ', result).strip()
+    result = re.sub(r"\s+", " ", result).strip()
     return result
 
 
@@ -300,11 +310,13 @@ def levenshtein_distance(s1: str, s2: str) -> int:
         current_row = [i]
         for j in range(1, n + 1):
             substitution_cost = 0 if s1[i - 1] == s2[j - 1] else 1
-            current_row.append(min(
-                previous_row[j] + 1,
-                current_row[j - 1] + 1,
-                previous_row[j - 1] + substitution_cost
-            ))
+            current_row.append(
+                min(
+                    previous_row[j] + 1,
+                    current_row[j - 1] + 1,
+                    previous_row[j - 1] + substitution_cost,
+                )
+            )
         previous_row = current_row
 
     return previous_row[n]
@@ -328,8 +340,12 @@ def compute_similarity(s1: str, s2: str) -> float:
 # ─── Main Grading Function ─────────────────────────────────────────
 
 
-def check_answer(user_answer: str, correct_answer: str, direction: str = "en_to_vi",
-                 source_text: str = None) -> dict:
+def check_answer(
+    user_answer: str,
+    correct_answer: str,
+    direction: str = "en_to_vi",
+    source_text: str = None,
+) -> dict:
     """Compare a user-typed answer against the correct translation.
 
     Uses a two-layer approach:
@@ -423,14 +439,24 @@ def check_answer(user_answer: str, correct_answer: str, direction: str = "en_to_
         else:
             grader_label = "comet"
 
-        return _grade_from_combined(combined, comet_score, embed_sim, norm_user, norm_correct, grader_label)
+        return _grade_from_combined(
+            combined, comet_score, embed_sim, norm_user, norm_correct, grader_label
+        )
 
     # ── 4. Levenshtein fallback ───────────────────────────
-    return _grade_from_levenshtein(norm_user_no_diacritics, norm_correct_no_diacritics, norm_user, norm_correct)
+    return _grade_from_levenshtein(
+        norm_user_no_diacritics, norm_correct_no_diacritics, norm_user, norm_correct
+    )
 
 
-def _grade_from_combined(combined: float, comet_score: float, embed_sim: float,
-                          norm_user: str, norm_correct: str, grader_label: str) -> dict:
+def _grade_from_combined(
+    combined: float,
+    comet_score: float,
+    embed_sim: float,
+    norm_user: str,
+    norm_correct: str,
+    grader_label: str,
+) -> dict:
     """Grade based on combined COMET + embedding similarity score.
 
     Thresholds calibrated for the combined score:
@@ -466,8 +492,12 @@ def _grade_from_combined(combined: float, comet_score: float, embed_sim: float,
     }
 
 
-def _grade_from_levenshtein(norm_user_no_diacritics: str, norm_correct_no_diacritics: str,
-                             norm_user: str, norm_correct: str) -> dict:
+def _grade_from_levenshtein(
+    norm_user_no_diacritics: str,
+    norm_correct_no_diacritics: str,
+    norm_user: str,
+    norm_correct: str,
+) -> dict:
     """Grade based on Levenshtein string similarity (fallback)."""
     similarity = compute_similarity(norm_user_no_diacritics, norm_correct_no_diacritics)
 

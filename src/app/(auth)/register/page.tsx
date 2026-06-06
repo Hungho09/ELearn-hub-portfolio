@@ -1,55 +1,63 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { GraduationCap, Mail, Lock, Eye, EyeOff, User, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import Link from 'next/link';
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import {
+  GraduationCap,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  User,
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError("Password must be at least 6 characters");
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Registration failed');
+        setError(data.error || "Registration failed");
         return;
       }
 
       // Auto sign in after registration
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
@@ -57,13 +65,13 @@ export default function RegisterPage() {
 
       if (result?.error) {
         // Registration succeeded but auto-login failed, redirect to login
-        router.push('/login');
+        router.push("/login");
       } else {
-        router.push('/');
+        router.push("/");
         router.refresh();
       }
     } catch {
-      setError('An unexpected error occurred.');
+      setError("An unexpected error occurred.");
     } finally {
       setIsLoading(false);
     }
@@ -71,31 +79,43 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-transparent relative overflow-hidden select-none">
-      
       {/* Aurora Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 dark:bg-primary/5 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#A29BFE]/5 dark:bg-[#A29BFE]/3 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
+        <div
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 dark:bg-primary/5 blur-[120px] animate-pulse"
+          style={{ animationDuration: "8s" }}
+        />
+        <div
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#A29BFE]/5 dark:bg-[#A29BFE]/3 blur-[120px] animate-pulse"
+          style={{ animationDuration: "12s" }}
+        />
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center justify-center gap-2.5 mb-8">
+        <Link
+          href="/"
+          className="flex items-center justify-center gap-2.5 mb-8"
+        >
           <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[#A29BFE] shadow-[0_4px_15px_rgba(108,92,231,0.25)]">
             <GraduationCap strokeWidth={1.5} className="size-6 text-white" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#A29BFE]">LearnHub</span>
+          <span className="text-2xl font-bold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-primary to-[#A29BFE]">
+            ELearnHub
+          </span>
         </Link>
 
         {/* Double-Bezel Card */}
         <div className="p-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[2.25rem] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shadow-[0_24px_80px_rgba(0,0,0,0.03)] dark:shadow-[0_24px_80px_rgba(0,0,0,0.3)]">
           <div className="p-8 rounded-[calc(2.25rem-4px)] bg-[#ffffff]/50 dark:bg-[#0c0c1b]/50 backdrop-blur-2xl border border-white/20 dark:border-white/5">
-            
             {/* Header */}
             <div className="text-center pb-6">
-              <h2 className="text-xl font-bold tracking-tight text-foreground">Create Account</h2>
-              <p className="text-xs text-muted-foreground mt-1.5">Start your learning journey today</p>
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                Create Account
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Start your learning journey today
+              </p>
             </div>
 
             {/* Form */}
@@ -108,9 +128,17 @@ export default function RegisterPage() {
 
               {/* Full Name Input */}
               <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-[11px] font-black uppercase text-muted-foreground tracking-wider ml-1">Full Name</Label>
+                <Label
+                  htmlFor="name"
+                  className="text-[11px] font-black uppercase text-muted-foreground tracking-wider ml-1"
+                >
+                  Full Name
+                </Label>
                 <div className="relative">
-                  <User strokeWidth={1.2} className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                  <User
+                    strokeWidth={1.2}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80"
+                  />
                   <Input
                     id="name"
                     type="text"
@@ -125,9 +153,17 @@ export default function RegisterPage() {
 
               {/* Email Input */}
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[11px] font-black uppercase text-muted-foreground tracking-wider ml-1">Email Address</Label>
+                <Label
+                  htmlFor="email"
+                  className="text-[11px] font-black uppercase text-muted-foreground tracking-wider ml-1"
+                >
+                  Email Address
+                </Label>
                 <div className="relative">
-                  <Mail strokeWidth={1.2} className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                  <Mail
+                    strokeWidth={1.2}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80"
+                  />
                   <Input
                     id="email"
                     type="email"
@@ -142,12 +178,20 @@ export default function RegisterPage() {
 
               {/* Password Input */}
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-[11px] font-black uppercase text-muted-foreground tracking-wider ml-1">Password</Label>
+                <Label
+                  htmlFor="password"
+                  className="text-[11px] font-black uppercase text-muted-foreground tracking-wider ml-1"
+                >
+                  Password
+                </Label>
                 <div className="relative">
-                  <Lock strokeWidth={1.2} className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                  <Lock
+                    strokeWidth={1.2}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80"
+                  />
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 6 characters"
@@ -159,19 +203,31 @@ export default function RegisterPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
                   >
-                    {showPassword ? <EyeOff strokeWidth={1.2} className="size-4" /> : <Eye strokeWidth={1.2} className="size-4" />}
+                    {showPassword ? (
+                      <EyeOff strokeWidth={1.2} className="size-4" />
+                    ) : (
+                      <Eye strokeWidth={1.2} className="size-4" />
+                    )}
                   </button>
                 </div>
               </div>
 
               {/* Confirm Password Input */}
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword" className="text-[11px] font-black uppercase text-muted-foreground tracking-wider ml-1">Confirm Password</Label>
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-[11px] font-black uppercase text-muted-foreground tracking-wider ml-1"
+                >
+                  Confirm Password
+                </Label>
                 <div className="relative">
-                  <Lock strokeWidth={1.2} className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80" />
+                  <Lock
+                    strokeWidth={1.2}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground/80"
+                  />
                   <Input
                     id="confirmPassword"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your password"
@@ -195,9 +251,14 @@ export default function RegisterPage() {
                     </span>
                   ) : (
                     <>
-                      <span className="text-xs tracking-tight">Create Account</span>
+                      <span className="text-xs tracking-tight">
+                        Create Account
+                      </span>
                       <div className="flex size-7 items-center justify-center rounded-full bg-white/15 dark:bg-white/10 group-hover/btn:bg-white/25 transition-all duration-500">
-                        <ChevronRight strokeWidth={1.2} className="size-4 text-white group-hover/btn:translate-x-0.5 transition-transform" />
+                        <ChevronRight
+                          strokeWidth={1.2}
+                          className="size-4 text-white group-hover/btn:translate-x-0.5 transition-transform"
+                        />
                       </div>
                     </>
                   )}
@@ -207,15 +268,16 @@ export default function RegisterPage() {
 
             {/* Login Link */}
             <div className="mt-6 text-center text-xs text-muted-foreground font-medium">
-              Already have an account?{' '}
-              <Link href="/login" className="font-bold text-primary dark:text-[#A29BFE] hover:underline transition-all">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="font-bold text-primary dark:text-[#A29BFE] hover:underline transition-all"
+              >
                 Sign In
               </Link>
             </div>
-
           </div>
         </div>
-
       </div>
     </div>
   );
