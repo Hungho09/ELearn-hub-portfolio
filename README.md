@@ -15,7 +15,7 @@
 
 ![LearnHub Banner](public/learnhub_banner.png)
 
-*Hình ảnh giao diện thiết kế theo phong cách hiện đại với các liên kết nơ-ron số học và biểu tượng AI.*
+*Hình ảnh giao diện bảng điều khiển chính (Dashboard) của LearnHub với các chỉ số thống kê và danh sách ngôn ngữ học.*
 
 </div>
 
