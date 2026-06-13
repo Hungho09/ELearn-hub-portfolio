@@ -235,6 +235,32 @@ graph TD
 
 ---
 
+## 📸 Screenshots
+
+Dưới đây là một số hình ảnh giao diện thực tế của hệ thống LearnHub:
+
+### 1. Trang chủ (Homepage)
+![Homepage](public/learnhub_banner.png)
+*Giao diện trang chủ cá nhân hóa hỗ trợ hiển thị các chỉ số học tập hôm nay, chuỗi ngày liên tục (streak) và danh sách ngôn ngữ học.*
+
+### 2. Bảng quản trị (Admin Dashboard)
+![Admin Dashboard](public/admin_dashboard.png)
+*Giao diện quản lý từ vựng tiếng Anh dành cho quản trị viên, cho phép quản lý từ khóa, định nghĩa, mức độ thông thạo và nhật ký hoạt động hệ thống.*
+
+### 3. Giao diện quản lý thống kê học tập (Academic statistics management interface)
+![Academic Statistics](public/academic_statistics.png)
+*Giao diện phân tích số liệu học tập chuyên sâu hiển thị biểu đồ ôn tập 30 ngày gần nhất, phân bố Ease Factors của từ vựng và tiến độ theo danh mục.*
+
+### 4. Không gian học tập trực tuyến (Workspace Online)
+![Workspace Online](public/workspace_online.png)
+*Không gian học nhóm cộng tác ảo thời gian thực với sơ đồ bàn học, avatar học viên đang tương tác và khung chat thảo luận nhóm.*
+
+### 5. Giao diện theo dõi độ tập trung bằng AI Camera (AI camera interface)
+![AI Camera](public/ai_camera.png)
+*Tính năng nhận diện sinh trắc học thời gian thực, đo lường tỷ lệ EAR/MAR và các góc quay đầu để đánh giá và hiển thị biểu đồ độ tập trung.*
+
+---
+
 ## ✍️ 5. Tác giả & Tham khảo
 
 ### 👤 Tác giả chính:
