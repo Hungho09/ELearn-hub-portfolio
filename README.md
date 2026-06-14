@@ -10,7 +10,11 @@
 [![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
 
 **LearnHub** là một nền tảng học từ vựng tiếng Anh đột phá, tích hợp Trí tuệ Nhân tạo (AI), học máy thời gian thực (Real-time ML) và khoa học nhận thức (Cognitive Science) giúp tối ưu hóa hiệu quả ghi nhớ của người học. Nền tảng được thiết kế với giao diện cao cấp, mượt mà và hỗ trợ không gian cộng tác trực tuyến thời gian thực.
+---
+### 📊 GitHub Analytics
+[![GitHub Stats](https://github-readme-stats.vercel.app/api?username=Hungho09&show_icons=true&theme=radical)](https://github.com/Hungho09)
 
+---
 ---
 
 ![LearnHub Banner](public/learnhub_banner.png)
